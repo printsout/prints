@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Truck, ShieldCheck } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Checkout = () => {
   const navigate = useNavigate();
