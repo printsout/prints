@@ -1,32 +1,33 @@
 import axios from 'axios';
 
-// Get API URL - always use HTTPS in production
-const getApiUrl = () => {
-  // If on HTTPS, force HTTPS for API
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    return `https://${window.location.host}`;
-  }
-  // Fallback to env variable
-  return process.env.REACT_APP_BACKEND_URL || '';
-};
-
-export const API_BASE_URL = getApiUrl();
-export const API = `${API_BASE_URL}/api`;
-
-// Create axios instance with proper config
+// Create axios instance
 const api = axios.create({
-  baseURL: API,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add interceptor to ensure URLs have trailing slash for FastAPI
+// Dynamic base URL resolver - runs on every request
 api.interceptors.request.use((config) => {
+  // Determine base URL dynamically
+  let baseUrl = '';
+  
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    baseUrl = `https://${window.location.host}`;
+  } else {
+    baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+  }
+  
+  // Set base URL for this request
+  if (!config.baseURL) {
+    config.baseURL = `${baseUrl}/api`;
+  }
+  
   // Add trailing slash if missing and not a query string
   if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
     config.url = `${config.url}/`;
   }
+  
   return config;
 });
 
