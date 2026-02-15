@@ -1,38 +1,35 @@
-// Direct XMLHttpRequest to bypass potential fetch interceptors
-const API_BASE = '/api';
+// Use full HTTPS URL to avoid mixed content issues
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.protocol}//${window.location.host}/api`;
+  }
+  return '/api';
+};
 
-const makeRequest = (method, url, data = null, headers = {}) => {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, `${API_BASE}${url}`, true);
-    
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    Object.keys(headers).forEach(key => {
-      xhr.setRequestHeader(key, headers[key]);
-    });
-    
-    xhr.onload = function() {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve({ data: JSON.parse(xhr.responseText) });
-        } catch (e) {
-          resolve({ data: xhr.responseText });
-        }
-      } else {
-        reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
-      }
-    };
-    
-    xhr.onerror = function() {
-      reject(new Error('Network error'));
-    };
-    
-    if (data) {
-      xhr.send(JSON.stringify(data));
-    } else {
-      xhr.send();
+const makeRequest = async (method, url, data = null, headers = {}) => {
+  const baseUrl = getBaseUrl();
+  const fullUrl = `${baseUrl}${url}`;
+  
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers
     }
-  });
+  };
+  
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+  
+  const response = await window.fetch(fullUrl, options);
+  
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  const responseData = await response.json();
+  return { data: responseData };
 };
 
 const api = {
