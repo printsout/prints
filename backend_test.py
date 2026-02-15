@@ -105,7 +105,7 @@ class NordicPrintAPITester:
         """Test user registration"""
         timestamp = datetime.now().strftime('%H%M%S')
         user_data = {
-            "email": f"testuser_{timestamp}@nordicprint.test",
+            "email": f"testuser_{timestamp}@example.com",
             "password": "TestPassword123!",
             "name": f"Test User {timestamp}"
         }
