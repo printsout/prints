@@ -1,21 +1,56 @@
-import axios from 'axios';
+// Simple API helper using fetch with relative URLs
+const API_BASE = '/api';
 
-// Force HTTPS - hardcode the backend URL
-const BACKEND_URL = 'https://custom-mug-designer-1.preview.emergentagent.com';
-
-const api = axios.create({
-  baseURL: `${BACKEND_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
+const api = {
+  async get(url, options = {}) {
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return { data: await response.json() };
   },
-});
 
-// Add trailing slash for FastAPI compatibility
-api.interceptors.request.use((config) => {
-  if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
-    config.url = `${config.url}/`;
+  async post(url, data, options = {}) {
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return { data: await response.json() };
+  },
+
+  async put(url, data, options = {}) {
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      body: data ? JSON.stringify(data) : undefined
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return { data: await response.json() };
+  },
+
+  async delete(url, options = {}) {
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return { data: await response.json() };
   }
-  return config;
-});
+};
 
 export default api;
