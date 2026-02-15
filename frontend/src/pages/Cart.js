@@ -26,7 +26,7 @@ const Cart = () => {
         await Promise.all(
           productIds.map(async (id) => {
             try {
-              const response = await axios.get(`${API}/products/${id}`);
+              const response = await api.get(`/products/${id}`);
               productData[id] = response.data;
             } catch (e) {
               console.error(`Failed to fetch product ${id}`);
