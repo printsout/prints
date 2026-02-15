@@ -131,7 +131,7 @@ const DesignEditor = () => {
         preview_image: imagePreview
       };
 
-      await axios.post(`${API}/designs`, designData, {
+      await api.post('/designs', designData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
