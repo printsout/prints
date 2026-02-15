@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Cart = () => {
   const navigate = useNavigate();
