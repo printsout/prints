@@ -53,7 +53,7 @@ const Account = () => {
 
   const handleDeleteDesign = async (designId) => {
     try {
-      await axios.delete(`${API}/designs/${designId}`, {
+      await api.delete(`/designs/${designId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDesigns(designs.filter(d => d.design_id !== designId));
