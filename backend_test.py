@@ -152,8 +152,8 @@ class NordicPrintAPITester:
         cart_item = {
             "product_id": product_id,
             "quantity": 2,
-            "color": products[0].get('colors', [None])[0],
-            "size": products[0].get('sizes', [None])[0]
+            "color": products[0].get('colors', [None])[0] if products[0].get('colors') else None,
+            "size": products[0].get('sizes', [None])[0] if products[0].get('sizes') else None
         }
         
         success3, updated_cart = self.run_test("Add to Cart", "POST", f"cart/{self.session_id}/items", 200, cart_item)
