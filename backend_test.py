@@ -230,7 +230,7 @@ class NordicPrintAPITester:
         # Attempt checkout
         checkout_data = {
             "cart_session_id": self.session_id,
-            "email": "test@nordicprint.se",
+            "email": "test@example.com",
             "shipping_address": {
                 "first_name": "Test",
                 "last_name": "User",
