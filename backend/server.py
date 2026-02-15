@@ -32,7 +32,7 @@ JWT_EXPIRATION_HOURS = 24
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
 # Create the main app
-app = FastAPI(title="NordicPrint API", redirect_slashes=False)
+app = FastAPI(title="NordicPrint API")
 
 # Create routers
 api_router = APIRouter(prefix="/api")
