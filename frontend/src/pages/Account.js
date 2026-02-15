@@ -29,10 +29,10 @@ const Account = () => {
   const fetchData = async () => {
     try {
       const [ordersRes, designsRes] = await Promise.all([
-        axios.get(`${API}/orders/my-orders`, {
+        api.get('/orders/my-orders', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API}/designs/my-designs`, {
+        api.get('/designs/my-designs', {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
