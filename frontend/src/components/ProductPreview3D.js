@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect, Suspense } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, useTexture, Html } from '@react-three/drei';
+import { useRef, Suspense } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Environment, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Loading component
@@ -14,22 +14,14 @@ const Loader = () => (
 );
 
 // Mug Component
-const Mug = ({ texture, color = '#FFFFFF' }) => {
+const Mug = ({ color = '#FFFFFF' }) => {
   const meshRef = useRef();
   
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.005;
     }
   });
-
-  const textureMap = texture ? useTexture(texture) : null;
-  
-  if (textureMap) {
-    textureMap.wrapS = THREE.RepeatWrapping;
-    textureMap.wrapT = THREE.RepeatWrapping;
-    textureMap.repeat.set(1, 1);
-  }
 
   return (
     <group ref={meshRef}>
@@ -38,7 +30,6 @@ const Mug = ({ texture, color = '#FFFFFF' }) => {
         <cylinderGeometry args={[0.8, 0.7, 1.6, 32]} />
         <meshStandardMaterial 
           color={color} 
-          map={textureMap}
           roughness={0.3}
           metalness={0.1}
         />
@@ -60,7 +51,7 @@ const Mug = ({ texture, color = '#FFFFFF' }) => {
 };
 
 // T-shirt Component
-const TShirt = ({ texture, color = '#FFFFFF' }) => {
+const TShirt = ({ color = '#FFFFFF' }) => {
   const meshRef = useRef();
   
   useFrame((state) => {
@@ -69,8 +60,6 @@ const TShirt = ({ texture, color = '#FFFFFF' }) => {
     }
   });
 
-  const textureMap = texture ? useTexture(texture) : null;
-
   return (
     <group ref={meshRef}>
       {/* Main body */}
@@ -78,7 +67,6 @@ const TShirt = ({ texture, color = '#FFFFFF' }) => {
         <boxGeometry args={[2, 2.5, 0.2]} />
         <meshStandardMaterial 
           color={color} 
-          map={textureMap}
           roughness={0.8}
           metalness={0}
         />
@@ -100,7 +88,7 @@ const TShirt = ({ texture, color = '#FFFFFF' }) => {
 };
 
 // Poster/Canvas Component
-const PosterCanvas = ({ texture, color = '#FFFFFF' }) => {
+const PosterCanvas = ({ color = '#FFFFFF' }) => {
   const meshRef = useRef();
   
   useFrame((state) => {
@@ -108,8 +96,6 @@ const PosterCanvas = ({ texture, color = '#FFFFFF' }) => {
       meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.15;
     }
   });
-
-  const textureMap = texture ? useTexture(texture) : null;
 
   return (
     <group ref={meshRef}>
@@ -124,7 +110,6 @@ const PosterCanvas = ({ texture, color = '#FFFFFF' }) => {
         <planeGeometry args={[2.2, 3]} />
         <meshStandardMaterial 
           color={color} 
-          map={textureMap}
           roughness={0.5}
         />
       </mesh>
@@ -133,16 +118,14 @@ const PosterCanvas = ({ texture, color = '#FFFFFF' }) => {
 };
 
 // Phone Case Component
-const PhoneCase = ({ texture, color = '#FFFFFF' }) => {
+const PhoneCase = ({ color = '#FFFFFF' }) => {
   const meshRef = useRef();
   
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.008;
     }
   });
-
-  const textureMap = texture ? useTexture(texture) : null;
 
   return (
     <group ref={meshRef}>
@@ -151,7 +134,6 @@ const PhoneCase = ({ texture, color = '#FFFFFF' }) => {
         <boxGeometry args={[1.2, 2.4, 0.15]} />
         <meshStandardMaterial 
           color={color}
-          map={textureMap}
           roughness={0.4}
           metalness={0.1}
         />
@@ -167,7 +149,7 @@ const PhoneCase = ({ texture, color = '#FFFFFF' }) => {
 };
 
 // Tote Bag Component
-const ToteBag = ({ texture, color = '#F5F5DC' }) => {
+const ToteBag = ({ color = '#F5F5DC' }) => {
   const meshRef = useRef();
   
   useFrame((state) => {
@@ -176,8 +158,6 @@ const ToteBag = ({ texture, color = '#F5F5DC' }) => {
     }
   });
 
-  const textureMap = texture ? useTexture(texture) : null;
-
   return (
     <group ref={meshRef}>
       {/* Bag body */}
@@ -185,7 +165,6 @@ const ToteBag = ({ texture, color = '#F5F5DC' }) => {
         <boxGeometry args={[1.8, 2, 0.3]} />
         <meshStandardMaterial 
           color={color}
-          map={textureMap}
           roughness={0.9}
         />
       </mesh>
@@ -206,7 +185,7 @@ const ToteBag = ({ texture, color = '#F5F5DC' }) => {
 };
 
 // Hoodie Component
-const Hoodie = ({ texture, color = '#333333' }) => {
+const Hoodie = ({ color = '#333333' }) => {
   const meshRef = useRef();
   
   useFrame((state) => {
@@ -215,8 +194,6 @@ const Hoodie = ({ texture, color = '#333333' }) => {
     }
   });
 
-  const textureMap = texture ? useTexture(texture) : null;
-
   return (
     <group ref={meshRef}>
       {/* Main body */}
@@ -224,7 +201,6 @@ const Hoodie = ({ texture, color = '#333333' }) => {
         <boxGeometry args={[2.2, 2.8, 0.4]} />
         <meshStandardMaterial 
           color={color} 
-          map={textureMap}
           roughness={0.85}
         />
       </mesh>
@@ -251,27 +227,27 @@ const Hoodie = ({ texture, color = '#333333' }) => {
 };
 
 // Model selector
-const ProductModel = ({ modelType, texture, color }) => {
+const ProductModel = ({ modelType, color }) => {
   switch (modelType) {
     case 'mug':
-      return <Mug texture={texture} color={color} />;
+      return <Mug color={color} />;
     case 'tshirt':
-      return <TShirt texture={texture} color={color} />;
+      return <TShirt color={color} />;
     case 'hoodie':
-      return <Hoodie texture={texture} color={color} />;
+      return <Hoodie color={color} />;
     case 'poster':
-      return <PosterCanvas texture={texture} color={color} />;
+      return <PosterCanvas color={color} />;
     case 'phonecase':
-      return <PhoneCase texture={texture} color={color} />;
+      return <PhoneCase color={color} />;
     case 'totebag':
-      return <ToteBag texture={texture} color={color} />;
+      return <ToteBag color={color} />;
     default:
-      return <Mug texture={texture} color={color} />;
+      return <Mug color={color} />;
   }
 };
 
 // Main Preview Component
-const ProductPreview3D = ({ modelType = 'mug', texture = null, color = '#FFFFFF' }) => {
+const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF' }) => {
   return (
     <div className="canvas-container rounded-lg overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100" data-testid="3d-preview">
       <Canvas
@@ -290,7 +266,7 @@ const ProductPreview3D = ({ modelType = 'mug', texture = null, color = '#FFFFFF'
           />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
           
-          <ProductModel modelType={modelType} texture={texture} color={color} />
+          <ProductModel modelType={modelType} color={color} />
           
           <ContactShadows
             position={[0, -1.5, 0]}
