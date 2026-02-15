@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { 
-  Upload, ZoomIn, ZoomOut, RotateCcw, Type, Move, 
+  Upload, RotateCcw, Type, 
   Trash2, Save, ShoppingCart, ChevronLeft, Palette
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -14,8 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import ProductPreview3D from '../components/ProductPreview3D';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DesignEditor = () => {
   const { productId } = useParams();
