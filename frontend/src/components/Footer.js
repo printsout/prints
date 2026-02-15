@@ -8,7 +8,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="text-2xl font-bold text-primary font-accent">
-              NordicPrint
+              Printout
             </Link>
             <p className="text-slate-500 text-sm leading-relaxed">
               Skapa personliga produkter med dina egna foton. Högsta kvalité, svensk design.
@@ -86,7 +86,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-slate-200 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-400 text-sm">
-            © 2024 NordicPrint. Alla rättigheter förbehållna.
+            © 2024 Printout. Alla rättigheter förbehållna.
           </p>
           <div className="flex items-center gap-4">
             <img 

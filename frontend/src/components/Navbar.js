@@ -34,7 +34,7 @@ const Navbar = () => {
             className="flex items-center gap-2"
             data-testid="logo-link"
           >
-            <span className="text-2xl font-bold text-primary font-accent">NordicPrint</span>
+            <span className="text-2xl font-bold text-primary font-accent">Printout</span>
           </Link>
 
           {/* Desktop Navigation */}
