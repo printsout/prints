@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, Palette, ChevronLeft, Check } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useCart } from '../context/CartContext';
 import ProductPreview3D from '../components/ProductPreview3D';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ProductDetail = () => {
   const { productId } = useParams();
