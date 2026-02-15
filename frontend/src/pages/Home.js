@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Upload, Palette, ShoppingBag, Star, ChevronRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { Button } from '../components/ui/button';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
