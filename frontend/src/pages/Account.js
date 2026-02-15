@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Package, Palette, LogOut, ChevronRight } from 'lucide-react';
-import axios from 'axios';
+import { User, Package, Palette, LogOut } from 'lucide-react';
+import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../context/AuthContext';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Account = () => {
   const navigate = useNavigate();
