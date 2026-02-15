@@ -1,0 +1,116 @@
+import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const CartContext = createContext(null);
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
+
+export const CartProvider = ({ children }) => {
+  const [cart, setCart] = useState({ items: [] });
+  const [sessionId, setSessionId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Get or create session ID
+    let storedSessionId = localStorage.getItem('cart_session_id');
+    if (!storedSessionId) {
+      storedSessionId = uuidv4();
+      localStorage.setItem('cart_session_id', storedSessionId);
+    }
+    setSessionId(storedSessionId);
+    fetchCart(storedSessionId);
+  }, []);
+
+  const fetchCart = async (sid) => {
+    try {
+      const response = await axios.get(`${API}/cart/${sid}`);
+      setCart(response.data);
+    } catch (error) {
+      console.error('Failed to fetch cart:', error);
+    }
+  };
+
+  const addToCart = async (item) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/cart/${sessionId}/items`, item);
+      setCart(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateQuantity = async (cartItemId, quantity) => {
+    setLoading(true);
+    try {
+      const response = await axios.put(`${API}/cart/${sessionId}/items/${cartItemId}?quantity=${quantity}`);
+      setCart(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeFromCart = async (cartItemId) => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(`${API}/cart/${sessionId}/items/${cartItemId}`);
+      setCart(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearCart = async () => {
+    setLoading(true);
+    try {
+      await axios.delete(`${API}/cart/${sessionId}`);
+      setCart({ items: [] });
+    } catch (error) {
+      console.error('Failed to clear cart:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const itemCount = cart.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+
+  const value = {
+    cart,
+    sessionId,
+    loading,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    refreshCart: () => fetchCart(sessionId),
+    itemCount
+  };
+
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
+};
