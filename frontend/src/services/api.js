@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Use relative URL - will automatically use same protocol and host
+// Force HTTPS - hardcode the backend URL
+const BACKEND_URL = 'https://custom-mug-designer-1.preview.emergentagent.com';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${BACKEND_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
