@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-// Ensure HTTPS is used
+// Get API URL - always use HTTPS in production
 const getApiUrl = () => {
-  const url = process.env.REACT_APP_BACKEND_URL || '';
-  // Force HTTPS if on production
-  if (url.startsWith('http://') && window.location.protocol === 'https:') {
-    return url.replace('http://', 'https://');
+  // If on HTTPS, force HTTPS for API
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return `https://${window.location.host}`;
   }
-  return url;
+  // Fallback to env variable
+  return process.env.REACT_APP_BACKEND_URL || '';
 };
 
 export const API_BASE_URL = getApiUrl();
