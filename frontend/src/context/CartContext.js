@@ -30,7 +30,7 @@ export const CartProvider = ({ children }) => {
 
   const fetchCart = async (sid) => {
     try {
-      const response = await axios.get(`${API}/cart/${sid}`);
+      const response = await api.get(`/cart/${sid}`);
       setCart(response.data);
     } catch (error) {
       console.error('Failed to fetch cart:', error);
@@ -40,7 +40,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (item) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/cart/${sessionId}/items`, item);
+      const response = await api.post(`/cart/${sessionId}/items`, item);
       setCart(response.data);
       return response.data;
     } catch (error) {
@@ -54,7 +54,7 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (cartItemId, quantity) => {
     setLoading(true);
     try {
-      const response = await axios.put(`${API}/cart/${sessionId}/items/${cartItemId}?quantity=${quantity}`);
+      const response = await api.put(`/cart/${sessionId}/items/${cartItemId}?quantity=${quantity}`);
       setCart(response.data);
       return response.data;
     } catch (error) {
@@ -68,7 +68,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (cartItemId) => {
     setLoading(true);
     try {
-      const response = await axios.delete(`${API}/cart/${sessionId}/items/${cartItemId}`);
+      const response = await api.delete(`/cart/${sessionId}/items/${cartItemId}`);
       setCart(response.data);
       return response.data;
     } catch (error) {
@@ -82,7 +82,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     setLoading(true);
     try {
-      await axios.delete(`${API}/cart/${sessionId}`);
+      await api.delete(`/cart/${sessionId}`);
       setCart({ items: [] });
     } catch (error) {
       console.error('Failed to clear cart:', error);
