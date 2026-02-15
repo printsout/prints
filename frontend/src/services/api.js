@@ -1,33 +1,18 @@
 import axios from 'axios';
 
-// Create axios instance
+// Use relative URL - will automatically use same protocol and host
 const api = axios.create({
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Dynamic base URL resolver - runs on every request
+// Add trailing slash for FastAPI compatibility
 api.interceptors.request.use((config) => {
-  // Determine base URL dynamically
-  let baseUrl = '';
-  
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    baseUrl = `https://${window.location.host}`;
-  } else {
-    baseUrl = process.env.REACT_APP_BACKEND_URL || '';
-  }
-  
-  // Set base URL for this request
-  if (!config.baseURL) {
-    config.baseURL = `${baseUrl}/api`;
-  }
-  
-  // Add trailing slash if missing and not a query string
   if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
     config.url = `${config.url}/`;
   }
-  
   return config;
 });
 
