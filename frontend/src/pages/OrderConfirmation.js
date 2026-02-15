@@ -22,7 +22,7 @@ const OrderConfirmation = () => {
 
     const checkPaymentStatus = async () => {
       try {
-        const response = await axios.get(`${API}/payments/status/${sessionId}`);
+        const response = await api.get(`/payments/status/${sessionId}`);
         setPaymentData(response.data);
 
         if (response.data.payment_status === 'paid') {
