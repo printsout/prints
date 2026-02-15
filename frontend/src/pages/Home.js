@@ -13,12 +13,12 @@ const Home = () => {
     const initData = async () => {
       try {
         // Initialize sample data
-        await axios.post(`${API}/init-data`);
+        await api.post('/init-data');
         
         // Fetch categories and reviews
         const [catRes, revRes] = await Promise.all([
-          axios.get(`${API}/products/categories/`),
-          axios.get(`${API}/reviews/`)
+          api.get('/products/categories'),
+          api.get('/reviews')
         ]);
         
         setCategories(catRes.data);
