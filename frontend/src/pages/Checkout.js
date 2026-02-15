@@ -110,7 +110,7 @@ const Checkout = () => {
         }
       };
 
-      const response = await axios.post(`${API}/payments/checkout`, checkoutData, {
+      const response = await api.post('/payments/checkout', checkoutData, {
         headers: {
           'Origin': window.location.origin
         }
