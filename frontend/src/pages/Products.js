@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Filter, Grid, List } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const Products = () => {
   const { category } = useParams();
