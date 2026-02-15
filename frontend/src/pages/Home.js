@@ -19,8 +19,8 @@ const Home = () => {
         
         // Fetch categories and reviews
         const [catRes, revRes] = await Promise.all([
-          axios.get(`${API}/products/categories`),
-          axios.get(`${API}/reviews`)
+          axios.get(`${API}/products/categories/`),
+          axios.get(`${API}/reviews/`)
         ]);
         
         setCategories(catRes.data);
