@@ -20,7 +20,7 @@ const Products = () => {
       setLoading(true);
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          axios.get(`${API}/products/${category ? `?category=${category}` : ''}`),
+          axios.get(`${API}/products/?${category ? `category=${category}` : ''}`),
           axios.get(`${API}/products/categories/`)
         ]);
         setProducts(productsRes.data);
