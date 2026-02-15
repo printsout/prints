@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Package, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const OrderConfirmation = () => {
   const [searchParams] = useSearchParams();
