@@ -23,12 +23,12 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
   // Texture positioning for each product type (percentage-based)
   const texturePositions = {
     mug: { 
-      top: '12%', 
-      left: '8%', 
-      width: '70%', 
-      height: '75%',
-      borderRadius: '5% / 3%',
-      transform: 'perspective(500px) rotateY(-5deg)'
+      top: '18%', 
+      left: '15%', 
+      width: '42%', 
+      height: '58%',
+      borderRadius: '3%',
+      transform: 'none'
     },
     tshirt: { 
       top: '25%', 
