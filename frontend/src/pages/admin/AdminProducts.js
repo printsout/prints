@@ -288,6 +288,7 @@ const AdminProducts = () => {
                       <SelectItem value="phonecase">Mobilskal</SelectItem>
                       <SelectItem value="totebag">Tygkasse</SelectItem>
                       <SelectItem value="calendar">Kalender</SelectItem>
+                      <SelectItem value="nametag">Namnskylt</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

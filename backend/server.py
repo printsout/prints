@@ -1196,6 +1196,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_init():
+    """Seed initial data only if the database is completely empty"""
+    existing = await db.products.find_one({}, {"_id": 0})
+    if not existing:
+        await init_data()
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

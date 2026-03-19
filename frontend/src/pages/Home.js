@@ -10,11 +10,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initData = async () => {
+    const loadData = async () => {
       try {
-        // Initialize sample data
-        await api.post('/init-data');
-        
         // Fetch categories and reviews
         const [catRes, revRes] = await Promise.all([
           api.get('/products/categories'),
@@ -30,7 +27,7 @@ const Home = () => {
       }
     };
     
-    initData();
+    loadData();
   }, []);
 
   const steps = [
