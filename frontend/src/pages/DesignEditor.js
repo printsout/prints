@@ -395,9 +395,49 @@ const DesignEditor = () => {
               {/* Adjust Tab */}
               {activeTab === 'adjust' && (
                 <div className="space-y-6">
+                  {/* Crop preview */}
+                  {imagePreview && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Beskärningsförhandsvisning
+                      </label>
+                      <div 
+                        className="relative w-full aspect-square bg-slate-100 rounded-lg overflow-hidden border-2 border-dashed border-slate-300"
+                        data-testid="crop-preview"
+                      >
+                        <img 
+                          src={imagePreview}
+                          alt="Beskärning"
+                          className="absolute"
+                          style={{
+                            width: `${designConfig.scale * 100}%`,
+                            height: `${designConfig.scale * 100}%`,
+                            left: `${designConfig.position_x}%`,
+                            top: `${designConfig.position_y}%`,
+                            transform: `translate(-50%, -50%) rotate(${designConfig.rotation}deg)`,
+                            objectFit: 'cover',
+                          }}
+                        />
+                        {/* Crop area indicator */}
+                        <div className="absolute inset-0 border-4 border-primary/50 pointer-events-none" />
+                        <div className="absolute bottom-2 left-2 right-2 text-center">
+                          <span className="text-xs bg-black/60 text-white px-2 py-1 rounded">
+                            Detta område visas på produkten
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!imagePreview && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                      Ladda upp en bild först för att kunna justera den
+                    </div>
+                  )}
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-slate-700">Position X</label>
+                      <label className="text-sm font-medium text-slate-700">Position X (vänster/höger)</label>
                       <span className="text-sm text-slate-500">{designConfig.position_x}%</span>
                     </div>
                     <Slider
@@ -406,13 +446,14 @@ const DesignEditor = () => {
                       min={0}
                       max={100}
                       step={1}
+                      disabled={!imagePreview}
                       data-testid="slider-position-x"
                     />
                   </div>
                   
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-slate-700">Position Y</label>
+                      <label className="text-sm font-medium text-slate-700">Position Y (upp/ner)</label>
                       <span className="text-sm text-slate-500">{designConfig.position_y}%</span>
                     </div>
                     <Slider
@@ -421,6 +462,7 @@ const DesignEditor = () => {
                       min={0}
                       max={100}
                       step={1}
+                      disabled={!imagePreview}
                       data-testid="slider-position-y"
                     />
                   </div>
@@ -429,16 +471,17 @@ const DesignEditor = () => {
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                         <ZoomIn className="w-4 h-4" />
-                        Storlek
+                        Storlek (zoom)
                       </label>
                       <span className="text-sm text-slate-500">{Math.round(designConfig.scale * 100)}%</span>
                     </div>
                     <Slider
                       value={[designConfig.scale * 100]}
                       onValueChange={([value]) => handleConfigChange('scale', value / 100)}
-                      min={10}
-                      max={200}
+                      min={50}
+                      max={300}
                       step={5}
+                      disabled={!imagePreview}
                       data-testid="slider-scale"
                     />
                   </div>
@@ -457,6 +500,7 @@ const DesignEditor = () => {
                       min={-180}
                       max={180}
                       step={5}
+                      disabled={!imagePreview}
                       data-testid="slider-rotation"
                     />
                   </div>
@@ -465,6 +509,7 @@ const DesignEditor = () => {
                     variant="outline" 
                     className="w-full"
                     onClick={handleReset}
+                    disabled={!imagePreview}
                     data-testid="reset-adjustments"
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
