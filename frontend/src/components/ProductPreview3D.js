@@ -10,7 +10,7 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
 
   // Product base images - using realistic product photos
   const productImages = {
-    mug: 'https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/lct9ro0u_hn.jpg',
+    mug: 'https://images.unsplash.com/photo-1680818080459-1b9ad0e9cd78?w=600',
     tshirt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600',
     hoodie: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600',
     poster: 'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=600',
@@ -21,12 +21,12 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
   // Texture positioning for each product type (percentage-based)
   const texturePositions = {
     mug: { 
-      top: '18%', 
-      left: '20%', 
-      width: '45%', 
-      height: '55%',
-      borderRadius: '5% / 3%',
-      transform: 'perspective(300px) rotateY(-5deg)'
+      top: '22%', 
+      left: '18%', 
+      width: '50%', 
+      height: '50%',
+      borderRadius: '8% / 5%',
+      transform: 'perspective(400px) rotateY(-8deg)'
     },
     tshirt: { 
       top: '25%', 
