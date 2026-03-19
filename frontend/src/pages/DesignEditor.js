@@ -38,7 +38,8 @@ const DesignEditor = () => {
     text: '',
     text_font: 'Arial',
     text_color: '#000000',
-    background_color: '#FFFFFF'
+    background_color: '#FFFFFF',
+    placement_notes: '' // Customer instructions for image placement
   });
   
   const [selectedColor, setSelectedColor] = useState(location.state?.color || '');
@@ -370,6 +371,24 @@ const DesignEditor = () => {
                       </Button>
                     </div>
                   )}
+
+                  {/* Placement instructions textarea */}
+                  <div className="mt-6 pt-6 border-t border-slate-200">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      📝 Placeringsönskemål (valfritt)
+                    </label>
+                    <textarea
+                      value={designConfig.placement_notes}
+                      onChange={(e) => handleConfigChange('placement_notes', e.target.value)}
+                      placeholder="Beskriv var du vill ha bilden, t.ex: 'Centrera bilden på framsidan' eller 'Placera i övre vänstra hörnet'"
+                      className="w-full p-3 border border-slate-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                      rows={3}
+                      data-testid="placement-notes"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      Skriv eventuella önskemål om bildplacering som vi ska ta hänsyn till
+                    </p>
+                  </div>
                 </div>
               )}
 
