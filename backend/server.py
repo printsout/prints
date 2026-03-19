@@ -42,8 +42,13 @@ cart_router = APIRouter(prefix="/cart", tags=["Cart"])
 designs_router = APIRouter(prefix="/designs", tags=["Designs"])
 orders_router = APIRouter(prefix="/orders", tags=["Orders"])
 payments_router = APIRouter(prefix="/payments", tags=["Payments"])
+admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 
 security = HTTPBearer(auto_error=False)
+
+# Admin credentials (in production, store these securely)
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@printout.se')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'PrintoutAdmin2024!')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -118,6 +123,48 @@ class Design(BaseModel):
     config: DesignConfig
     preview_image: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# Admin Models
+class AdminLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class AdminStats(BaseModel):
+    total_users: int
+    total_orders: int
+    total_products: int
+    total_revenue: float
+    recent_orders: int
+    pending_orders: int
+
+class AdminUserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    is_blocked: Optional[bool] = None
+
+class AdminProductCreate(BaseModel):
+    name: str
+    category: str
+    description: str
+    price: float
+    images: List[str]
+    colors: List[str] = []
+    sizes: List[str] = []
+    model_type: str
+
+class AdminOrderUpdate(BaseModel):
+    status: Optional[str] = None
+    payment_status: Optional[str] = None
+    notes: Optional[str] = None
+
+class SiteSettings(BaseModel):
+    site_name: str = "Printout"
+    site_logo: Optional[str] = None
+    contact_email: str = "info@printout.se"
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    social_links: Dict[str, str] = {}
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class OrderItem(BaseModel):
@@ -722,6 +769,282 @@ async def init_data():
     
     return {"message": "Data initialiserad", "products": len(products), "reviews": len(reviews)}
 
+# ============== ADMIN ROUTES ==============
+
+def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify admin JWT token"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Admin-autentisering krävs")
+    
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if not payload.get("is_admin"):
+            raise HTTPException(status_code=403, detail="Endast administratörer har tillgång")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token har gått ut")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Ogiltig token")
+
+@admin_router.post("/login")
+async def admin_login(login_data: AdminLogin):
+    """Admin login endpoint"""
+    if login_data.email != ADMIN_EMAIL or login_data.password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Felaktiga inloggningsuppgifter")
+    
+    # Create admin token
+    token_data = {
+        "sub": "admin",
+        "email": ADMIN_EMAIL,
+        "is_admin": True,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    # Log admin login
+    await db.admin_logs.insert_one({
+        "action": "login",
+        "admin_email": ADMIN_EMAIL,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ip": "system"
+    })
+    
+    return {"access_token": token, "token_type": "bearer"}
+
+@admin_router.get("/stats")
+async def get_admin_stats(admin = Depends(verify_admin_token)):
+    """Get dashboard statistics"""
+    total_users = await db.users.count_documents({})
+    total_orders = await db.orders.count_documents({})
+    total_products = await db.products.count_documents({})
+    
+    # Calculate revenue
+    orders = await db.orders.find({"payment_status": "completed"}).to_list(1000)
+    total_revenue = sum(order.get("total", 0) for order in orders)
+    
+    # Recent orders (last 7 days)
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_orders = await db.orders.count_documents({"created_at": {"$gte": week_ago}})
+    
+    # Pending orders
+    pending_orders = await db.orders.count_documents({"status": {"$in": ["pending", "processing"]}})
+    
+    return {
+        "total_users": total_users,
+        "total_orders": total_orders,
+        "total_products": total_products,
+        "total_revenue": total_revenue,
+        "recent_orders": recent_orders,
+        "pending_orders": pending_orders
+    }
+
+@admin_router.get("/users")
+async def get_all_users(admin = Depends(verify_admin_token), skip: int = 0, limit: int = 50):
+    """Get all users"""
+    users = await db.users.find({}, {"password_hash": 0, "_id": 0}).skip(skip).limit(limit).to_list(limit)
+    total = await db.users.count_documents({})
+    return {"users": users, "total": total}
+
+@admin_router.get("/users/{user_id}")
+async def get_user_details(user_id: str, admin = Depends(verify_admin_token)):
+    """Get user details with their orders"""
+    user = await db.users.find_one({"user_id": user_id}, {"password_hash": 0, "_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Användare hittades inte")
+    
+    orders = await db.orders.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    designs = await db.designs.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    
+    return {"user": user, "orders": orders, "designs": designs}
+
+@admin_router.put("/users/{user_id}")
+async def update_user(user_id: str, update_data: AdminUserUpdate, admin = Depends(verify_admin_token)):
+    """Update user details"""
+    update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
+    
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="Inga uppdateringar angivna")
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": update_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Användare hittades inte")
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "update_user",
+        "target_user_id": user_id,
+        "changes": update_dict,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Användare uppdaterad"}
+
+@admin_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, admin = Depends(verify_admin_token)):
+    """Delete a user"""
+    result = await db.users.delete_one({"user_id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Användare hittades inte")
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "delete_user",
+        "target_user_id": user_id,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Användare raderad"}
+
+@admin_router.get("/orders")
+async def get_all_orders(
+    admin = Depends(verify_admin_token), 
+    skip: int = 0, 
+    limit: int = 50,
+    status: Optional[str] = None
+):
+    """Get all orders"""
+    query = {}
+    if status:
+        query["status"] = status
+    
+    orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.orders.count_documents(query)
+    return {"orders": orders, "total": total}
+
+@admin_router.get("/orders/{order_id}")
+async def get_order_details(order_id: str, admin = Depends(verify_admin_token)):
+    """Get order details"""
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    return order
+
+@admin_router.put("/orders/{order_id}")
+async def update_order(order_id: str, update_data: AdminOrderUpdate, admin = Depends(verify_admin_token)):
+    """Update order status"""
+    update_dict = {k: v for k, v in update_data.model_dump().items() if v is not None}
+    update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.orders.update_one(
+        {"order_id": order_id},
+        {"$set": update_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "update_order",
+        "order_id": order_id,
+        "changes": update_dict,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Order uppdaterad"}
+
+@admin_router.get("/products")
+async def admin_get_products(admin = Depends(verify_admin_token)):
+    """Get all products for admin"""
+    products = await db.products.find({}, {"_id": 0}).to_list(100)
+    return {"products": products, "total": len(products)}
+
+@admin_router.post("/products")
+async def create_product(product_data: AdminProductCreate, admin = Depends(verify_admin_token)):
+    """Create a new product"""
+    product = Product(**product_data.model_dump())
+    await db.products.insert_one(product.model_dump())
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "create_product",
+        "product_id": product.product_id,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Produkt skapad", "product_id": product.product_id}
+
+@admin_router.put("/products/{product_id}")
+async def update_product(product_id: str, product_data: AdminProductCreate, admin = Depends(verify_admin_token)):
+    """Update a product"""
+    result = await db.products.update_one(
+        {"product_id": product_id},
+        {"$set": product_data.model_dump()}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Produkt hittades inte")
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "update_product",
+        "product_id": product_id,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Produkt uppdaterad"}
+
+@admin_router.delete("/products/{product_id}")
+async def delete_product(product_id: str, admin = Depends(verify_admin_token)):
+    """Delete a product"""
+    result = await db.products.delete_one({"product_id": product_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Produkt hittades inte")
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "delete_product",
+        "product_id": product_id,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Produkt raderad"}
+
+@admin_router.get("/settings")
+async def get_settings(admin = Depends(verify_admin_token)):
+    """Get site settings"""
+    settings = await db.settings.find_one({"type": "site_settings"}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        return SiteSettings().model_dump()
+    return settings
+
+@admin_router.put("/settings")
+async def update_settings(settings: SiteSettings, admin = Depends(verify_admin_token)):
+    """Update site settings"""
+    await db.settings.update_one(
+        {"type": "site_settings"},
+        {"$set": {**settings.model_dump(), "type": "site_settings"}},
+        upsert=True
+    )
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "update_settings",
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Inställningar uppdaterade"}
+
+@admin_router.get("/logs")
+async def get_admin_logs(admin = Depends(verify_admin_token), skip: int = 0, limit: int = 100):
+    """Get admin activity logs"""
+    logs = await db.admin_logs.find({}, {"_id": 0}).sort("timestamp", -1).skip(skip).limit(limit).to_list(limit)
+    return {"logs": logs}
+
 # ============== ROOT ==============
 
 @api_router.get("/")
@@ -736,6 +1059,7 @@ api_router.include_router(cart_router)
 api_router.include_router(designs_router)
 api_router.include_router(orders_router)
 api_router.include_router(payments_router)
+api_router.include_router(admin_router)
 
 app.include_router(api_router)
 
