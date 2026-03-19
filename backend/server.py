@@ -275,7 +275,7 @@ async def get_categories():
         {"id": "hoodie", "name": "Hoodies", "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400"},
         {"id": "poster", "name": "Posters", "image": "https://images.unsplash.com/photo-1571164860029-856acbc24b4a?w=400"},
         {"id": "mobilskal", "name": "Mobilskal", "image": "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400"},
-        {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1597633244018-0201d0158aec?w=400"}
+        {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"}
     ]
 
 @products_router.get("/{product_id}", response_model=Product)
