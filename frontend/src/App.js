@@ -31,6 +31,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminContent from "./pages/admin/AdminContent";
+import AdminPayments from "./pages/admin/AdminPayments";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="content" element={<AdminContent />} />
+                <Route path="payments" element={<AdminPayments />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
 

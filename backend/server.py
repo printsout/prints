@@ -165,6 +165,36 @@ class SiteSettings(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     social_links: Dict[str, str] = {}
+
+class PaymentSettings(BaseModel):
+    # Stripe
+    stripe_enabled: bool = True
+    stripe_test_mode: bool = True
+    stripe_public_key: str = ""
+    stripe_secret_key: str = ""
+    
+    # Klarna
+    klarna_enabled: bool = False
+    klarna_merchant_id: str = ""
+    klarna_api_key: str = ""
+    
+    # Swish
+    swish_enabled: bool = False
+    swish_number: str = ""
+    swish_certificate: str = ""
+    
+    # Bank transfer
+    bank_transfer_enabled: bool = False
+    bank_name: str = ""
+    bank_account: str = ""
+    bank_iban: str = ""
+    bank_bic: str = ""
+    
+    # General
+    currency: str = "SEK"
+    tax_rate: float = 25
+    free_shipping_threshold: float = 500
+    shipping_cost: float = 49
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class OrderItem(BaseModel):
@@ -1044,6 +1074,34 @@ async def get_admin_logs(admin = Depends(verify_admin_token), skip: int = 0, lim
     """Get admin activity logs"""
     logs = await db.admin_logs.find({}, {"_id": 0}).sort("timestamp", -1).skip(skip).limit(limit).to_list(limit)
     return {"logs": logs}
+
+@admin_router.get("/payment-settings")
+async def get_payment_settings(admin = Depends(verify_admin_token)):
+    """Get payment settings"""
+    settings = await db.settings.find_one({"type": "payment_settings"}, {"_id": 0})
+    if not settings:
+        return PaymentSettings().model_dump()
+    # Remove the type field from response
+    settings.pop("type", None)
+    return settings
+
+@admin_router.put("/payment-settings")
+async def update_payment_settings(settings: PaymentSettings, admin = Depends(verify_admin_token)):
+    """Update payment settings"""
+    await db.settings.update_one(
+        {"type": "payment_settings"},
+        {"$set": {**settings.model_dump(), "type": "payment_settings"}},
+        upsert=True
+    )
+    
+    # Log action
+    await db.admin_logs.insert_one({
+        "action": "update_payment_settings",
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Betalningsinställningar uppdaterade"}
 
 # ============== ROOT ==============
 
