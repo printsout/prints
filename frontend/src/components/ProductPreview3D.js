@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 
 // Product Preview with real product images and texture overlay
 const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage = null, texture = null }) => {
@@ -7,6 +8,7 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
   const [isDragging, setIsDragging] = useState(false);
   const [lastX, setLastX] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [isAutoRotating, setIsAutoRotating] = useState(false);
 
   // Product base images - using realistic product photos
   const productImages = {
@@ -91,6 +93,15 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
     setZoom(prev => Math.max(0.7, Math.min(1.5, prev + delta)));
   };
 
+  const handleReset = () => {
+    setRotation(0);
+    setZoom(1);
+  };
+
+  const toggleAutoRotate = () => {
+    setIsAutoRotating(prev => !prev);
+  };
+
   useEffect(() => {
     const container = containerRef.current;
     if (container) {
@@ -99,16 +110,16 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
     }
   }, []);
 
-  // Subtle auto-animation when not dragging
+  // Auto-rotation when enabled
   useEffect(() => {
-    if (isDragging || !texture) return;
+    if (!isAutoRotating || isDragging) return;
     
     const interval = setInterval(() => {
-      setRotation(prev => prev + 0.15);
-    }, 50);
+      setRotation(prev => prev + 0.5);
+    }, 30);
 
     return () => clearInterval(interval);
-  }, [isDragging, texture]);
+  }, [isAutoRotating, isDragging]);
 
   return (
     <div 
@@ -123,6 +134,30 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
       onMouseLeave={handleMouseUp}
       data-testid="3d-preview"
     >
+      {/* Control buttons */}
+      <div className="absolute top-4 left-4 flex gap-2 z-10">
+        <button
+          onClick={toggleAutoRotate}
+          className={`p-2 rounded-full shadow-md transition-all ${
+            isAutoRotating 
+              ? 'bg-primary text-white' 
+              : 'bg-white/90 text-slate-600 hover:bg-white'
+          }`}
+          title={isAutoRotating ? 'Stoppa rotation' : 'Starta rotation'}
+          data-testid="toggle-rotation-btn"
+        >
+          {isAutoRotating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={handleReset}
+          className="p-2 rounded-full bg-white/90 text-slate-600 hover:bg-white shadow-md transition-all"
+          title="Återställ vy"
+          data-testid="reset-view-btn"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+      </div>
+
       {/* Product container with 3D transform */}
       <div 
         className="relative transition-transform duration-100"
