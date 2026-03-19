@@ -88,4 +88,4 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 - E-post loggas till konsol (ej riktig e-post)
 
 ## Preview URL
-https://printout-design.preview.emergentagent.com
+https://printout-lab.preview.emergentagent.com
