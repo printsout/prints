@@ -1,42 +1,36 @@
-// Use full HTTPS URL to avoid mixed content issues
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.host}/api`;
-  }
-  return '/api';
-};
+import axios from 'axios';
 
-const makeRequest = async (method, url, data = null, headers = {}) => {
-  const baseUrl = getBaseUrl();
-  const fullUrl = `${baseUrl}${url}`;
-  
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers
-    }
-  };
-  
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
-  
-  const response = await window.fetch(fullUrl, options);
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-  
-  const responseData = await response.json();
-  return { data: responseData };
-};
+// Create axios instance with relative URL - let the dev server proxy handle it
+const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  withCredentials: false
+});
 
-const api = {
-  get: (url, options = {}) => makeRequest('GET', url, null, options.headers),
-  post: (url, data, options = {}) => makeRequest('POST', url, data, options.headers),
-  put: (url, data, options = {}) => makeRequest('PUT', url, data, options.headers),
-  delete: (url, options = {}) => makeRequest('DELETE', url, null, options.headers)
-};
+// Request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error.message);
+    return Promise.reject(error);
+  }
+);
 
 export default api;

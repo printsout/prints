@@ -123,6 +123,7 @@ const ProductDetail = () => {
               <ProductPreview3D 
                 modelType={product.model_type}
                 color={colorHexMap[selectedColor] || '#FFFFFF'}
+                productImage={product.images?.[0]}
               />
             </div>
             <p className="text-center text-sm text-slate-400 mt-4">

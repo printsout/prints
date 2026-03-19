@@ -18,7 +18,7 @@ const Products = () => {
       setLoading(true);
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          api.get(`/products${category ? `?category=${category}` : ''}`),
+          api.get(`/products/${category ? `?category=${category}` : ''}`),
           api.get('/products/categories')
         ]);
         setProducts(productsRes.data);

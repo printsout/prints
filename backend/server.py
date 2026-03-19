@@ -31,8 +31,8 @@ JWT_EXPIRATION_HOURS = 24
 # Stripe Config
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
-# Create the main app
-app = FastAPI(title="Printout API")
+# Create the main app with redirect_slashes disabled to handle both /products and /products/
+app = FastAPI(title="Printout API", redirect_slashes=False)
 
 # Create routers
 api_router = APIRouter(prefix="/api")
@@ -259,6 +259,7 @@ async def get_profile(user: dict = Depends(require_auth)):
 # ============== PRODUCTS ROUTES ==============
 
 @products_router.get("/", response_model=List[Product])
+@products_router.get("", response_model=List[Product])
 async def get_products(category: Optional[str] = None):
     query = {}
     if category:
