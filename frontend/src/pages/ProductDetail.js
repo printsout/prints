@@ -69,6 +69,11 @@ const ProductDetail = () => {
       navigate(`/kalender/${productId}`, {
         state: { size: selectedSize }
       });
+    // Check if it's a name tag product
+    } else if (product?.model_type === 'nametag' || product?.category === 'namnskylt') {
+      navigate(`/namnskylt/${productId}`, {
+        state: { size: selectedSize }
+      });
     } else {
       navigate(`/design/${productId}`, {
         state: { color: selectedColor, size: selectedSize }
@@ -244,6 +249,8 @@ const ProductDetail = () => {
                 <Palette className="w-5 h-5 mr-2" />
                 {product?.model_type === 'calendar' || product?.category === 'kalender' 
                   ? 'Skapa din kalender' 
+                  : product?.model_type === 'nametag' || product?.category === 'namnskylt'
+                  ? 'Skapa namnlappar'
                   : 'Designa med egen bild'
                 }
               </Button>
