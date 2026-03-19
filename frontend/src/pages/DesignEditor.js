@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { 
   Upload, RotateCcw, Type, 
-  Trash2, Save, ShoppingCart, ChevronLeft, Palette
+  Trash2, Save, ShoppingCart, ChevronLeft, Palette, Move
 } from 'lucide-react';
 import api from '../services/api';
 import { toast } from 'sonner';
