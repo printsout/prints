@@ -246,6 +246,7 @@ const DesignEditor = () => {
                   modelType={product?.model_type}
                   texture={imagePreview}
                   color={colorHexMap[selectedColor] || designConfig.background_color}
+                  designConfig={designConfig}
                 />
               </div>
               <p className="text-center text-sm text-slate-400 mt-4">

@@ -2,13 +2,27 @@ import { useState, useEffect, useRef } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 
 // Product Preview with real product images and texture overlay
-const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage = null, texture = null }) => {
+const ProductPreview3D = ({ 
+  modelType = 'mug', 
+  color = '#FFFFFF', 
+  productImage = null, 
+  texture = null,
+  designConfig = null 
+}) => {
   const containerRef = useRef(null);
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [lastX, setLastX] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [isAutoRotating, setIsAutoRotating] = useState(false);
+
+  // Default design config
+  const config = designConfig || {
+    position_x: 50,
+    position_y: 50,
+    scale: 1,
+    rotation: 0
+  };
 
   // Product base images - using realistic product photos
   const productImages = {
@@ -20,55 +34,60 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
     totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600'
   };
 
-  // Texture positioning for each product type (percentage-based)
-  const texturePositions = {
+  // Texture area bounds for each product (the printable area on the product)
+  const textureAreas = {
     mug: { 
-      top: '18%', 
-      left: '15%', 
-      width: '42%', 
-      height: '58%',
-      borderRadius: '3%',
-      transform: 'none'
+      top: 15, 
+      left: 12, 
+      width: 45, 
+      height: 65,
+      containerWidth: 45,
+      containerHeight: 65
     },
     tshirt: { 
-      top: '25%', 
-      left: '30%', 
-      width: '40%', 
-      height: '35%',
-      borderRadius: '2%'
+      top: 22, 
+      left: 28, 
+      width: 44, 
+      height: 40,
+      containerWidth: 44,
+      containerHeight: 40
     },
     hoodie: { 
-      top: '28%', 
-      left: '32%', 
-      width: '36%', 
-      height: '30%',
-      borderRadius: '2%'
+      top: 25, 
+      left: 30, 
+      width: 40, 
+      height: 35,
+      containerWidth: 40,
+      containerHeight: 35
     },
     poster: { 
-      top: '5%', 
-      left: '5%', 
-      width: '90%', 
-      height: '90%',
-      borderRadius: '0'
+      top: 5, 
+      left: 5, 
+      width: 90, 
+      height: 90,
+      containerWidth: 90,
+      containerHeight: 90
     },
     phonecase: { 
-      top: '15%', 
-      left: '15%', 
-      width: '70%', 
-      height: '60%',
-      borderRadius: '8px'
+      top: 12, 
+      left: 12, 
+      width: 76, 
+      height: 70,
+      containerWidth: 76,
+      containerHeight: 70
     },
     totebag: { 
-      top: '25%', 
-      left: '25%', 
-      width: '50%', 
-      height: '40%',
-      borderRadius: '2%'
+      top: 20, 
+      left: 22, 
+      width: 56, 
+      height: 50,
+      containerWidth: 56,
+      containerHeight: 50
     }
   };
 
   const baseImage = productImages[modelType] || productImages.mug;
-  const texturePos = texturePositions[modelType] || texturePositions.mug;
+  const textureArea = textureAreas[modelType] || textureAreas.mug;
 
   // Mouse handlers for rotation
   const handleMouseDown = (e) => {
@@ -120,6 +139,26 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
 
     return () => clearInterval(interval);
   }, [isAutoRotating, isDragging]);
+
+  // Calculate image position within the printable area based on designConfig
+  const getImageStyle = () => {
+    const scale = config.scale || 1;
+    const posX = config.position_x || 50;
+    const posY = config.position_y || 50;
+    const rot = config.rotation || 0;
+
+    return {
+      position: 'absolute',
+      width: `${100 * scale}%`,
+      height: `${100 * scale}%`,
+      left: `${posX}%`,
+      top: `${posY}%`,
+      transform: `translate(-50%, -50%) rotate(${rot}deg)`,
+      objectFit: 'cover',
+      mixBlendMode: 'multiply',
+      opacity: 0.92,
+    };
+  };
 
   return (
     <div 
@@ -176,33 +215,29 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
           }}
         />
         
-        {/* User's uploaded texture overlay */}
+        {/* Printable area container - clips the user's image */}
         {texture && (
           <div 
             className="absolute overflow-hidden"
             style={{
-              top: texturePos.top,
-              left: texturePos.left,
-              width: texturePos.width,
-              height: texturePos.height,
-              borderRadius: texturePos.borderRadius,
-              transform: texturePos.transform || 'none',
+              top: `${textureArea.top}%`,
+              left: `${textureArea.left}%`,
+              width: `${textureArea.width}%`,
+              height: `${textureArea.height}%`,
+              borderRadius: '2%',
             }}
           >
+            {/* User's uploaded image with position/scale/rotation from designConfig */}
             <img 
               src={texture}
               alt="Din design"
-              className="w-full h-full object-cover"
-              style={{
-                mixBlendMode: 'multiply',
-                opacity: 0.9,
-              }}
+              style={getImageStyle()}
             />
             {/* Subtle highlight overlay for realism */}
             <div 
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.05) 100%)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)',
               }}
             />
           </div>
@@ -213,7 +248,7 @@ const ProductPreview3D = ({ modelType = 'mug', color = '#FFFFFF', productImage =
       <div className="absolute bottom-4 left-0 right-0 text-center">
         <span className="inline-block px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm text-slate-600 shadow-md">
           {texture 
-            ? 'Dra för att rotera • Scrolla för att zooma' 
+            ? 'Använd Justera-fliken för att positionera bilden' 
             : 'Ladda upp en bild för att se den på produkten'
           }
         </span>
