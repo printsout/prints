@@ -51,10 +51,11 @@ const AdminLayout = () => {
         <div className="p-4 border-b border-slate-700 flex items-center justify-between">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="font-bold text-white">P</span>
-              </div>
-              <span className="font-bold text-lg">Printout</span>
+              <img 
+                src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
+                alt="Printout" 
+                className="h-10 w-auto"
+              />
             </div>
           )}
           <button 

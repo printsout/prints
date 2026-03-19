@@ -7,11 +7,15 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="text-2xl font-bold text-primary font-accent">
-              Printout
+            <Link to="/" className="block">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
+                alt="Printout" 
+                className="h-16 w-auto"
+              />
             </Link>
             <p className="text-slate-500 text-sm leading-relaxed">
-              Skapa personliga produkter med dina egna foton. Högsta kvalité, svensk design.
+              Kvalitet i varje utskrift. Skapa personliga produkter med dina egna foton.
             </p>
           </div>
 

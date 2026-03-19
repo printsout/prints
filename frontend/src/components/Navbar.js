@@ -34,7 +34,11 @@ const Navbar = () => {
             className="flex items-center gap-2"
             data-testid="logo-link"
           >
-            <span className="text-2xl font-bold text-primary font-accent">Printout</span>
+            <img 
+              src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
+              alt="Printout" 
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}

@@ -30,10 +30,12 @@ const AdminLogin = () => {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <Shield className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">Printout Admin</h1>
+          <img 
+            src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
+            alt="Printout" 
+            className="h-20 w-auto mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
           <p className="text-slate-400 mt-2">Logga in för att hantera din webshop</p>
         </div>
 
