@@ -789,6 +789,44 @@ async def init_data():
             sizes=["A2", "A3"],
             model_type="calendar"
         ),
+        Product(
+            name="Strykmärken med Namn",
+            category="namnskylt",
+            description="Personliga strykmärken för barnskläder. Perfekt för förskolan! 30 st i paketet. Tål tvätt i 60°C.",
+            price=149.0,
+            images=["https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600"],
+            colors=["Vit", "Rosa", "Ljusblå", "Grön", "Gul"],
+            sizes=["Liten (2x5cm)", "Mellan (2.5x6cm)", "Stor (3x7cm)"],
+            model_type="nametag"
+        ),
+        Product(
+            name="Symärken med Namn",
+            category="namnskylt",
+            description="Sybara namnlappar i mjukt tyg. Perfekt för ömtåliga plagg. 25 st i paketet.",
+            price=129.0,
+            images=["https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600"],
+            colors=["Vit", "Beige", "Rosa", "Ljusblå"],
+            sizes=["Standard (2x6cm)"],
+            model_type="nametag"
+        ),
+        Product(
+            name="Namnstämpel för Kläder",
+            category="namnskylt",
+            description="Självfärgande stämpel för att märka kläder, väskor och lunchboxar. Tål tvätt upp till 90°C!",
+            price=199.0,
+            images=["https://images.unsplash.com/photo-1584727638096-042c45049ebe?w=600"],
+            model_type="nametag"
+        ),
+        Product(
+            name="Namnlappar med Figur",
+            category="namnskylt",
+            description="Strykmärken med söta figurer (djur, fordon, blommor) + barnets namn. 30 st i paketet.",
+            price=179.0,
+            images=["https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600"],
+            colors=["Vit bakgrund", "Färgglad bakgrund"],
+            sizes=["Liten (2x5cm)", "Mellan (2.5x6cm)"],
+            model_type="nametag"
+        ),
     ]
     
     for product in products:

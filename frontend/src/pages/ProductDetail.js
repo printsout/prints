@@ -129,18 +129,30 @@ const ProductDetail = () => {
 
       <div className="container-main py-12">
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left - 3D Preview */}
+          {/* Left - Preview */}
           <div className="lg:sticky lg:top-24 lg:h-fit">
-            <div className="aspect-square rounded-xl overflow-hidden bg-slate-50">
-              <ProductPreview3D 
-                modelType={product.model_type}
-                color={colorHexMap[selectedColor] || '#FFFFFF'}
-                productImage={product.images?.[0]}
-              />
-            </div>
-            <p className="text-center text-sm text-slate-400 mt-4">
-              Dra för att rotera • Scrolla för att zooma
-            </p>
+            {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' ? (
+              <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
+                <img
+                  src={product.images?.[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <>
+                <div className="aspect-square rounded-xl overflow-hidden bg-slate-50">
+                  <ProductPreview3D 
+                    modelType={product.model_type}
+                    color={colorHexMap[selectedColor] || '#FFFFFF'}
+                    productImage={product.images?.[0]}
+                  />
+                </div>
+                <p className="text-center text-sm text-slate-400 mt-4">
+                  Dra för att rotera • Scrolla för att zooma
+                </p>
+              </>
+            )}
           </div>
 
           {/* Right - Details */}

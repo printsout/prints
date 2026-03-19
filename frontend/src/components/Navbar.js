@@ -16,6 +16,8 @@ const Navbar = () => {
     { href: '/produkter/mugg', label: 'Muggar' },
     { href: '/produkter/tshirt', label: 'T-shirts' },
     { href: '/produkter/poster', label: 'Posters' },
+    { href: '/produkter/namnskylt', label: 'Namnlappar' },
+    { href: '/produkter/kalender', label: 'Kalendrar' },
   ];
 
   const handleLogout = () => {
