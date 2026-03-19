@@ -64,9 +64,16 @@ const ProductDetail = () => {
   };
 
   const handleDesign = () => {
-    navigate(`/design/${productId}`, {
-      state: { color: selectedColor, size: selectedSize }
-    });
+    // Check if it's a calendar product
+    if (product?.model_type === 'calendar' || product?.category === 'kalender') {
+      navigate(`/kalender/${productId}`, {
+        state: { size: selectedSize }
+      });
+    } else {
+      navigate(`/design/${productId}`, {
+        state: { color: selectedColor, size: selectedSize }
+      });
+    }
   };
 
   if (loading) {
@@ -235,7 +242,10 @@ const ProductDetail = () => {
                 data-testid="design-button"
               >
                 <Palette className="w-5 h-5 mr-2" />
-                Designa med egen bild
+                {product?.model_type === 'calendar' || product?.category === 'kalender' 
+                  ? 'Skapa din kalender' 
+                  : 'Designa med egen bild'
+                }
               </Button>
               <Button 
                 onClick={handleAddToCart}

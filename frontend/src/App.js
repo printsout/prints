@@ -16,6 +16,7 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import DesignEditor from "./pages/DesignEditor";
+import CalendarEditor from "./pages/CalendarEditor";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -63,6 +64,7 @@ function App() {
                       <Route path="/produkter/:category" element={<Products />} />
                       <Route path="/produkt/:productId" element={<ProductDetail />} />
                       <Route path="/design/:productId" element={<DesignEditor />} />
+                      <Route path="/kalender/:productId" element={<CalendarEditor />} />
                       <Route path="/varukorg" element={<Cart />} />
                       <Route path="/kassa" element={<Checkout />} />
                       <Route path="/order-confirmation" element={<OrderConfirmation />} />
