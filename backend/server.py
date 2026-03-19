@@ -352,7 +352,8 @@ async def get_categories():
         {"id": "hoodie", "name": "Hoodies", "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400"},
         {"id": "poster", "name": "Posters", "image": "https://images.unsplash.com/photo-1571164860029-856acbc24b4a?w=400"},
         {"id": "mobilskal", "name": "Mobilskal", "image": "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400"},
-        {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"}
+        {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"},
+        {"id": "kalender", "name": "Kalendrar", "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400"}
     ]
 
 @products_router.get("/{product_id}", response_model=Product)
@@ -759,6 +760,33 @@ async def init_data():
             images=["https://images.unsplash.com/photo-1597633244018-0201d0158aec?w=600"],
             colors=["Naturvit", "Svart"],
             model_type="totebag"
+        ),
+        Product(
+            name="Årskalender med Foton",
+            category="kalender",
+            description="Personlig väggkalender med dina egna bilder. 12 månader, en bild per månad. A3-format.",
+            price=249.0,
+            images=["https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600"],
+            sizes=["A3", "A4"],
+            model_type="calendar"
+        ),
+        Product(
+            name="Skrivbordskalender",
+            category="kalender",
+            description="Kompakt skrivbordskalender med spiralbindning. Perfekt present eller för kontoret.",
+            price=179.0,
+            images=["https://images.unsplash.com/photo-1435527173128-983b87201f4d?w=600"],
+            sizes=["Standard"],
+            model_type="calendar"
+        ),
+        Product(
+            name="Familjekalender",
+            category="kalender",
+            description="Stor familjekalender med plats för anteckningar. Perfekt för att planera familjens aktiviteter.",
+            price=299.0,
+            images=["https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600"],
+            sizes=["A2", "A3"],
+            model_type="calendar"
         ),
     ]
     

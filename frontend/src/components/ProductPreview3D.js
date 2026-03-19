@@ -31,7 +31,8 @@ const ProductPreview3D = ({
     hoodie: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600',
     poster: 'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=600',
     phonecase: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=600',
-    totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600'
+    totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600',
+    calendar: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600'
   };
 
   // Texture area bounds for each product (the printable area on the product)
@@ -83,6 +84,14 @@ const ProductPreview3D = ({
       height: 50,
       containerWidth: 56,
       containerHeight: 50
+    },
+    calendar: { 
+      top: 8, 
+      left: 10, 
+      width: 80, 
+      height: 55,
+      containerWidth: 80,
+      containerHeight: 55
     }
   };
 
