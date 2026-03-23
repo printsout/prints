@@ -56,16 +56,16 @@ const Footer = () => {
             <h4 className="font-semibold text-slate-800 mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-slate-500 text-sm">FAQ</span>
+                <Link to="/sida/faq" className="text-slate-500 hover:text-primary text-sm transition-colors">FAQ</Link>
               </li>
               <li>
-                <span className="text-slate-500 text-sm">Frakt & Leverans</span>
+                <Link to="/sida/frakt-leverans" className="text-slate-500 hover:text-primary text-sm transition-colors">Frakt & Leverans</Link>
               </li>
               <li>
-                <span className="text-slate-500 text-sm">Returer</span>
+                <Link to="/sida/returer" className="text-slate-500 hover:text-primary text-sm transition-colors">Returer</Link>
               </li>
               <li>
-                <span className="text-slate-500 text-sm">Kontakt</span>
+                <Link to="/sida/kontakt" className="text-slate-500 hover:text-primary text-sm transition-colors">Kontakt</Link>
               </li>
             </ul>
           </div>
@@ -75,13 +75,13 @@ const Footer = () => {
             <h4 className="font-semibold text-slate-800 mb-4">Information</h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-slate-500 text-sm">Om oss</span>
+                <Link to="/sida/om-oss" className="text-slate-500 hover:text-primary text-sm transition-colors">Om oss</Link>
               </li>
               <li>
-                <span className="text-slate-500 text-sm">Integritetspolicy</span>
+                <Link to="/sida/integritetspolicy" className="text-slate-500 hover:text-primary text-sm transition-colors">Integritetspolicy</Link>
               </li>
               <li>
-                <span className="text-slate-500 text-sm">Köpvillkor</span>
+                <Link to="/sida/kopvillkor" className="text-slate-500 hover:text-primary text-sm transition-colors">Köpvillkor</Link>
               </li>
             </ul>
           </div>
