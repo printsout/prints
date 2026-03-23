@@ -11,7 +11,7 @@ const Cart = () => {
   const { cart, updateQuantity, removeFromCart, loading } = useCart();
   const [products, setProducts] = useState({});
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500 });
+  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0 });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -77,10 +77,14 @@ const Cart = () => {
   };
 
   const subtotal = calculateTotal();
+  const discountAmount = shippingConfig.discount_enabled && shippingConfig.discount_percent > 0
+    ? Math.round(subtotal * shippingConfig.discount_percent / 100)
+    : 0;
+  const afterDiscount = subtotal - discountAmount;
   const shipping = !shippingConfig.shipping_enabled ? 0
-    : (shippingConfig.free_shipping_threshold > 0 && subtotal >= shippingConfig.free_shipping_threshold) ? 0
+    : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
     : shippingConfig.shipping_cost;
-  const total = subtotal + shipping;
+  const total = afterDiscount + shipping;
 
   if (loadingProducts) {
     return (
@@ -232,15 +236,21 @@ const Cart = () => {
                     <span className="text-slate-600">Delsumma</span>
                     <span className="font-medium">{subtotal.toFixed(2)} kr</span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-[#2a9d8f]">
+                      <span>Rabatt ({shippingConfig.discount_percent}%)</span>
+                      <span className="font-medium">-{discountAmount} kr</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-600">Frakt</span>
                     <span className="font-medium">
                       {shipping === 0 ? 'Gratis' : `${shipping} kr`}
                     </span>
                   </div>
-                  {shipping > 0 && shippingConfig.free_shipping_threshold > 0 && subtotal < shippingConfig.free_shipping_threshold && (
+                  {shipping > 0 && shippingConfig.free_shipping_threshold > 0 && afterDiscount < shippingConfig.free_shipping_threshold && (
                     <p className="text-xs text-slate-500">
-                      Handla för {(shippingConfig.free_shipping_threshold - subtotal).toFixed(0)} kr till för fri frakt!
+                      Handla för {(shippingConfig.free_shipping_threshold - afterDiscount).toFixed(0)} kr till för fri frakt!
                     </p>
                   )}
                   <div className="border-t pt-3 mt-3">

@@ -246,6 +246,8 @@ class PaymentSettings(BaseModel):
     shipping_enabled: bool = True
     free_shipping_threshold: float = 500
     shipping_cost: float = 49
+    discount_enabled: bool = False
+    discount_percent: float = 0
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class OrderItem(BaseModel):
@@ -559,7 +561,7 @@ async def get_order(order_id: str, user: dict = Depends(get_current_user)):
 
 @api_router.get("/shipping-settings")
 async def get_public_shipping_settings():
-    """Public endpoint for shipping configuration"""
+    """Public endpoint for shipping and discount configuration"""
     settings = await db.settings.find_one({"type": "payment_settings"}, {"_id": 0})
     if not settings:
         defaults = PaymentSettings()
@@ -567,11 +569,15 @@ async def get_public_shipping_settings():
             "shipping_enabled": defaults.shipping_enabled,
             "shipping_cost": defaults.shipping_cost,
             "free_shipping_threshold": defaults.free_shipping_threshold,
+            "discount_enabled": defaults.discount_enabled,
+            "discount_percent": defaults.discount_percent,
         }
     return {
         "shipping_enabled": settings.get("shipping_enabled", True),
         "shipping_cost": settings.get("shipping_cost", 49),
         "free_shipping_threshold": settings.get("free_shipping_threshold", 500),
+        "discount_enabled": settings.get("discount_enabled", False),
+        "discount_percent": settings.get("discount_percent", 0),
     }
 
 

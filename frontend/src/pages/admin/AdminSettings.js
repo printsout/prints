@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from 'sonner';
-import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck } from 'lucide-react';
+import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent } from 'lucide-react';
 
 const AdminSettings = () => {
   const { getAuthHeaders } = useAdmin();
@@ -27,6 +27,8 @@ const AdminSettings = () => {
     shipping_enabled: true,
     shipping_cost: 49,
     free_shipping_threshold: 500,
+    discount_enabled: false,
+    discount_percent: 0,
   });
   const [savingShipping, setSavingShipping] = useState(false);
 
@@ -53,6 +55,8 @@ const AdminSettings = () => {
         shipping_enabled: response.data.shipping_enabled ?? true,
         shipping_cost: response.data.shipping_cost ?? 49,
         free_shipping_threshold: response.data.free_shipping_threshold ?? 500,
+        discount_enabled: response.data.discount_enabled ?? false,
+        discount_percent: response.data.discount_percent ?? 0,
       });
     } catch (error) {
       console.error('Failed to fetch shipping settings:', error);
@@ -334,6 +338,78 @@ const AdminSettings = () => {
                   <>
                     <Save className="w-4 h-4 mr-2" />
                     Spara fraktinställningar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Discount Settings */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <Percent className="w-5 h-5" />
+            Rabatt
+          </h2>
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-slate-700">Aktivera rabatt</p>
+                <p className="text-sm text-slate-500">Slå på för att ge alla kunder en procentuell rabatt</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShippingSettings(prev => ({ ...prev, discount_enabled: !prev.discount_enabled }))}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  shippingSettings.discount_enabled ? 'bg-[#2a9d8f]' : 'bg-slate-300'
+                }`}
+                data-testid="discount-toggle"
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    shippingSettings.discount_enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {shippingSettings.discount_enabled && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Rabatt (%)
+                </label>
+                <p className="text-xs text-slate-500 mb-1">
+                  Rabatten appliceras på hela orderns delsumma.
+                </p>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={shippingSettings.discount_percent}
+                  onChange={(e) => setShippingSettings(prev => ({ ...prev, discount_percent: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) }))}
+                  data-testid="discount-percent-input"
+                />
+                {shippingSettings.discount_percent > 0 && (
+                  <p className="text-sm text-[#2a9d8f] mt-2 font-medium">
+                    Kunder får {shippingSettings.discount_percent}% rabatt på alla ordrar
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button
+                type="button"
+                onClick={handleSaveShipping}
+                disabled={savingShipping}
+                className="min-w-[180px]"
+                data-testid="save-discount-btn"
+              >
+                {savingShipping ? 'Sparar...' : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Spara rabattinställningar
                   </>
                 )}
               </Button>

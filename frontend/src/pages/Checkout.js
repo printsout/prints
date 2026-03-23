@@ -17,7 +17,7 @@ const Checkout = () => {
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500 });
+  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0 });
   
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -84,10 +84,14 @@ const Checkout = () => {
   };
 
   const subtotal = calculateTotal();
+  const discountAmount = shippingConfig.discount_enabled && shippingConfig.discount_percent > 0
+    ? Math.round(subtotal * shippingConfig.discount_percent / 100)
+    : 0;
+  const afterDiscount = subtotal - discountAmount;
   const shipping = !shippingConfig.shipping_enabled ? 0
-    : (shippingConfig.free_shipping_threshold > 0 && subtotal >= shippingConfig.free_shipping_threshold) ? 0
+    : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
     : shippingConfig.shipping_cost;
-  const total = subtotal + shipping;
+  const total = afterDiscount + shipping;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -379,6 +383,12 @@ const Checkout = () => {
                     <span className="text-slate-600">Delsumma</span>
                     <span>{subtotal.toFixed(2)} kr</span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-[#2a9d8f]">
+                      <span>Rabatt ({shippingConfig.discount_percent}%)</span>
+                      <span>-{discountAmount} kr</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-600">Frakt</span>
                     <span>{shipping === 0 ? 'Gratis' : `${shipping} kr`}</span>
