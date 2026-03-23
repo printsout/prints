@@ -1,7 +1,7 @@
 # Printout - E-commerce för Personliga Produkter
 
 ## Projektöversikt
-En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa designen på produkter, se en förhandsvisning och beställa tryck på olika artiklar som muggar, t-shirts, hoodies, posters, mobilskal, tygkassar, kalendrar och namnlappar.
+En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa designen på produkter, se en förhandsvisning och beställa tryck på olika artiklar som muggar, t-shirts, hoodies, posters, mobilskal, tygkassar, kalendrar, namnlappar och fotoalbum.
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Shadcn/UI, React Router, Google Fonts
@@ -19,50 +19,48 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
    - Produkt, Varukorg, Design, Order CRUD
    - Admin-API (stats, users, products, orders, payments)
    - Stripe-checkout (testläge)
-   - 16 produkter seedade
-   - **Startup hook** - seedar bara om DB är helt tom
+   - 17 produkter (muggar, t-shirts, hoodies, posters, mobilskal, tygkassar, kalendrar, namnlappar, fotoalbum)
+   - Startup hook - seedar bara om DB är helt tom
 
 2. **Frontend Sidor**
-   - Hemsida (utan auto-reseed)
+   - Hemsida
    - Produktsida med filter/sortering
-   - Produktdetaljer - 3D för muggar, produktbild för namnlappar/kalendrar
+   - Produktdetaljer - 3D för muggar, produktbild för specialprodukter
    - Designverktyg med 3D mugg-förhandsvisning
    - Kalender-editor (12 månader)
-   - **Namnskylts-editor** (namly.se-inspirerad)
+   - Namnskylts-editor (namly.se-inspirerad, tab-baserad)
+   - **Fotoalbum-editor** (NYTT 2026-03-23): Multi-sida editor med:
+     - 20 default-sidor, min 10, max 80
+     - Drag & drop bilduppladdning per sida
+     - Lägg till/ta bort sidor dynamiskt (+2, +10)
+     - Sidnavigering + miniatyrvy
+     - Storleksval (A4 Liggande/Stående, A5 Kvadrat, 30x30cm)
+     - Extra sidkostnad (5 kr/sida utöver 20)
+     - Prisuträkning med antal och extra sidor
    - Varukorg, Kassa, Registrering, Inloggning, Konto
-   - **Navbar med alla kategorier** (Produkter, Muggar, T-shirts, Posters, Namnlappar, Kalendrar)
+   - **Navbar**: Produkter, Muggar, T-shirts, Posters, Namnlappar, Kalendrar, Fotoalbum
 
 3. **Admin Panel** (/admin)
-   - Dashboard, Produkthantering (med Namnskylt-typ), Användarhantering, Orderhantering, Betalningsinställningar
-
-4. **Buggfixar (2026-03-19)**
-   - Löst "Mixed Content" HTTP/HTTPS-problem
-   - Fixat ProductDetail: visar produktbild för namnlappar/kalendrar
-   - Lagt till Namnlappar + Kalendrar i navigeringen
-   - **Fixat admin delete-bugg**: Borttagna produkter återskapades inte vid hemsidesbesök
-   - Flyttat init_data från Home.js till backend startup
-   - Lagt till "Namnskylt" som produkttyp i admin
+   - Dashboard, Produkthantering (inkl. Namnskylt-typ), Användarhantering, Orderhantering, Betalningsinställningar
 
 ### Pågående / Nästa steg (P1)
 1. **Stripe Checkout** - Komplett betalningsflöde
-2. **Varukorgs-integration för specialeditorer** - Kalender → varukorg
-3. **Kundkonto** - Orderhistorik, sparade designer
+2. **Kundkonto** - Orderhistorik, sparade designer
 
 ### Framtida uppgifter (P2)
 1. **E-postbekräftelse** - Integrera riktig e-posttjänst
 2. **Klarna/Swish** - Aktivera svenska betalningsmetoder
 3. **Backend-refaktorisering** - Bryt ut server.py till moduler
 4. **Produktbilder** - Byt ut stockfoton mot relevanta bilder
-5. **Premium Poster trasig bild** - Bild laddas inte korrekt
 
 ## Credentials
 - **Admin**: admin@printout.se / PrintoutAdmin2024!
 - **User**: Registrera via /registrera
 
-## Test Status (2026-03-19)
+## Test Status (2026-03-23)
 - Iteration 1: Core app - PASS
-- Iteration 2: NameTagEditor redesign - 100% (19/19)
-- Admin delete flow: Manuellt verifierad via API + UI
+- Iteration 2: NameTagEditor - 100% (19/19)
+- Iteration 3: PhotoAlbumEditor - 100% (17/17)
 
 ## Preview URL
 https://printout-lab.preview.emergentagent.com
