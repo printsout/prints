@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDropzone } from 'react-dropzone';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
@@ -8,13 +7,123 @@ import { toast } from 'sonner';
 import {
   Upload, ChevronLeft, ChevronRight, ShoppingCart,
   Trash2, Plus, BookOpen, Image as ImageIcon,
-  Minus, GripVertical, RotateCcw
+  Minus, LayoutGrid, Square, Columns, Rows, Grid2x2
 } from 'lucide-react';
 
 const MIN_PAGES = 10;
 const MAX_PAGES = 80;
 const DEFAULT_PAGES = 20;
 
+// ─── LAYOUTS ───────────────────────────────────────
+const LAYOUTS = [
+  { id: 'single', label: '1 bild', icon: Square, slots: 1 },
+  { id: 'two-h', label: '2 bredvid', icon: Columns, slots: 2 },
+  { id: 'two-v', label: '2 staplade', icon: Rows, slots: 2 },
+  { id: 'three', label: '1 + 2', icon: LayoutGrid, slots: 3 },
+  { id: 'four', label: '2 x 2', icon: Grid2x2, slots: 4 },
+];
+
+function createPage(id) {
+  return { id, layout: 'single', images: [null] };
+}
+
+function resizeImages(images, newSlots) {
+  const result = [...images];
+  while (result.length < newSlots) result.push(null);
+  return result.slice(0, newSlots);
+}
+
+// ─── SLOT COMPONENT ────────────────────────────────
+function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove }) {
+  const inputRef = useRef(null);
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => onUpload(pageIndex, slotIndex, ev.target.result);
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  if (image) {
+    return (
+      <div className="relative w-full h-full group">
+        <img src={image} alt="" className="w-full h-full object-cover" />
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(pageIndex, slotIndex); }}
+          className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+          data-testid={`remove-img-${pageIndex}-${slotIndex}`}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      className="w-full h-full flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors border border-dashed border-slate-300 rounded"
+      data-testid={`slot-${pageIndex}-${slotIndex}`}
+    >
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <Upload className="w-5 h-5 text-slate-400 mb-1" />
+      <span className="text-xs text-slate-400">Lägg till bild</span>
+    </div>
+  );
+}
+
+// ─── LAYOUT RENDERER ───────────────────────────────
+function PagePreview({ page, pageIndex, onUpload, onRemove }) {
+  const { layout, images } = page;
+  const slot = (idx) => (
+    <ImageSlot
+      key={idx}
+      image={images[idx] || null}
+      slotIndex={idx}
+      pageIndex={pageIndex}
+      onUpload={onUpload}
+      onRemove={onRemove}
+    />
+  );
+
+  const containerClass = "w-full h-full";
+
+  switch (layout) {
+    case 'two-h':
+      return (
+        <div className={`${containerClass} grid grid-cols-2 gap-1 p-1`}>
+          {slot(0)}{slot(1)}
+        </div>
+      );
+    case 'two-v':
+      return (
+        <div className={`${containerClass} grid grid-rows-2 gap-1 p-1`}>
+          {slot(0)}{slot(1)}
+        </div>
+      );
+    case 'three':
+      return (
+        <div className={`${containerClass} grid grid-rows-2 gap-1 p-1`}>
+          <div className="row-span-1">{slot(0)}</div>
+          <div className="grid grid-cols-2 gap-1">
+            {slot(1)}{slot(2)}
+          </div>
+        </div>
+      );
+    case 'four':
+      return (
+        <div className={`${containerClass} grid grid-cols-2 grid-rows-2 gap-1 p-1`}>
+          {slot(0)}{slot(1)}{slot(2)}{slot(3)}
+        </div>
+      );
+    default: // single
+      return <div className={`${containerClass} p-1`}>{slot(0)}</div>;
+  }
+}
+
+// ─── MAIN COMPONENT ────────────────────────────────
 const PhotoAlbumEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -24,12 +133,7 @@ const PhotoAlbumEditor = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [pages, setPages] = useState(
-    Array.from({ length: DEFAULT_PAGES }, (_, i) => ({
-      id: i,
-      image: null,
-      preview: null,
-      caption: '',
-    }))
+    Array.from({ length: DEFAULT_PAGES }, (_, i) => createPage(i))
   );
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -39,9 +143,7 @@ const PhotoAlbumEditor = () => {
       try {
         const response = await api.get(`/products/${productId}`);
         setProduct(response.data);
-        if (response.data.sizes?.length > 0) {
-          setSelectedSize(response.data.sizes[0]);
-        }
+        if (response.data.sizes?.length > 0) setSelectedSize(response.data.sizes[0]);
       } catch (error) {
         console.error('Failed to fetch product:', error);
         toast.error('Kunde inte hämta produkt');
@@ -52,52 +154,51 @@ const PhotoAlbumEditor = () => {
     fetchProduct();
   }, [productId]);
 
-  const onDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPages(prev => {
-          const updated = [...prev];
-          updated[currentPage] = {
-            ...updated[currentPage],
-            image: file,
-            preview: reader.result,
-          };
-          return updated;
-        });
-        toast.success(`Bild tillagd på sida ${currentPage + 1}`);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [currentPage]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
-    multiple: false,
-  });
-
-  const removeImage = (pageIndex) => {
+  // ── Image handlers ──
+  const handleUpload = (pageIdx, slotIdx, dataUrl) => {
     setPages(prev => {
       const updated = [...prev];
-      updated[pageIndex] = { ...updated[pageIndex], image: null, preview: null };
+      const newImages = [...updated[pageIdx].images];
+      newImages[slotIdx] = dataUrl;
+      updated[pageIdx] = { ...updated[pageIdx], images: newImages };
       return updated;
     });
-    toast.success('Bild borttagen');
+    toast.success(`Bild tillagd`);
   };
 
+  const handleRemoveImage = (pageIdx, slotIdx) => {
+    setPages(prev => {
+      const updated = [...prev];
+      const newImages = [...updated[pageIdx].images];
+      newImages[slotIdx] = null;
+      updated[pageIdx] = { ...updated[pageIdx], images: newImages };
+      return updated;
+    });
+  };
+
+  // ── Layout change ──
+  const changeLayout = (layoutId) => {
+    const layoutDef = LAYOUTS.find(l => l.id === layoutId);
+    if (!layoutDef) return;
+    setPages(prev => {
+      const updated = [...prev];
+      const oldImages = updated[currentPage].images;
+      updated[currentPage] = {
+        ...updated[currentPage],
+        layout: layoutId,
+        images: resizeImages(oldImages, layoutDef.slots),
+      };
+      return updated;
+    });
+  };
+
+  // ── Page management ──
   const addPages = (count) => {
     if (pages.length + count > MAX_PAGES) {
       toast.error(`Max ${MAX_PAGES} sidor tillåtet`);
       return;
     }
-    const newPages = Array.from({ length: count }, (_, i) => ({
-      id: Date.now() + i,
-      image: null,
-      preview: null,
-      caption: '',
-    }));
+    const newPages = Array.from({ length: count }, (_, i) => createPage(Date.now() + i));
     setPages(prev => [...prev, ...newPages]);
     toast.success(`${count} sidor tillagda`);
   };
@@ -108,19 +209,19 @@ const PhotoAlbumEditor = () => {
       return;
     }
     setPages(prev => prev.filter((_, i) => i !== pageIndex));
-    if (currentPage >= pages.length - 1) {
-      setCurrentPage(Math.max(0, pages.length - 2));
-    }
+    if (currentPage >= pages.length - 1) setCurrentPage(Math.max(0, pages.length - 2));
   };
 
-  const getUploadedCount = () => pages.filter(p => p.preview !== null).length;
+  // ── Counts ──
+  const getTotalImages = () => pages.reduce((sum, p) => sum + p.images.filter(Boolean).length, 0);
+  const getPageImageCount = (p) => p.images.filter(Boolean).length;
 
   const extraPageCost = Math.max(0, pages.length - DEFAULT_PAGES) * 5;
   const basePrice = product?.price || 0;
   const totalPerItem = basePrice + extraPageCost;
 
   const handleAddToCart = async () => {
-    if (getUploadedCount() === 0) {
+    if (getTotalImages() === 0) {
       toast.error('Lägg till minst en bild i ditt album');
       return;
     }
@@ -130,15 +231,16 @@ const PhotoAlbumEditor = () => {
         name: product.name,
         price: totalPerItem,
         quantity,
-        image: pages.find(p => p.preview)?.preview || product.images?.[0],
+        image: pages.flatMap(p => p.images).find(Boolean) || product.images?.[0],
         customization: {
           type: 'photoalbum',
           total_pages: pages.length,
-          images_count: getUploadedCount(),
+          total_images: getTotalImages(),
           size: selectedSize,
           pages: pages.map((p, i) => ({
             page_number: i + 1,
-            has_image: p.preview !== null,
+            layout: p.layout,
+            image_count: getPageImageCount(p),
           })),
         },
       });
@@ -183,7 +285,7 @@ const PhotoAlbumEditor = () => {
           <span className="text-slate-300">|</span>
           <h1 className="text-base font-semibold text-slate-800">{product.name}</h1>
           <span className="ml-auto text-sm text-slate-400">
-            {getUploadedCount()} / {pages.length} bilder uppladdade
+            {getTotalImages()} bilder totalt
           </span>
         </div>
       </div>
@@ -218,46 +320,51 @@ const PhotoAlbumEditor = () => {
               </button>
             </div>
 
+            {/* Layout selector */}
+            <div className="bg-white rounded-xl border p-3" data-testid="layout-selector">
+              <div className="flex items-center gap-2 mb-2">
+                <LayoutGrid className="w-4 h-4 text-slate-500" />
+                <span className="text-sm font-semibold text-slate-700">Sidlayout</span>
+              </div>
+              <div className="flex gap-2">
+                {LAYOUTS.map(lo => {
+                  const Icon = lo.icon;
+                  return (
+                    <button
+                      key={lo.id}
+                      onClick={() => changeLayout(lo.id)}
+                      className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg border-2 transition-all text-xs font-medium ${
+                        currentPageData?.layout === lo.id
+                          ? 'border-[#2a9d8f] bg-[#2a9d8f]/5 text-[#2a9d8f]'
+                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                      }`}
+                      data-testid={`layout-${lo.id}`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {lo.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Main page preview */}
             <div className="bg-white rounded-xl border overflow-hidden" data-testid="page-preview">
-              <div className="aspect-[4/3] relative bg-slate-50">
-                {currentPageData?.preview ? (
-                  <>
-                    <img
-                      src={currentPageData.preview}
-                      alt={`Sida ${currentPage + 1}`}
-                      className="w-full h-full object-contain bg-slate-100"
-                    />
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <button
-                        onClick={() => removeImage(currentPage)}
-                        className="p-2 bg-red-500/90 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md"
-                        data-testid="remove-image"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 to-transparent p-4">
-                      <span className="text-white text-sm font-medium">Sida {currentPage + 1}</span>
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    {...getRootProps()}
-                    className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                      isDragActive ? 'bg-[#2a9d8f]/10 border-[#2a9d8f]' : 'hover:bg-slate-100'
-                    }`}
-                    data-testid="dropzone"
-                  >
-                    <input {...getInputProps()} />
-                    <div className="w-16 h-16 rounded-full bg-[#2a9d8f]/10 flex items-center justify-center mb-4">
-                      <Upload className="w-7 h-7 text-[#2a9d8f]" />
-                    </div>
-                    <p className="text-slate-700 font-medium text-base">Ladda upp bild för sida {currentPage + 1}</p>
-                    <p className="text-slate-400 text-sm mt-1">Dra & släpp eller klicka för att välja</p>
-                    <p className="text-slate-300 text-xs mt-3">JPG, PNG eller WebP</p>
-                  </div>
-                )}
+              <div className="aspect-[4/3] bg-white">
+                <PagePreview
+                  page={currentPageData}
+                  pageIndex={currentPage}
+                  onUpload={handleUpload}
+                  onRemove={handleRemoveImage}
+                />
+              </div>
+              <div className="px-4 py-2 border-t bg-slate-50 flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  Sida {currentPage + 1} — {getPageImageCount(currentPageData)} / {currentPageData.images.length} bilder
+                </span>
+                <span className="text-xs text-slate-400">
+                  Layout: {LAYOUTS.find(l => l.id === currentPageData.layout)?.label}
+                </span>
               </div>
             </div>
 
@@ -285,42 +392,53 @@ const PhotoAlbumEditor = () => {
                 </div>
               </div>
               <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 max-h-[220px] overflow-y-auto pr-1">
-                {pages.map((page, index) => (
-                  <div
-                    key={page.id}
-                    onClick={() => setCurrentPage(index)}
-                    className={`group relative aspect-[3/4] rounded-md border-2 overflow-hidden transition-all cursor-pointer ${
-                      currentPage === index
-                        ? 'border-[#2a9d8f] ring-2 ring-[#2a9d8f]/20'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                    data-testid={`page-thumb-${index}`}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCurrentPage(index); }}
-                  >
-                    {page.preview ? (
-                      <img src={page.preview} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                        <ImageIcon className="w-3 h-3 text-slate-300" />
-                      </div>
-                    )}
-                    <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center leading-tight" style={{ fontSize: '8px' }}>
-                      {index + 1}
-                    </span>
-                    {pages.length > MIN_PAGES && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); removePage(index); }}
-                        className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white rounded-bl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ fontSize: '8px' }}
-                        data-testid={`remove-page-${index}`}
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {pages.map((page, index) => {
+                  const imgCount = getPageImageCount(page);
+                  const slotCount = page.images.length;
+                  return (
+                    <div
+                      key={page.id}
+                      onClick={() => setCurrentPage(index)}
+                      className={`group relative aspect-[3/4] rounded-md border-2 overflow-hidden transition-all cursor-pointer ${
+                        currentPage === index
+                          ? 'border-[#2a9d8f] ring-2 ring-[#2a9d8f]/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                      data-testid={`page-thumb-${index}`}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setCurrentPage(index); }}
+                    >
+                      {imgCount > 0 ? (
+                        <div className="w-full h-full">
+                          <img src={page.images.find(Boolean)} alt="" className="w-full h-full object-cover" />
+                          {imgCount > 1 && (
+                            <div className="absolute top-0.5 left-0.5 bg-[#2a9d8f] text-white rounded px-1" style={{ fontSize: '7px' }}>
+                              {imgCount}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                          <ImageIcon className="w-3 h-3 text-slate-300" />
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center leading-tight" style={{ fontSize: '8px' }}>
+                        {index + 1}
+                      </span>
+                      {pages.length > MIN_PAGES && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removePage(index); }}
+                          className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white rounded-bl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ fontSize: '8px' }}
+                          data-testid={`remove-page-${index}`}
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -338,15 +456,18 @@ const PhotoAlbumEditor = () => {
               {/* Progress */}
               <div className="mb-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-slate-600">Bilder uppladdade</span>
-                  <span className="font-semibold text-slate-900" data-testid="upload-count">{getUploadedCount()} / {pages.length}</span>
+                  <span className="text-slate-600">Sidor med bilder</span>
+                  <span className="font-semibold text-slate-900" data-testid="upload-count">
+                    {pages.filter(p => getPageImageCount(p) > 0).length} / {pages.length}
+                  </span>
                 </div>
                 <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#2a9d8f] transition-all duration-300 rounded-full"
-                    style={{ width: `${(getUploadedCount() / pages.length) * 100}%` }}
+                    style={{ width: `${(pages.filter(p => getPageImageCount(p) > 0).length / pages.length) * 100}%` }}
                   />
                 </div>
+                <p className="text-xs text-slate-400 mt-1">{getTotalImages()} bilder totalt</p>
               </div>
             </div>
 
@@ -452,14 +573,14 @@ const PhotoAlbumEditor = () => {
               <Button
                 className="w-full bg-[#2a9d8f] hover:bg-[#238b7e] h-12 text-base"
                 onClick={handleAddToCart}
-                disabled={getUploadedCount() === 0}
+                disabled={getTotalImages() === 0}
                 data-testid="add-album-to-cart"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 Lägg i kundvagn
               </Button>
 
-              {getUploadedCount() === 0 && (
+              {getTotalImages() === 0 && (
                 <p className="text-xs text-slate-400 text-center mt-2">
                   Lägg till minst en bild för att fortsätta
                 </p>
@@ -470,9 +591,9 @@ const PhotoAlbumEditor = () => {
             <div className="bg-[#2a9d8f]/5 rounded-xl border border-[#2a9d8f]/20 p-4">
               <h4 className="text-sm font-semibold text-[#2a9d8f] mb-2">Tips</h4>
               <ul className="text-xs text-slate-600 space-y-1.5">
-                <li>Använd bilder i hög upplösning för bästa tryck</li>
-                <li>Du kan lägga till fler sidor (+2 eller +10 åt gången)</li>
-                <li>Lämna sidor tomma om du vill ha tomma sidor i albumet</li>
+                <li>Välj sidlayout för att lägga till 1–4 bilder per sida</li>
+                <li>Klicka på ett tomt fält för att ladda upp en bild</li>
+                <li>Hovra över en bild för att ta bort den</li>
                 <li>Extra sidor kostar 5 kr / sida utöver {DEFAULT_PAGES} grundsidor</li>
               </ul>
             </div>
