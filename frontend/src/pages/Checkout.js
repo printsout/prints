@@ -73,10 +73,8 @@ const Checkout = () => {
   const calculateTotal = () => {
     return cart.items?.reduce((total, item) => {
       const product = products[item.product_id];
-      if (product) {
-        return total + (product.price * (item.quantity || 1));
-      }
-      return total;
+      const itemPrice = item.price || product?.price || 0;
+      return total + (itemPrice * (item.quantity || 1));
     }, 0) || 0;
   };
 
@@ -343,24 +341,25 @@ const Checkout = () => {
                   {cart.items?.map((item) => {
                     const product = products[item.product_id];
                     if (!product) return null;
+                    const itemPrice = item.price || product.price;
 
                     return (
                       <div key={item.cart_item_id} className="flex gap-3">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0">
                           <img 
-                            src={item.design_preview || product.images?.[0]}
-                            alt={product.name}
+                            src={item.design_preview || item.image || product.images?.[0]}
+                            alt={item.name || product.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{product.name}</p>
+                          <p className="font-medium text-sm truncate">{item.name || product.name}</p>
                           <p className="text-xs text-slate-500">
-                            {item.quantity || 1} st × {product.price} kr
+                            {item.quantity || 1} st × {itemPrice} kr
                           </p>
                         </div>
                         <p className="font-medium text-sm">
-                          {((item.quantity || 1) * product.price).toFixed(0)} kr
+                          {((item.quantity || 1) * itemPrice).toFixed(0)} kr
                         </p>
                       </div>
                     );

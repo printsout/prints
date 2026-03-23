@@ -147,12 +147,38 @@ const DesignEditor = () => {
 
   const handleAddToCart = async () => {
     try {
+      // Upload image to server if one was uploaded
+      let uploadedImageUrl = null;
+      if (imagePreview) {
+        toast.info('Laddar upp bild...');
+        const uploadRes = await api.post('/upload-base64', { image: imagePreview });
+        uploadedImageUrl = uploadRes.data.url;
+      }
+
       await addToCart({
         product_id: productId,
+        name: product?.name,
+        price: product?.price,
         quantity: 1,
         color: selectedColor || null,
         size: selectedSize || null,
-        design_preview: imagePreview
+        image: product?.images?.[0],
+        design_preview: uploadedImageUrl,
+        customization: {
+          type: 'design',
+          uploaded_image_url: uploadedImageUrl,
+          text: designConfig.text || null,
+          text_font: designConfig.text_font || null,
+          text_color: designConfig.text_color || null,
+          background_color: designConfig.background_color || null,
+          position_x: designConfig.position_x,
+          position_y: designConfig.position_y,
+          scale: designConfig.scale,
+          rotation: designConfig.rotation,
+          placement_notes: designConfig.placement_notes || null,
+          color: selectedColor || null,
+          size: selectedSize || null,
+        }
       });
       toast.success('Tillagd i varukorgen!', {
         action: {

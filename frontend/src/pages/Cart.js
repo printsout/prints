@@ -66,10 +66,8 @@ const Cart = () => {
   const calculateTotal = () => {
     return cart.items?.reduce((total, item) => {
       const product = products[item.product_id];
-      if (product) {
-        return total + (product.price * (item.quantity || 1));
-      }
-      return total;
+      const itemPrice = item.price || product?.price || 0;
+      return total + (itemPrice * (item.quantity || 1));
     }, 0) || 0;
   };
 
@@ -112,6 +110,10 @@ const Cart = () => {
               {cart.items.map((item) => {
                 const product = products[item.product_id];
                 if (!product) return null;
+                const itemPrice = item.price || product.price;
+                const thumbUrl = item.design_preview
+                  ? (item.design_preview.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${item.design_preview}` : item.design_preview)
+                  : item.image || product.images?.[0];
 
                 return (
                   <div 
@@ -121,19 +123,11 @@ const Cart = () => {
                   >
                     {/* Image */}
                     <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-100">
-                      {item.design_preview ? (
-                        <img 
-                          src={item.design_preview} 
-                          alt="Design" 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <img 
-                          src={product.images?.[0]} 
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                      <img 
+                        src={thumbUrl} 
+                        alt={item.name || product.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
                     {/* Details */}
@@ -142,19 +136,43 @@ const Cart = () => {
                         to={`/produkt/${product.product_id}`}
                         className="font-semibold text-slate-900 hover:text-primary"
                       >
-                        {product.name}
+                        {item.name || product.name}
                       </Link>
                       <div className="text-sm text-slate-500 mt-1 space-x-3">
                         {item.color && <span>Färg: {item.color}</span>}
                         {item.size && <span>Storlek: {item.size}</span>}
                       </div>
-                      {item.design_preview && (
+                      {item.customization && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {item.customization.type === 'nametag' && item.customization.child_name && (
+                            <span className="inline-block text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded mr-1">
+                              Namn: {item.customization.child_name}
+                            </span>
+                          )}
+                          {item.customization.type === 'calendar' && (
+                            <span className="inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded mr-1">
+                              Kalender {item.customization.year} — {item.customization.images_count} bilder
+                            </span>
+                          )}
+                          {item.customization.type === 'photoalbum' && (
+                            <span className="inline-block text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded mr-1">
+                              Album — {item.customization.total_pages} sidor, {item.customization.total_images} bilder
+                            </span>
+                          )}
+                          {item.customization.type === 'design' && (
+                            <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mr-1">
+                              Med egen design
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {!item.customization && item.design_preview && (
                         <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-1 rounded mt-2">
                           Med egen design
                         </span>
                       )}
                       <p className="text-primary font-semibold mt-2">
-                        {product.price} kr
+                        {itemPrice} kr
                       </p>
                     </div>
 

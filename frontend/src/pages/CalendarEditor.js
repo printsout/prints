@@ -19,7 +19,7 @@ const MONTHS = [
 const CalendarEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,39 +90,57 @@ const CalendarEditor = () => {
     return monthImages.filter(m => m.preview !== null).length;
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (getUploadedCount() === 0) {
       toast.error('Lägg till minst en bild för din kalender');
       return;
     }
 
-    const calendarData = {
-      year: selectedYear,
-      size: selectedSize,
-      months: monthImages.map((m, index) => ({
-        month: MONTHS[index],
-        hasImage: m.preview !== null,
-        imagePreview: m.preview
-      }))
-    };
+    try {
+      toast.info('Laddar upp bilder...');
 
-    addItem({
-      product_id: product.product_id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: monthImages.find(m => m.preview)?.preview || product.images?.[0],
-      size: selectedSize,
-      customization: {
-        type: 'calendar',
-        year: selectedYear,
-        images_count: getUploadedCount(),
-        calendar_data: calendarData
+      // Upload all month images to server
+      const uploadedMonths = [];
+      for (let i = 0; i < monthImages.length; i++) {
+        const m = monthImages[i];
+        let imageUrl = null;
+        if (m.preview) {
+          const uploadRes = await api.post('/upload-base64', { image: m.preview });
+          imageUrl = uploadRes.data.url;
+        }
+        uploadedMonths.push({
+          month: MONTHS[i],
+          hasImage: m.preview !== null,
+          image_url: imageUrl,
+        });
       }
-    });
 
-    toast.success('Kalender tillagd i varukorgen!');
-    navigate('/varukorg');
+      // Use the first uploaded image as the cart thumbnail
+      const firstImage = uploadedMonths.find(m => m.image_url)?.image_url;
+
+      await addToCart({
+        product_id: product.product_id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.images?.[0],
+        size: selectedSize,
+        customization: {
+          type: 'calendar',
+          year: selectedYear,
+          size: selectedSize,
+          images_count: getUploadedCount(),
+          months: uploadedMonths,
+          cover_image_url: firstImage,
+        }
+      });
+
+      toast.success('Kalender tillagd i varukorgen!');
+      navigate('/varukorg');
+    } catch (error) {
+      console.error('Failed to add calendar to cart:', error);
+      toast.error('Kunde inte lägga till i varukorgen');
+    }
   };
 
   if (loading) {

@@ -91,11 +91,23 @@ const AdminOrders = () => {
         lines.push(`Antal bilder: ${c.total_images || c.images_count || '-'}`);
         if (c.size) lines.push(`Storlek: ${c.size}`);
       } else if (c.type === 'calendar') {
-        lines.push(`Typ: Kalender`);
+        if (c.year) lines.push(`År: ${c.year}`);
         if (c.size) lines.push(`Storlek: ${c.size}`);
+        lines.push(`Bilder: ${c.images_count || 0} / 12`);
+        if (c.months) {
+          const monthsWithImg = c.months.filter(m => m.image_url || m.hasImage);
+          lines.push(`Månader med bilder: ${monthsWithImg.map(m => m.month).join(', ')}`);
+        }
+      } else if (c.type === 'design') {
+        if (c.text) lines.push(`Text: ${c.text}`);
+        if (c.text_font) lines.push(`Typsnitt: ${c.text_font}`);
+        if (c.text_color) lines.push(`Textfärg: ${c.text_color}`);
+        if (c.color) lines.push(`Produktfärg: ${c.color}`);
+        if (c.size) lines.push(`Storlek: ${c.size}`);
+        if (c.placement_notes) lines.push(`Placering: ${c.placement_notes}`);
       } else {
         Object.entries(c).forEach(([k, v]) => {
-          if (k !== 'type' && v) lines.push(`${k}: ${v}`);
+          if (k !== 'type' && v && typeof v !== 'object') lines.push(`${k}: ${v}`);
         });
       }
       return lines.join('<br/>');
@@ -119,6 +131,17 @@ const AdminOrders = () => {
           }).join('')).join('');
         if (pageImgs) {
           imagesHtml = `<br/><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${pageImgs}</div>`;
+        }
+      }
+      if (item.customization?.months) {
+        const monthImgs = item.customization.months
+          .filter(m => m.image_url)
+          .map(m => {
+            const imgUrl = m.image_url.startsWith('http') ? m.image_url : `${API_BASE}${m.image_url}`;
+            return `<div style="text-align:center;"><img src="${imgUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/><br/><span style="font-size:10px;">${m.month}</span></div>`;
+          }).join('');
+        if (monthImgs) {
+          imagesHtml += `<br/><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${monthImgs}</div>`;
         }
       }
       return `
@@ -476,7 +499,62 @@ const AdminOrders = () => {
                                 )}
                               </>
                             )}
-                            {!['nametag', 'photoalbum'].includes(item.customization.type) && (
+                            {!['nametag', 'photoalbum'].includes(item.customization.type) && item.customization.type === 'calendar' && (
+                              <>
+                                {item.customization.year && <p>År: <strong>{item.customization.year}</strong></p>}
+                                {item.customization.size && <p>Storlek: {item.customization.size}</p>}
+                                <p>Bilder: {item.customization.images_count || 0} / 12</p>
+                                {item.customization.months?.some(m => m.image_url) && (
+                                  <div className="mt-2">
+                                    <p className="font-medium mb-1">Månadsbilder:</p>
+                                    <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                                      {item.customization.months.filter(m => m.image_url).map((m, idx) => {
+                                        const imgUrl = m.image_url.startsWith('http') ? m.image_url : `${API_BASE}${m.image_url}`;
+                                        return (
+                                          <div key={idx} className="flex items-center gap-2 border rounded p-1.5 bg-white">
+                                            <img src={imgUrl} alt={m.month} className="w-10 h-10 object-cover rounded border" />
+                                            <span className="text-xs text-slate-600">{m.month}</span>
+                                            <a href={imgUrl} download target="_blank" rel="noreferrer" className="ml-auto text-[#2a9d8f] hover:underline">
+                                              <Download className="w-3 h-3" />
+                                            </a>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {item.customization.type === 'design' && (
+                              <>
+                                {item.customization.text && <p>Text: <strong>{item.customization.text}</strong></p>}
+                                {item.customization.text_font && <p>Typsnitt: {item.customization.text_font}</p>}
+                                {item.customization.text_color && <p>Textfärg: <span style={{color: item.customization.text_color}}>{item.customization.text_color}</span></p>}
+                                {item.customization.color && <p>Produktfärg: {item.customization.color}</p>}
+                                {item.customization.size && <p>Storlek: {item.customization.size}</p>}
+                                {item.customization.placement_notes && <p>Placeringsönskemål: <em>{item.customization.placement_notes}</em></p>}
+                                {item.customization.uploaded_image_url && (
+                                  <div className="mt-2">
+                                    <p className="mb-1 font-medium">Kundens bild:</p>
+                                    <img
+                                      src={item.customization.uploaded_image_url.startsWith('http') ? item.customization.uploaded_image_url : `${API_BASE}${item.customization.uploaded_image_url}`}
+                                      alt="Kunddesign"
+                                      className="w-24 h-24 object-cover rounded border"
+                                    />
+                                    <a
+                                      href={item.customization.uploaded_image_url.startsWith('http') ? item.customization.uploaded_image_url : `${API_BASE}${item.customization.uploaded_image_url}`}
+                                      download
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline"
+                                    >
+                                      <Download className="w-3 h-3" /> Ladda ner
+                                    </a>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {!['nametag', 'photoalbum', 'calendar', 'design'].includes(item.customization.type) && (
                               <p>Typ: {item.customization.type}</p>
                             )}
                           </div>
