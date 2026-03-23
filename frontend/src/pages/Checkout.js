@@ -17,6 +17,7 @@ const Checkout = () => {
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500 });
   
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -63,6 +64,10 @@ const Checkout = () => {
     fetchProducts();
   }, [cart.items, navigate]);
 
+  useEffect(() => {
+    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {});
+  }, []);
+
   const handleChange = (e) => {
     setFormData(prev => ({
       ...prev,
@@ -79,7 +84,9 @@ const Checkout = () => {
   };
 
   const subtotal = calculateTotal();
-  const shipping = subtotal > 500 ? 0 : 49;
+  const shipping = !shippingConfig.shipping_enabled ? 0
+    : (shippingConfig.free_shipping_threshold > 0 && subtotal >= shippingConfig.free_shipping_threshold) ? 0
+    : shippingConfig.shipping_cost;
   const total = subtotal + shipping;
 
   const handleSubmit = async (e) => {

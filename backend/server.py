@@ -243,6 +243,7 @@ class PaymentSettings(BaseModel):
     # General
     currency: str = "SEK"
     tax_rate: float = 25
+    shipping_enabled: bool = True
     free_shipping_threshold: float = 500
     shipping_cost: float = 49
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -555,6 +556,25 @@ async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     return Order(**order)
 
 # ============== PAYMENTS ROUTES ==============
+
+@api_router.get("/shipping-settings")
+async def get_public_shipping_settings():
+    """Public endpoint for shipping configuration"""
+    settings = await db.settings.find_one({"type": "payment_settings"}, {"_id": 0})
+    if not settings:
+        defaults = PaymentSettings()
+        return {
+            "shipping_enabled": defaults.shipping_enabled,
+            "shipping_cost": defaults.shipping_cost,
+            "free_shipping_threshold": defaults.free_shipping_threshold,
+        }
+    return {
+        "shipping_enabled": settings.get("shipping_enabled", True),
+        "shipping_cost": settings.get("shipping_cost", 49),
+        "free_shipping_threshold": settings.get("free_shipping_threshold", 500),
+    }
+
+
 
 @payments_router.post("/checkout")
 async def create_checkout(request: Request, checkout_data: CheckoutRequest, user: dict = Depends(get_current_user)):

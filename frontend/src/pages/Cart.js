@@ -11,6 +11,7 @@ const Cart = () => {
   const { cart, updateQuantity, removeFromCart, loading } = useCart();
   const [products, setProducts] = useState({});
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500 });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -45,6 +46,10 @@ const Cart = () => {
     fetchProducts();
   }, [cart.items]);
 
+  useEffect(() => {
+    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {});
+  }, []);
+
   const handleQuantityChange = async (cartItemId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
@@ -72,7 +77,9 @@ const Cart = () => {
   };
 
   const subtotal = calculateTotal();
-  const shipping = subtotal > 500 ? 0 : 49;
+  const shipping = !shippingConfig.shipping_enabled ? 0
+    : (shippingConfig.free_shipping_threshold > 0 && subtotal >= shippingConfig.free_shipping_threshold) ? 0
+    : shippingConfig.shipping_cost;
   const total = subtotal + shipping;
 
   if (loadingProducts) {
@@ -231,9 +238,9 @@ const Cart = () => {
                       {shipping === 0 ? 'Gratis' : `${shipping} kr`}
                     </span>
                   </div>
-                  {subtotal < 500 && (
+                  {shipping > 0 && shippingConfig.free_shipping_threshold > 0 && subtotal < shippingConfig.free_shipping_threshold && (
                     <p className="text-xs text-slate-500">
-                      Handla för {(500 - subtotal).toFixed(0)} kr till för fri frakt!
+                      Handla för {(shippingConfig.free_shipping_threshold - subtotal).toFixed(0)} kr till för fri frakt!
                     </p>
                   )}
                   <div className="border-t pt-3 mt-3">
