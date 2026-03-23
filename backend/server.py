@@ -980,9 +980,13 @@ async def get_admin_stats(admin = Depends(verify_admin_token)):
     total_orders = await db.orders.count_documents({})
     total_products = await db.products.count_documents({})
     
-    # Calculate revenue
-    orders = await db.orders.find({"payment_status": "completed"}).to_list(1000)
-    total_revenue = sum(order.get("total", 0) for order in orders)
+    # Calculate revenue using aggregation pipeline
+    pipeline = [
+        {"$match": {"payment_status": "completed"}},
+        {"$group": {"_id": None, "total_revenue": {"$sum": "$total_amount"}}}
+    ]
+    revenue_result = await db.orders.aggregate(pipeline).to_list(1)
+    total_revenue = revenue_result[0]["total_revenue"] if revenue_result else 0
     
     # Recent orders (last 7 days)
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
@@ -1014,8 +1018,8 @@ async def get_user_details(user_id: str, admin = Depends(verify_admin_token)):
     if not user:
         raise HTTPException(status_code=404, detail="Användare hittades inte")
     
-    orders = await db.orders.find({"user_id": user_id}, {"_id": 0}).to_list(100)
-    designs = await db.designs.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    orders = await db.orders.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
+    designs = await db.designs.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
     
     return {"user": user, "orders": orders, "designs": designs}
 
