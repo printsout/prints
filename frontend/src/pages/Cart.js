@@ -11,7 +11,7 @@ const Cart = () => {
   const { cart, updateQuantity, removeFromCart, loading } = useCart();
   const [products, setProducts] = useState({});
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0 });
+  const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0, tax_enabled: true, tax_rate: 25 });
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
@@ -99,7 +99,9 @@ const Cart = () => {
     : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
     : shippingConfig.shipping_cost;
   const total = afterDiscount + shipping;
-  const vatAmount = Math.round(total * 25 / 125 * 100) / 100;
+  const vatAmount = shippingConfig.tax_enabled
+    ? Math.round(total * shippingConfig.tax_rate / (100 + shippingConfig.tax_rate) * 100) / 100
+    : 0;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -324,7 +326,9 @@ const Cart = () => {
                       <span>Totalt</span>
                       <span className="text-primary">{total.toFixed(2)} kr</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">varav moms (25%): {vatAmount.toFixed(2)} kr</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {vatAmount > 0 ? `varav moms (${shippingConfig.tax_rate}%): ${vatAmount.toFixed(2)} kr` : 'exkl. moms'}
+                    </p>
                   </div>
                 </div>
 

@@ -258,6 +258,7 @@ class PaymentSettings(BaseModel):
     
     # General
     currency: str = "SEK"
+    tax_enabled: bool = True
     tax_rate: float = 25
     shipping_enabled: bool = True
     free_shipping_threshold: float = 500
@@ -587,6 +588,8 @@ async def get_public_shipping_settings():
             "free_shipping_threshold": defaults.free_shipping_threshold,
             "discount_enabled": defaults.discount_enabled,
             "discount_percent": defaults.discount_percent,
+            "tax_enabled": defaults.tax_enabled,
+            "tax_rate": defaults.tax_rate,
         }
     return {
         "shipping_enabled": settings.get("shipping_enabled", True),
@@ -594,6 +597,8 @@ async def get_public_shipping_settings():
         "free_shipping_threshold": settings.get("free_shipping_threshold", 500),
         "discount_enabled": settings.get("discount_enabled", False),
         "discount_percent": settings.get("discount_percent", 0),
+        "tax_enabled": settings.get("tax_enabled", True),
+        "tax_rate": settings.get("tax_rate", 25),
     }
 
 

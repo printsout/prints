@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from 'sonner';
-import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent, Plus, Trash2, ToggleLeft, ToggleRight, Send } from 'lucide-react';
+import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent, Plus, Trash2, ToggleLeft, ToggleRight, Send, Receipt } from 'lucide-react';
 
 const AdminSettings = () => {
   const { getAuthHeaders } = useAdmin();
@@ -29,6 +29,8 @@ const AdminSettings = () => {
     free_shipping_threshold: 500,
     discount_enabled: false,
     discount_percent: 0,
+    tax_enabled: true,
+    tax_rate: 25,
   });
   const [savingShipping, setSavingShipping] = useState(false);
 
@@ -64,6 +66,8 @@ const AdminSettings = () => {
         free_shipping_threshold: response.data.free_shipping_threshold ?? 500,
         discount_enabled: response.data.discount_enabled ?? false,
         discount_percent: response.data.discount_percent ?? 0,
+        tax_enabled: response.data.tax_enabled ?? true,
+        tax_rate: response.data.tax_rate ?? 25,
       });
     } catch (error) {
       console.error('Failed to fetch shipping settings:', error);
@@ -414,6 +418,70 @@ const AdminSettings = () => {
                   <>
                     <Save className="w-4 h-4 mr-2" />
                     Spara fraktinställningar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tax Settings */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <Receipt className="w-5 h-5" />
+            Moms
+          </h2>
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-slate-700">Visa moms</p>
+                <p className="text-sm text-slate-500">Stäng av för att dölja moms i kassan</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShippingSettings(prev => ({ ...prev, tax_enabled: !prev.tax_enabled }))}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  shippingSettings.tax_enabled ? 'bg-[#2a9d8f]' : 'bg-slate-300'
+                }`}
+                data-testid="tax-toggle"
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    shippingSettings.tax_enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {shippingSettings.tax_enabled && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Momssats (%)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={shippingSettings.tax_rate}
+                  onChange={(e) => setShippingSettings(prev => ({ ...prev, tax_rate: parseFloat(e.target.value) || 0 }))}
+                  data-testid="tax-rate-input"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <Button
+                type="button"
+                onClick={handleSaveShipping}
+                disabled={savingShipping}
+                className="min-w-[180px]"
+                data-testid="save-tax-btn"
+              >
+                {savingShipping ? 'Sparar...' : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Spara momsinställningar
                   </>
                 )}
               </Button>
