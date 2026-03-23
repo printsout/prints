@@ -19,6 +19,7 @@ import DesignEditor from "./pages/DesignEditor";
 import CalendarEditor from "./pages/CalendarEditor";
 import NameTagEditor from "./pages/NameTagEditor";
 import PhotoAlbumEditor from "./pages/PhotoAlbumEditor";
+import ContentPage from "./pages/ContentPage";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -75,6 +76,7 @@ function App() {
                       <Route path="/konto" element={<Account />} />
                       <Route path="/logga-in" element={<Login />} />
                       <Route path="/registrera" element={<Register />} />
+                      <Route path="/sida/:slug" element={<ContentPage />} />
                     </Routes>
                   </main>
                   <Footer />

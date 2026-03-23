@@ -1171,6 +1171,69 @@ async def update_payment_settings(settings: PaymentSettings, admin = Depends(ver
     
     return {"message": "Betalningsinställningar uppdaterade"}
 
+# ============== CONTENT PAGES ==============
+
+class ContentPage(BaseModel):
+    title: str
+    slug: str
+    content: str = ""
+    status: str = "draft"
+
+@admin_router.get("/content")
+async def get_content_pages(admin = Depends(verify_admin_token)):
+    """Get all content pages"""
+    pages = await db.content_pages.find({}, {"_id": 0}).to_list(100)
+    return {"pages": pages}
+
+@admin_router.post("/content")
+async def create_content_page(page: ContentPage, admin = Depends(verify_admin_token)):
+    """Create a new content page"""
+    page_data = page.model_dump()
+    page_data["page_id"] = str(uuid.uuid4())
+    page_data["created_at"] = datetime.now(timezone.utc).isoformat()
+    page_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    slug = page_data["slug"].strip("/")
+    if not slug.startswith("/"):
+        page_data["slug"] = f"/{slug}"
+    await db.content_pages.insert_one(page_data)
+    return {"message": "Sida skapad", "page_id": page_data["page_id"]}
+
+@admin_router.put("/content/{page_id}")
+async def update_content_page(page_id: str, page: ContentPage, admin = Depends(verify_admin_token)):
+    """Update a content page"""
+    page_data = page.model_dump()
+    page_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    slug = page_data["slug"].strip("/")
+    if not slug.startswith("/"):
+        page_data["slug"] = f"/{slug}"
+    result = await db.content_pages.update_one(
+        {"page_id": page_id},
+        {"$set": page_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Sida hittades inte")
+    return {"message": "Sida uppdaterad"}
+
+@admin_router.delete("/content/{page_id}")
+async def delete_content_page(page_id: str, admin = Depends(verify_admin_token)):
+    """Delete a content page"""
+    result = await db.content_pages.delete_one({"page_id": page_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Sida hittades inte")
+    return {"message": "Sida raderad"}
+
+# Public endpoint to get page by slug
+@api_router.get("/pages/{slug:path}")
+async def get_public_page(slug: str):
+    """Get a published content page by slug"""
+    page = await db.content_pages.find_one(
+        {"slug": f"/{slug}", "status": "published"},
+        {"_id": 0}
+    )
+    if not page:
+        raise HTTPException(status_code=404, detail="Sidan hittades inte")
+    return page
+
 # ============== ROOT ==============
 
 @api_router.get("/")
