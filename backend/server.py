@@ -134,6 +134,16 @@ class Product(BaseModel):
     model_type: str  # mug, tshirt, hoodie, poster, phonecase, totebag
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class DiscountCode(BaseModel):
+    code: str
+    discount_percent: float
+    active: bool = True
+    max_uses: int = 0  # 0 = unlimited
+    current_uses: int = 0
+    expires_at: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
 class CartItem(BaseModel):
     cart_item_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     product_id: str
@@ -1319,6 +1329,66 @@ async def delete_content_page(page_id: str, admin = Depends(verify_admin_token))
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Sida hittades inte")
     return {"message": "Sida raderad"}
+
+# ===================== DISCOUNT CODES =====================
+
+@admin_router.get("/discount-codes")
+async def get_discount_codes(admin = Depends(verify_admin_token)):
+    codes = await db.discount_codes.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return codes
+
+@admin_router.post("/discount-codes")
+async def create_discount_code(code_data: DiscountCode, admin = Depends(verify_admin_token)):
+    existing = await db.discount_codes.find_one({"code": code_data.code.upper()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Koden finns redan")
+    code_dict = code_data.model_dump()
+    code_dict["code"] = code_dict["code"].upper()
+    await db.discount_codes.insert_one(code_dict)
+    return {"message": "Rabattkod skapad", "code": code_dict["code"]}
+
+@admin_router.put("/discount-codes/{code}")
+async def update_discount_code(code: str, code_data: dict, admin = Depends(verify_admin_token)):
+    update_fields = {k: v for k, v in code_data.items() if k in ("discount_percent", "active", "max_uses", "expires_at")}
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="Inga fält att uppdatera")
+    result = await db.discount_codes.update_one({"code": code.upper()}, {"$set": update_fields})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Kod hittades inte")
+    return {"message": "Rabattkod uppdaterad"}
+
+@admin_router.delete("/discount-codes/{code}")
+async def delete_discount_code(code: str, admin = Depends(verify_admin_token)):
+    result = await db.discount_codes.delete_one({"code": code.upper()})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Kod hittades inte")
+    return {"message": "Rabattkod raderad"}
+
+@api_router.post("/validate-discount-code")
+async def validate_discount_code(data: dict):
+    code = data.get("code", "").strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Ange en rabattkod")
+    
+    doc = await db.discount_codes.find_one({"code": code}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Ogiltig rabattkod")
+    if not doc.get("active", True):
+        raise HTTPException(status_code=400, detail="Rabattkoden är inte aktiv")
+    if doc.get("max_uses", 0) > 0 and doc.get("current_uses", 0) >= doc["max_uses"]:
+        raise HTTPException(status_code=400, detail="Rabattkoden har redan använts max antal gånger")
+    if doc.get("expires_at"):
+        from datetime import datetime as dt
+        try:
+            exp = dt.fromisoformat(doc["expires_at"].replace("Z", "+00:00"))
+            if datetime.now(timezone.utc) > exp:
+                raise HTTPException(status_code=400, detail="Rabattkoden har gått ut")
+        except (ValueError, TypeError):
+            pass
+    
+    return {"valid": True, "code": doc["code"], "discount_percent": doc["discount_percent"]}
+
+
 
 # Public endpoint to get page by slug
 @api_router.get("/pages/{slug:path}")

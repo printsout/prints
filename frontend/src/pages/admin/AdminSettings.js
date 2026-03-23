@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from 'sonner';
-import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent } from 'lucide-react';
+import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const AdminSettings = () => {
   const { getAuthHeaders } = useAdmin();
@@ -32,9 +32,14 @@ const AdminSettings = () => {
   });
   const [savingShipping, setSavingShipping] = useState(false);
 
+  // Discount codes
+  const [discountCodes, setDiscountCodes] = useState([]);
+  const [newCode, setNewCode] = useState({ code: '', discount_percent: 10, max_uses: 0, expires_at: '' });
+
   useEffect(() => {
     fetchSettings();
     fetchShippingSettings();
+    fetchDiscountCodes();
   }, []);
 
   const fetchSettings = async () => {
@@ -76,6 +81,58 @@ const AdminSettings = () => {
       toast.error('Kunde inte spara fraktinställningar');
     } finally {
       setSavingShipping(false);
+    }
+  };
+
+  const fetchDiscountCodes = async () => {
+    try {
+      const response = await api.get('/admin/discount-codes', { headers: getAuthHeaders() });
+      setDiscountCodes(response.data);
+    } catch (error) {
+      console.error('Failed to fetch discount codes:', error);
+    }
+  };
+
+  const handleCreateCode = async () => {
+    if (!newCode.code.trim()) {
+      toast.error('Ange en rabattkod');
+      return;
+    }
+    if (newCode.discount_percent <= 0 || newCode.discount_percent > 100) {
+      toast.error('Rabatt måste vara mellan 1-100%');
+      return;
+    }
+    try {
+      await api.post('/admin/discount-codes', {
+        ...newCode,
+        code: newCode.code.trim().toUpperCase(),
+        expires_at: newCode.expires_at || null,
+      }, { headers: getAuthHeaders() });
+      toast.success(`Rabattkod "${newCode.code.toUpperCase()}" skapad!`);
+      setNewCode({ code: '', discount_percent: 10, max_uses: 0, expires_at: '' });
+      fetchDiscountCodes();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Kunde inte skapa rabattkod');
+    }
+  };
+
+  const handleToggleCode = async (code, currentActive) => {
+    try {
+      await api.put(`/admin/discount-codes/${code}`, { active: !currentActive }, { headers: getAuthHeaders() });
+      fetchDiscountCodes();
+      toast.success(`Kod "${code}" ${!currentActive ? 'aktiverad' : 'inaktiverad'}`);
+    } catch (error) {
+      toast.error('Kunde inte uppdatera koden');
+    }
+  };
+
+  const handleDeleteCode = async (code) => {
+    try {
+      await api.delete(`/admin/discount-codes/${code}`, { headers: getAuthHeaders() });
+      fetchDiscountCodes();
+      toast.success(`Kod "${code}" raderad`);
+    } catch (error) {
+      toast.error('Kunde inte radera koden');
     }
   };
 
@@ -415,6 +472,119 @@ const AdminSettings = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Discount Codes */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
+            <Percent className="w-5 h-5" />
+            Rabattkoder
+          </h2>
+
+          {/* Create new code */}
+          <div className="bg-slate-50 rounded-lg p-4 mb-6">
+            <p className="font-medium text-slate-700 mb-3">Skapa ny rabattkod</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Kod</label>
+                <Input
+                  value={newCode.code}
+                  onChange={(e) => setNewCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                  placeholder="T.ex. SOMMAR20"
+                  data-testid="new-discount-code-input"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Rabatt (%)</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={newCode.discount_percent}
+                  onChange={(e) => setNewCode(prev => ({ ...prev, discount_percent: parseFloat(e.target.value) || 0 }))}
+                  data-testid="new-discount-percent-input"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Max användningar (0 = obegränsat)</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={newCode.max_uses}
+                  onChange={(e) => setNewCode(prev => ({ ...prev, max_uses: parseInt(e.target.value) || 0 }))}
+                  data-testid="new-discount-max-uses-input"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Utgångsdatum (valfritt)</label>
+                <Input
+                  type="date"
+                  value={newCode.expires_at ? newCode.expires_at.split('T')[0] : ''}
+                  onChange={(e) => setNewCode(prev => ({ ...prev, expires_at: e.target.value ? new Date(e.target.value + 'T23:59:59Z').toISOString() : '' }))}
+                  data-testid="new-discount-expires-input"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-3">
+              <Button onClick={handleCreateCode} data-testid="create-discount-code-btn">
+                <Plus className="w-4 h-4 mr-2" />
+                Skapa kod
+              </Button>
+            </div>
+          </div>
+
+          {/* Existing codes */}
+          {discountCodes.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-4">Inga rabattkoder skapade ännu.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="pb-2 font-medium text-slate-600">Kod</th>
+                    <th className="pb-2 font-medium text-slate-600">Rabatt</th>
+                    <th className="pb-2 font-medium text-slate-600">Användningar</th>
+                    <th className="pb-2 font-medium text-slate-600">Utgår</th>
+                    <th className="pb-2 font-medium text-slate-600">Status</th>
+                    <th className="pb-2 font-medium text-slate-600 text-right">Åtgärd</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discountCodes.map((dc) => (
+                    <tr key={dc.code} className="border-b last:border-0" data-testid={`discount-code-row-${dc.code}`}>
+                      <td className="py-3 font-mono font-bold text-slate-900">{dc.code}</td>
+                      <td className="py-3">{dc.discount_percent}%</td>
+                      <td className="py-3">{dc.current_uses} / {dc.max_uses === 0 ? '∞' : dc.max_uses}</td>
+                      <td className="py-3">{dc.expires_at ? new Date(dc.expires_at).toLocaleDateString('sv-SE') : '—'}</td>
+                      <td className="py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${dc.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                          {dc.active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right space-x-2">
+                        <button
+                          onClick={() => handleToggleCode(dc.code, dc.active)}
+                          className="text-slate-500 hover:text-[#2a9d8f] transition-colors"
+                          title={dc.active ? 'Inaktivera' : 'Aktivera'}
+                          data-testid={`toggle-code-${dc.code}`}
+                        >
+                          {dc.active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCode(dc.code)}
+                          className="text-slate-500 hover:text-red-500 transition-colors"
+                          title="Radera"
+                          data-testid={`delete-code-${dc.code}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Save Button */}

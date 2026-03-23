@@ -18,6 +18,9 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0 });
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -84,14 +87,37 @@ const Checkout = () => {
   };
 
   const subtotal = calculateTotal();
-  const discountAmount = shippingConfig.discount_enabled && shippingConfig.discount_percent > 0
+  const globalDiscountAmount = shippingConfig.discount_enabled && shippingConfig.discount_percent > 0
     ? Math.round(subtotal * shippingConfig.discount_percent / 100)
     : 0;
+  const couponDiscountAmount = appliedCoupon
+    ? Math.round(subtotal * appliedCoupon.discount_percent / 100)
+    : 0;
+  const bestDiscount = Math.max(globalDiscountAmount, couponDiscountAmount);
+  const discountLabel = couponDiscountAmount >= globalDiscountAmount && appliedCoupon
+    ? `Rabattkod ${appliedCoupon.code} (${appliedCoupon.discount_percent}%)`
+    : `Rabatt (${shippingConfig.discount_percent}%)`;
+  const discountAmount = bestDiscount;
   const afterDiscount = subtotal - discountAmount;
   const shipping = !shippingConfig.shipping_enabled ? 0
     : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
     : shippingConfig.shipping_cost;
   const total = afterDiscount + shipping;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    try {
+      const res = await api.post('/validate-discount-code', { code: couponCode.trim() });
+      setAppliedCoupon(res.data);
+      toast.success(`Rabattkod "${res.data.code}" aktiverad! ${res.data.discount_percent}% rabatt`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Ogiltig rabattkod');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -385,10 +411,49 @@ const Checkout = () => {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-[#2a9d8f]">
-                      <span>Rabatt ({shippingConfig.discount_percent}%)</span>
+                      <span>{discountLabel}</span>
                       <span>-{discountAmount} kr</span>
                     </div>
                   )}
+
+                  {/* Coupon code input */}
+                  <div className="pt-1">
+                    <label className="block text-xs text-slate-500 mb-1">Rabattkod</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Ange kod"
+                        className="flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2a9d8f]/50 font-mono"
+                        data-testid="checkout-coupon-code-input"
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponCode.trim()}
+                        className="px-3 py-1.5 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors"
+                        data-testid="checkout-apply-coupon-btn"
+                      >
+                        {couponLoading ? '...' : 'Använd'}
+                      </button>
+                    </div>
+                    {appliedCoupon && (
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-xs text-[#2a9d8f] font-medium">{appliedCoupon.code} — {appliedCoupon.discount_percent}% rabatt</span>
+                        <button
+                          type="button"
+                          onClick={() => { setAppliedCoupon(null); setCouponCode(''); }}
+                          className="text-xs text-red-500 hover:underline"
+                          data-testid="checkout-remove-coupon-btn"
+                        >
+                          Ta bort
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex justify-between">
                     <span className="text-slate-600">Frakt</span>
                     <span>{shipping === 0 ? 'Gratis' : `${shipping} kr`}</span>
