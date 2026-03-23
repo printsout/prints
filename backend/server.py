@@ -410,7 +410,7 @@ async def get_categories():
         {"id": "tshirt", "name": "T-shirts", "image": "https://images.unsplash.com/photo-1593733926335-bdec7f12acfd?w=400"},
         {"id": "hoodie", "name": "Hoodies", "image": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400"},
         {"id": "poster", "name": "Posters", "image": "https://images.unsplash.com/photo-1571164860029-856acbc24b4a?w=400"},
-        {"id": "mobilskal", "name": "Mobilskal", "image": "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400"},
+        {"id": "mobilskal", "name": "Mobilskal", "image": "https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/85a45f02a7e9178632d56b673ee19b1c5ee40cbb0d3c4c37dd4c5ea35eaaf2e4.png"},
         {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"},
         {"id": "kalender", "name": "Kalendrar", "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400"},
         {"id": "namnskylt", "name": "Namnlappar", "image": "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400"},
@@ -812,7 +812,7 @@ async def init_data():
             category="mobilskal",
             description="Skyddande mobilskal med ditt eget foto. Passar de senaste iPhone-modellerna.",
             price=199.0,
-            images=["https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=600"],
+            images=["https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/85a45f02a7e9178632d56b673ee19b1c5ee40cbb0d3c4c37dd4c5ea35eaaf2e4.png"],
             colors=["Transparent", "Svart"],
             sizes=["iPhone 14", "iPhone 15", "iPhone 16"],
             model_type="phonecase"

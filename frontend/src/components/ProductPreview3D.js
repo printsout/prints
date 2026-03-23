@@ -30,7 +30,7 @@ const ProductPreview3D = ({
     tshirt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600',
     hoodie: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600',
     poster: 'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=600',
-    phonecase: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=600',
+    phonecase: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/85a45f02a7e9178632d56b673ee19b1c5ee40cbb0d3c4c37dd4c5ea35eaaf2e4.png',
     totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600',
     calendar: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600'
   };
@@ -70,12 +70,12 @@ const ProductPreview3D = ({
       containerHeight: 90
     },
     phonecase: { 
-      top: 12, 
-      left: 12, 
-      width: 76, 
-      height: 70,
-      containerWidth: 76,
-      containerHeight: 70
+      top: 8, 
+      left: 10, 
+      width: 65, 
+      height: 75,
+      containerWidth: 65,
+      containerHeight: 75
     },
     totebag: { 
       top: 20, 
