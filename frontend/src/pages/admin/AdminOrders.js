@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Download, Image as ImageIcon } from 'lucide-react';
+import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Download, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
@@ -43,6 +43,19 @@ const AdminOrders = () => {
       toast.error('Kunde inte uppdatera order');
     }
   };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Är du säker på att du vill ta bort denna beställning? Detta går inte att ångra.')) return;
+    try {
+      await api.delete(`/admin/orders/${orderId}`, { headers: getAuthHeaders() });
+      if (selectedOrder?.order_id === orderId) setSelectedOrder(null);
+      fetchOrders();
+      toast.success('Beställning borttagen');
+    } catch (error) {
+      toast.error('Kunde inte ta bort beställningen');
+    }
+  };
+
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -370,6 +383,16 @@ const AdminOrders = () => {
                           >
                             <Printer className="w-4 h-4" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.order_id); }}
+                            title="Ta bort order"
+                            className="hover:text-red-500"
+                            data-testid={`delete-order-${order.order_id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -403,6 +426,16 @@ const AdminOrders = () => {
                 >
                   <Printer className="w-4 h-4 mr-1.5" />
                   Skriv ut
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteOrder(selectedOrder.order_id)}
+                  className="text-red-500 hover:text-red-700 hover:border-red-300"
+                  data-testid="delete-selected-order"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Ta bort
                 </Button>
               </div>
 

@@ -1153,6 +1153,21 @@ async def update_order(order_id: str, update_data: AdminOrderUpdate, admin = Dep
     
     return {"message": "Order uppdaterad"}
 
+@admin_router.delete("/orders/{order_id}")
+async def delete_order(order_id: str, admin = Depends(verify_admin_token)):
+    result = await db.orders.delete_one({"order_id": order_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    await db.admin_logs.insert_one({
+        "action": "delete_order",
+        "order_id": order_id,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    return {"message": "Order raderad"}
+
+
+
 @admin_router.get("/products")
 async def admin_get_products(admin = Depends(verify_admin_token)):
     """Get all products for admin"""
