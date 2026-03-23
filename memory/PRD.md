@@ -21,7 +21,7 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 - Design-editor (muggar, t-shirts, posters med bilduppladdning, text, position)
 - Varukorg med anpassningsdetaljer, Kassa med Stripe redirect
 - Auth (register/login), Konto
-- Admin Panel (dashboard, produkter, användare, ordrar, betalningar, innehåll, skatt)
+- Admin Panel (dashboard, produkter, användare, ordrar, betalningar, innehåll, skatt, recensioner)
 - Dropdown produktmeny i navbar (9 kategorier)
 - Footer-länkar kopplade till admin-innehåll (7 sidor)
 - Orderbekräftelsesida med polling av betalningsstatus
@@ -30,34 +30,34 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 - Rabattkod-system (skapa, aktivera/inaktivera, ta bort)
 - Skatteövervakningssida (AdminTax) med CSV-export
 
+### Recensionshantering (2026-03-23)
+- Admin CRUD för kundrecensioner (skapa, redigera, radera)
+- Betyg med stjärnor (1-5), recensionstext, kundnamn, källa
+- Externa recensionsplattformar: Google Reviews, Trustpilot, Facebook, Yelp, Prisjakt, Reco.se, Annan
+- Plattformslänkar visas på hemsidan med ikoner och färger
+- Källa-badge visas på recensioner från externa plattformar
+- Backend: CRUD endpoints + review-platforms settings
+
 ### Namnlappar - Uppdateringar (2026-03-23)
 - Nya fält: Efternamn och Telefonnummer (valfritt)
 - Färgade motiv-ikoner (varje ikon har unik färg)
-- 14 nya sportmotiv: Häst, Fotboll, Volleyboll, Gym, Bågskytte, Fäktning, Simning, Klättring, Sköld, Flagga, Tyngdlyftning, Löpning
-- Nya djurmotiv: Tassavtryck
-- Custom häst-SVG-ikon (finns ej i lucide-react)
-- Förhandsgranskning visar fullständigt namn + telefon
-- Admin-ordervy visar Förnamn, Efternamn, Telefon
+- 14 nya sportmotiv + häst + fotboll (custom SVG-ikoner)
+- Tassavtryck djurmotiv
 
 ### Stripe Checkout - KOMPLETT
-- Backend skapar Stripe Checkout Session med korrekta belopp i SEK
+- Backend skapar Stripe Checkout Session
 - Frontend omdirigerar kund till Stripe betalningssida
 - Webhook-hantering för betalningsbekräftelse
-- Orderbekräftelsesida pollar betalningsstatus
 
 ### Säkerhet
 - Rate limiting, Security headers, Input-sanitering (bleach)
 - Lösenordskrav, JWT 8h timeout, Admin-lösenord hashad i .env
 
-### DB-optimeringar
-- Admin Revenue: MongoDB aggregation pipeline
-- Användarordrar/designer: Paginering + sortering
-
 ## Pågående
 - Ingen aktiv uppgift
 
 ## Framtida (P1-P2)
-1. Backend-refaktorisering (server.py ~1700 rader behöver brytas upp)
+1. Backend-refaktorisering (server.py ~1750 rader behöver brytas upp)
 2. Databasbyte (användaren nämnde byte till annan databas)
 3. E-postbekräftelse vid beställning
 4. Klarna/Swish betalningar
