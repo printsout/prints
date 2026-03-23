@@ -1420,7 +1420,7 @@ async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
     if not all_emails:
         raise HTTPException(status_code=400, detail="Inga kunder hittade")
     
-    site_url = os.environ.get("SITE_URL", "https://printout-lab.preview.emergentagent.com")
+    site_url = os.environ.get('SITE_URL', '')
     
     html_template = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
