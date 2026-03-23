@@ -354,7 +354,8 @@ async def get_categories():
         {"id": "mobilskal", "name": "Mobilskal", "image": "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=400"},
         {"id": "tygkasse", "name": "Tygkassar", "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"},
         {"id": "kalender", "name": "Kalendrar", "image": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400"},
-        {"id": "namnskylt", "name": "Namnlappar", "image": "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400"}
+        {"id": "namnskylt", "name": "Namnlappar", "image": "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400"},
+        {"id": "fotoalbum", "name": "Fotoalbum", "image": "https://images.unsplash.com/photo-1694022861804-840f61c1c452?w=400"}
     ]
 
 @products_router.get("/{product_id}", response_model=Product)

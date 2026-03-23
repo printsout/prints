@@ -18,6 +18,7 @@ const Navbar = () => {
     { href: '/produkter/poster', label: 'Posters' },
     { href: '/produkter/namnskylt', label: 'Namnlappar' },
     { href: '/produkter/kalender', label: 'Kalendrar' },
+    { href: '/produkter/fotoalbum', label: 'Fotoalbum' },
   ];
 
   const handleLogout = () => {
