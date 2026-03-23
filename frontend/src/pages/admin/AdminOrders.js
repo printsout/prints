@@ -102,16 +102,21 @@ const AdminOrders = () => {
     };
 
     const itemsHtml = (order.items || []).map((item, i) => {
+      const itemName = item.product_name || item.name || 'Produkt';
       let imagesHtml = '';
       if (item.customization?.uploaded_image_url) {
-        imagesHtml = `<br/><img src="${API_BASE}${item.customization.uploaded_image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;margin-top:6px;border:1px solid #e2e8f0;"/>`;
+        const imgUrl = item.customization.uploaded_image_url.startsWith('http')
+          ? item.customization.uploaded_image_url
+          : `${API_BASE}${item.customization.uploaded_image_url}`;
+        imagesHtml = `<br/><img src="${imgUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;margin-top:6px;border:1px solid #e2e8f0;"/>`;
       }
       if (item.customization?.pages) {
         const pageImgs = item.customization.pages
           .filter(pg => pg.image_urls?.length > 0)
-          .map(pg => pg.image_urls.map(url =>
-            `<img src="${API_BASE}${url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/>`
-          ).join('')).join('');
+          .map(pg => pg.image_urls.map(url => {
+            const imgUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+            return `<img src="${imgUrl}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/>`;
+          }).join('')).join('');
         if (pageImgs) {
           imagesHtml = `<br/><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${pageImgs}</div>`;
         }
@@ -120,7 +125,7 @@ const AdminOrders = () => {
         <tr>
           <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${i + 1}</td>
           <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
-            <strong>${item.name || 'Produkt'}</strong>
+            <strong>${itemName}</strong>
             ${item.customization ? `<br/><span style="font-size:12px;color:#64748b;">${formatCustomization(item.customization)}</span>` : ''}
             ${imagesHtml}
           </td>
@@ -220,7 +225,7 @@ const AdminOrders = () => {
               ${itemsHtml || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#94a3b8;">Inga produkter</td></tr>'}
               <tr class="total-row">
                 <td colspan="4" style="text-align:right;">Totalt:</td>
-                <td style="text-align:right;">${order.total?.toLocaleString('sv-SE')} kr</td>
+                <td style="text-align:right;">${(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
               </tr>
             </tbody>
           </table>
@@ -314,7 +319,7 @@ const AdminOrders = () => {
                       <td className="px-6 py-4 text-sm font-mono text-slate-600">#{order.order_id?.slice(0, 8)}</td>
                       <td className="px-6 py-4 text-sm text-slate-900">{order.email || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString('sv-SE')}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{order.total?.toLocaleString('sv-SE')} kr</td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)} {getStatusLabel(order.status)}
@@ -387,7 +392,7 @@ const AdminOrders = () => {
                     {selectedOrder.items?.map((item, index) => (
                       <div key={index} className="border border-slate-100 rounded-lg p-3">
                         <div className="flex justify-between text-sm">
-                          <span className="font-medium text-slate-800">{item.name || 'Produkt'}</span>
+                          <span className="font-medium text-slate-800">{item.product_name || item.name || 'Produkt'}</span>
                           <span className="text-slate-900">{item.price} kr</span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">Antal: {item.quantity || 1}</p>
@@ -397,17 +402,19 @@ const AdminOrders = () => {
                               <>
                                 {item.customization.child_name && <p>Namn: <strong>{item.customization.child_name}</strong></p>}
                                 {item.customization.font && <p>Typsnitt: {item.customization.font}</p>}
+                                {item.customization.font_color && <p>Typsnittsfärg: <span style={{color: item.customization.font_color}}>{item.customization.font_color}</span></p>}
+                                {item.customization.motif && <p>Motiv: {item.customization.motif}</p>}
                                 {item.customization.background && <p>Bakgrund: {item.customization.background}</p>}
                                 {item.customization.uploaded_image_url && (
                                   <div className="mt-2">
                                     <p className="mb-1 font-medium">Uppladdad bild:</p>
                                     <img
-                                      src={`${API_BASE}${item.customization.uploaded_image_url}`}
+                                      src={item.customization.uploaded_image_url.startsWith('http') ? item.customization.uploaded_image_url : `${API_BASE}${item.customization.uploaded_image_url}`}
                                       alt="Kunduppladdning"
                                       className="w-20 h-20 object-cover rounded border"
                                     />
                                     <a
-                                      href={`${API_BASE}${item.customization.uploaded_image_url}`}
+                                      href={item.customization.uploaded_image_url.startsWith('http') ? item.customization.uploaded_image_url : `${API_BASE}${item.customization.uploaded_image_url}`}
                                       download
                                       target="_blank"
                                       rel="noreferrer"
@@ -432,24 +439,27 @@ const AdminOrders = () => {
                                         <div key={pg.page_number} className="border rounded p-2 bg-white">
                                           <p className="text-xs text-slate-500 mb-1">Sida {pg.page_number} ({pg.layout})</p>
                                           <div className="flex gap-1 flex-wrap">
-                                            {pg.image_urls.map((url, imgIdx) => (
-                                              <div key={imgIdx} className="relative group">
-                                                <img
-                                                  src={`${API_BASE}${url}`}
-                                                  alt={`S${pg.page_number}-${imgIdx + 1}`}
-                                                  className="w-14 h-14 object-cover rounded border"
-                                                />
-                                                <a
-                                                  href={`${API_BASE}${url}`}
-                                                  download
-                                                  target="_blank"
-                                                  rel="noreferrer"
-                                                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
-                                                >
-                                                  <Download className="w-4 h-4 text-white" />
-                                                </a>
-                                              </div>
-                                            ))}
+                                            {pg.image_urls.map((url, imgIdx) => {
+                                              const imgUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+                                              return (
+                                                <div key={imgIdx} className="relative group">
+                                                  <img
+                                                    src={imgUrl}
+                                                    alt={`S${pg.page_number}-${imgIdx + 1}`}
+                                                    className="w-14 h-14 object-cover rounded border"
+                                                  />
+                                                  <a
+                                                    href={imgUrl}
+                                                    download
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                                                  >
+                                                    <Download className="w-4 h-4 text-white" />
+                                                  </a>
+                                                </div>
+                                              );
+                                            })}
                                           </div>
                                         </div>
                                       ))}
@@ -479,7 +489,7 @@ const AdminOrders = () => {
                 <div className="pt-4 border-t">
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-slate-600">Totalt</span>
-                    <span className="text-lg text-slate-900">{selectedOrder.total?.toLocaleString('sv-SE')} kr</span>
+                    <span className="text-lg text-slate-900">{(selectedOrder.total_amount || selectedOrder.total)?.toLocaleString('sv-SE')} kr</span>
                   </div>
                 </div>
 

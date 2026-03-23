@@ -137,11 +137,15 @@ class Product(BaseModel):
 class CartItem(BaseModel):
     cart_item_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     product_id: str
+    name: Optional[str] = None
+    price: Optional[float] = None
     quantity: int = 1
     color: Optional[str] = None
     size: Optional[str] = None
+    image: Optional[str] = None
     design_id: Optional[str] = None
     design_preview: Optional[str] = None
+    customization: Optional[Dict[str, Any]] = None
 
 class Cart(BaseModel):
     cart_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -251,6 +255,8 @@ class OrderItem(BaseModel):
     color: Optional[str] = None
     size: Optional[str] = None
     design_preview: Optional[str] = None
+    customization: Optional[Dict[str, Any]] = None
+    image: Optional[str] = None
 
 class Order(BaseModel):
     order_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -564,16 +570,20 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest, user
     for cart_item in cart["items"]:
         product = await db.products.find_one({"product_id": cart_item["product_id"]}, {"_id": 0})
         if product:
-            item_total = product["price"] * cart_item["quantity"]
+            # Use cart item price if set (editors may add extra costs), else product price
+            item_price = cart_item.get("price") or product["price"]
+            item_total = item_price * cart_item["quantity"]
             total_amount += item_total
             order_items.append(OrderItem(
                 product_id=product["product_id"],
-                product_name=product["name"],
+                product_name=cart_item.get("name") or product["name"],
                 quantity=cart_item["quantity"],
-                price=product["price"],
+                price=item_price,
                 color=cart_item.get("color"),
                 size=cart_item.get("size"),
-                design_preview=cart_item.get("design_preview")
+                image=cart_item.get("image"),
+                design_preview=cart_item.get("design_preview"),
+                customization=cart_item.get("customization"),
             ))
     
     if total_amount <= 0:
