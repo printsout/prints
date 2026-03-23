@@ -9,6 +9,7 @@ import { AdminProvider } from "./context/AdminContext";
 // Layout
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import CookieBanner from "./components/CookieBanner";
 import AdminLayout from "./components/AdminLayout";
 
 // Pages
@@ -80,6 +81,7 @@ function App() {
                     </Routes>
                   </main>
                   <Footer />
+                  <CookieBanner />
                 </div>
               } />
             </Routes>
