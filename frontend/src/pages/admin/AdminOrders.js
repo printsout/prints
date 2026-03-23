@@ -215,12 +215,17 @@ const AdminOrders = () => {
         <div class="grid-2">
           <div class="section">
             <h3>Kunduppgifter</h3>
+            ${order.shipping_address ? `
+              <div class="info-row"><div class="info-label">Namn</div><div class="info-value">
+                ${order.shipping_address.name || [order.shipping_address.first_name, order.shipping_address.last_name].filter(Boolean).join(' ') || '—'}
+              </div></div>
+            ` : ''}
             ${order.email ? `<div class="info-row"><div class="info-label">E-post</div><div class="info-value">${order.email}</div></div>` : ''}
+            ${order.shipping_address?.phone ? `<div class="info-row"><div class="info-label">Telefon</div><div class="info-value">${order.shipping_address.phone}</div></div>` : ''}
             ${order.shipping_address ? `
               <div class="info-row"><div class="info-label">Leveransadress</div><div class="info-value">
-                ${order.shipping_address.name || ''}<br/>
-                ${order.shipping_address.street || ''}<br/>
-                ${order.shipping_address.zip || ''} ${order.shipping_address.city || ''}
+                ${order.shipping_address.street || order.shipping_address.address || ''}<br/>
+                ${order.shipping_address.zip || order.shipping_address.postal_code || ''} ${order.shipping_address.city || ''}
               </div></div>
             ` : ''}
           </div>
@@ -340,7 +345,10 @@ const AdminOrders = () => {
                       onClick={() => setSelectedOrder(order)}
                     >
                       <td className="px-6 py-4 text-sm font-mono text-slate-600">#{order.order_id?.slice(0, 8)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-900">{order.email || 'N/A'}</td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-medium text-slate-900">{order.shipping_address?.name || order.email}</p>
+                        <p className="text-xs text-slate-500">{order.email}</p>
+                      </td>
                       <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString('sv-SE')}</td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
                       <td className="px-6 py-4">
@@ -401,7 +409,29 @@ const AdminOrders = () => {
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-slate-500 uppercase">Kund</p>
-                  <p className="text-sm text-slate-900">{selectedOrder.email}</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedOrder.shipping_address?.name || selectedOrder.shipping_address?.first_name ? `${selectedOrder.shipping_address?.first_name || ''} ${selectedOrder.shipping_address?.last_name || ''}`.trim() : '—'}</p>
+                  <p className="text-sm text-slate-600">{selectedOrder.email}</p>
+                  {selectedOrder.shipping_address?.phone && (
+                    <p className="text-sm text-slate-600">Tel: {selectedOrder.shipping_address.phone}</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-500 uppercase">Leveransadress</p>
+                  {selectedOrder.shipping_address ? (
+                    <div className="text-sm text-slate-900">
+                      {selectedOrder.shipping_address.name && <p className="font-medium">{selectedOrder.shipping_address.name}</p>}
+                      {(selectedOrder.shipping_address.street || selectedOrder.shipping_address.address) && (
+                        <p>{selectedOrder.shipping_address.street || selectedOrder.shipping_address.address}</p>
+                      )}
+                      <p>
+                        {selectedOrder.shipping_address.zip || selectedOrder.shipping_address.postal_code || ''}{' '}
+                        {selectedOrder.shipping_address.city || ''}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400">Ingen adress angiven</p>
+                  )}
                 </div>
 
                 <div>
