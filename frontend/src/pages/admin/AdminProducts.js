@@ -5,7 +5,68 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Package, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler } from 'lucide-react';
+
+// ─── Tag Input Component ──────────────────────────
+function TagInput({ tags, onChange, placeholder, testId }) {
+  const [inputValue, setInputValue] = useState('');
+
+  const addTag = () => {
+    const val = inputValue.trim();
+    if (val && !tags.includes(val)) {
+      onChange([...tags, val]);
+    }
+    setInputValue('');
+  };
+
+  const removeTag = (index) => {
+    onChange(tags.filter((_, i) => i !== index));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5 mb-2">
+        {tags.map((tag, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-sm px-2.5 py-1 rounded-full"
+            data-testid={`${testId}-tag-${i}`}
+          >
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeTag(i)}
+              className="hover:text-red-500 transition-colors"
+              data-testid={`${testId}-remove-${i}`}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="flex-1"
+          data-testid={`${testId}-input`}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={addTag} data-testid={`${testId}-add-btn`}>
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const AdminProducts = () => {
   const { getAuthHeaders } = useAdmin();
@@ -201,6 +262,20 @@ const AdminProducts = () => {
             <div className="p-4">
               <h3 className="font-medium text-slate-900 truncate">{product.name}</h3>
               <p className="text-sm text-slate-500">{product.category}</p>
+              {product.colors?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {product.colors.map((c, i) => (
+                    <span key={i} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{c}</span>
+                  ))}
+                </div>
+              )}
+              {product.sizes?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {product.sizes.map((s, i) => (
+                    <span key={i} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{s}</span>
+                  ))}
+                </div>
+              )}
               <p className="text-lg font-bold text-primary mt-2">{product.price} kr</p>
             </div>
           </div>
@@ -292,6 +367,30 @@ const AdminProducts = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <span className="flex items-center gap-1.5"><Palette className="w-4 h-4" /> Färger</span>
+                </label>
+                <TagInput
+                  tags={formData.colors}
+                  onChange={(colors) => setFormData(prev => ({ ...prev, colors }))}
+                  placeholder="Skriv färg + Enter"
+                  testId="color"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <span className="flex items-center gap-1.5"><Ruler className="w-4 h-4" /> Storlekar</span>
+                </label>
+                <TagInput
+                  tags={formData.sizes}
+                  onChange={(sizes) => setFormData(prev => ({ ...prev, sizes }))}
+                  placeholder="Skriv storlek + Enter"
+                  testId="size"
+                />
               </div>
 
               <div>
