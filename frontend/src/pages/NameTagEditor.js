@@ -13,8 +13,20 @@ import {
   Trophy, Medal, Gamepad2, Music, Crown, Gem, Sparkles,
   Anchor, Skull, Ghost, Flame, Zap, Rainbow,
   Baby, IceCream, Cherry, Apple, Pizza, Cake,
-  Minus, Plus, ToggleLeft, ToggleRight, RotateCcw
+  Minus, Plus, ToggleLeft, ToggleRight, RotateCcw,
+  Dumbbell, Target, Swords, Shield, Mountain, Volleyball,
+  Waves, Flag, Goal, Weight, Footprints, PersonStanding
 } from 'lucide-react';
+
+// Custom Horse icon (lucide doesn't have one)
+const HorseIcon = ({ className, style }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+    <path d="M3 19V16C3 14 5 12 7 11L9 10C10 9.5 11 8 11 6V3L13 5C14 6 15 6.5 16 6.5H19L20 8C20 8 21 9 21 10C21 11 20 12 19 12H17L15 14V19" />
+    <path d="M5 19H15" />
+    <circle cx="7" cy="19" r="1" />
+    <circle cx="13" cy="19" r="1" />
+  </svg>
+);
 
 // ─── FONTS ────────────────────────────────────────────
 const FONTS = [
@@ -71,6 +83,8 @@ const ALL_MOTIFS = [
   { id: 'bird', icon: Bird, label: 'Fågel', color: '#66BB6A', cats: ['animals'] },
   { id: 'bug', icon: Bug, label: 'Nyckelpiga', color: '#EF5350', cats: ['animals'] },
   { id: 'baby', icon: Baby, label: 'Baby', color: '#F48FB1', cats: ['animals', 'fun'] },
+  { id: 'horse', icon: HorseIcon, label: 'Häst', color: '#795548', cats: ['animals', 'popular', 'sports'] },
+  { id: 'footprints', icon: Footprints, label: 'Tassavtryck', color: '#8D6E63', cats: ['animals'] },
   // Nature
   { id: 'tree', icon: TreePine, label: 'Träd', color: '#2E7D32', cats: ['nature'] },
   { id: 'sun', icon: Sun, label: 'Sol', color: '#FFB300', cats: ['nature'] },
@@ -88,6 +102,17 @@ const ALL_MOTIFS = [
   { id: 'trophy', icon: Trophy, label: 'Trofé', color: '#FFB300', cats: ['sports'] },
   { id: 'medal', icon: Medal, label: 'Medalj', color: '#FFC107', cats: ['sports'] },
   { id: 'gamepad', icon: Gamepad2, label: 'Spel', color: '#7C4DFF', cats: ['sports', 'fun'] },
+  { id: 'football', icon: Goal, label: 'Fotboll', color: '#4CAF50', cats: ['sports', 'popular'] },
+  { id: 'volleyball', icon: Volleyball, label: 'Volleyboll', color: '#FF9800', cats: ['sports'] },
+  { id: 'dumbbell', icon: Dumbbell, label: 'Gym', color: '#546E7A', cats: ['sports'] },
+  { id: 'target', icon: Target, label: 'Bågskytte', color: '#E53935', cats: ['sports'] },
+  { id: 'swords', icon: Swords, label: 'Fäktning', color: '#78909C', cats: ['sports'] },
+  { id: 'swimming', icon: Waves, label: 'Simning', color: '#0288D1', cats: ['sports'] },
+  { id: 'mountain', icon: Mountain, label: 'Klättring', color: '#5D4037', cats: ['sports', 'nature'] },
+  { id: 'shield', icon: Shield, label: 'Sköld', color: '#1565C0', cats: ['sports', 'fun'] },
+  { id: 'flag', icon: Flag, label: 'Flagga', color: '#D32F2F', cats: ['sports'] },
+  { id: 'weight', icon: Weight, label: 'Tyngdlyftning', color: '#37474F', cats: ['sports'] },
+  { id: 'running', icon: PersonStanding, label: 'Löpning', color: '#FF5722', cats: ['sports'] },
   // Fun
   { id: 'gem', icon: Gem, label: 'Kristall', color: '#00BCD4', cats: ['fun'] },
   { id: 'music', icon: Music, label: 'Musik', color: '#9C27B0', cats: ['fun'] },

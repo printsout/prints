@@ -16,7 +16,7 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 ### Core Features
 - Hemsida, Produktsida, Produktdetaljer, 3D mugg-preview
 - Kalender-editor (12 månader med bilduppladdning)
-- Namnskylts-editor (namly.se-stil, tab-baserad, med förnamn, efternamn, telefonnummer, färgade motiv)
+- Namnskylts-editor (namly.se-stil, tab-baserad, förnamn, efternamn, telefonnummer, 50+ färgade motiv inkl. häst och sport)
 - Fotoalbum-editor (multi-bild per sida, 5 layouter)
 - Design-editor (muggar, t-shirts, posters med bilduppladdning, text, position)
 - Varukorg med anpassningsdetaljer, Kassa med Stripe redirect
@@ -30,9 +30,12 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 - Rabattkod-system (skapa, aktivera/inaktivera, ta bort)
 - Skatteövervakningssida (AdminTax) med CSV-export
 
-### Namnlappar - Uppdatering (2026-03-23)
+### Namnlappar - Uppdateringar (2026-03-23)
 - Nya fält: Efternamn och Telefonnummer (valfritt)
 - Färgade motiv-ikoner (varje ikon har unik färg)
+- 14 nya sportmotiv: Häst, Fotboll, Volleyboll, Gym, Bågskytte, Fäktning, Simning, Klättring, Sköld, Flagga, Tyngdlyftning, Löpning
+- Nya djurmotiv: Tassavtryck
+- Custom häst-SVG-ikon (finns ej i lucide-react)
 - Förhandsgranskning visar fullständigt namn + telefon
 - Admin-ordervy visar Förnamn, Efternamn, Telefon
 
