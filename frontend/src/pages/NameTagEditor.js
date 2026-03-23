@@ -56,52 +56,52 @@ const MOTIF_CATEGORIES = [
 
 const ALL_MOTIFS = [
   // Popular
-  { id: 'star', icon: Star, label: 'Stjärna', cats: ['popular', 'fun'] },
-  { id: 'heart', icon: Heart, label: 'Hjärta', cats: ['popular', 'fun'] },
-  { id: 'cat', icon: Cat, label: 'Katt', cats: ['popular', 'animals'] },
-  { id: 'dog', icon: Dog, label: 'Hund', cats: ['popular', 'animals'] },
-  { id: 'rabbit', icon: Rabbit, label: 'Kanin', cats: ['popular', 'animals'] },
-  { id: 'rainbow', icon: Rainbow, label: 'Regnbåge', cats: ['popular', 'nature'] },
-  { id: 'crown', icon: Crown, label: 'Krona', cats: ['popular', 'fun'] },
-  { id: 'rocket', icon: Rocket, label: 'Raket', cats: ['popular', 'vehicles'] },
-  { id: 'sparkles', icon: Sparkles, label: 'Glitter', cats: ['popular', 'fun'] },
-  { id: 'flower', icon: Flower2, label: 'Blomma', cats: ['popular', 'nature'] },
+  { id: 'star', icon: Star, label: 'Stjärna', color: '#FFD700', cats: ['popular', 'fun'] },
+  { id: 'heart', icon: Heart, label: 'Hjärta', color: '#E53935', cats: ['popular', 'fun'] },
+  { id: 'cat', icon: Cat, label: 'Katt', color: '#FF8C00', cats: ['popular', 'animals'] },
+  { id: 'dog', icon: Dog, label: 'Hund', color: '#8D6E63', cats: ['popular', 'animals'] },
+  { id: 'rabbit', icon: Rabbit, label: 'Kanin', color: '#F48FB1', cats: ['popular', 'animals'] },
+  { id: 'rainbow', icon: Rainbow, label: 'Regnbåge', color: '#FF6F00', cats: ['popular', 'nature'] },
+  { id: 'crown', icon: Crown, label: 'Krona', color: '#FFC107', cats: ['popular', 'fun'] },
+  { id: 'rocket', icon: Rocket, label: 'Raket', color: '#1E88E5', cats: ['popular', 'vehicles'] },
+  { id: 'sparkles', icon: Sparkles, label: 'Glitter', color: '#AB47BC', cats: ['popular', 'fun'] },
+  { id: 'flower', icon: Flower2, label: 'Blomma', color: '#E91E63', cats: ['popular', 'nature'] },
   // Animals
-  { id: 'fish', icon: Fish, label: 'Fisk', cats: ['animals'] },
-  { id: 'bird', icon: Bird, label: 'Fågel', cats: ['animals'] },
-  { id: 'bug', icon: Bug, label: 'Nyckelpiga', cats: ['animals'] },
-  { id: 'baby', icon: Baby, label: 'Baby', cats: ['animals', 'fun'] },
+  { id: 'fish', icon: Fish, label: 'Fisk', color: '#29B6F6', cats: ['animals'] },
+  { id: 'bird', icon: Bird, label: 'Fågel', color: '#66BB6A', cats: ['animals'] },
+  { id: 'bug', icon: Bug, label: 'Nyckelpiga', color: '#EF5350', cats: ['animals'] },
+  { id: 'baby', icon: Baby, label: 'Baby', color: '#F48FB1', cats: ['animals', 'fun'] },
   // Nature
-  { id: 'tree', icon: TreePine, label: 'Träd', cats: ['nature'] },
-  { id: 'sun', icon: Sun, label: 'Sol', cats: ['nature'] },
-  { id: 'moon', icon: Moon, label: 'Måne', cats: ['nature'] },
-  { id: 'cloud', icon: Cloud, label: 'Moln', cats: ['nature'] },
-  { id: 'leaf', icon: Leaf, label: 'Löv', cats: ['nature'] },
-  { id: 'snowflake', icon: Snowflake, label: 'Snöflinga', cats: ['nature'] },
+  { id: 'tree', icon: TreePine, label: 'Träd', color: '#2E7D32', cats: ['nature'] },
+  { id: 'sun', icon: Sun, label: 'Sol', color: '#FFB300', cats: ['nature'] },
+  { id: 'moon', icon: Moon, label: 'Måne', color: '#7E57C2', cats: ['nature'] },
+  { id: 'cloud', icon: Cloud, label: 'Moln', color: '#42A5F5', cats: ['nature'] },
+  { id: 'leaf', icon: Leaf, label: 'Löv', color: '#43A047', cats: ['nature'] },
+  { id: 'snowflake', icon: Snowflake, label: 'Snöflinga', color: '#4FC3F7', cats: ['nature'] },
   // Vehicles
-  { id: 'car', icon: Car, label: 'Bil', cats: ['vehicles'] },
-  { id: 'plane', icon: Plane, label: 'Flygplan', cats: ['vehicles'] },
-  { id: 'ship', icon: Ship, label: 'Båt', cats: ['vehicles'] },
-  { id: 'bike', icon: Bike, label: 'Cykel', cats: ['vehicles'] },
-  { id: 'train', icon: Train, label: 'Tåg', cats: ['vehicles'] },
+  { id: 'car', icon: Car, label: 'Bil', color: '#E53935', cats: ['vehicles'] },
+  { id: 'plane', icon: Plane, label: 'Flygplan', color: '#1565C0', cats: ['vehicles'] },
+  { id: 'ship', icon: Ship, label: 'Båt', color: '#00838F', cats: ['vehicles'] },
+  { id: 'bike', icon: Bike, label: 'Cykel', color: '#43A047', cats: ['vehicles'] },
+  { id: 'train', icon: Train, label: 'Tåg', color: '#6D4C41', cats: ['vehicles'] },
   // Sports
-  { id: 'trophy', icon: Trophy, label: 'Trofé', cats: ['sports'] },
-  { id: 'medal', icon: Medal, label: 'Medalj', cats: ['sports'] },
-  { id: 'gamepad', icon: Gamepad2, label: 'Spel', cats: ['sports', 'fun'] },
+  { id: 'trophy', icon: Trophy, label: 'Trofé', color: '#FFB300', cats: ['sports'] },
+  { id: 'medal', icon: Medal, label: 'Medalj', color: '#FFC107', cats: ['sports'] },
+  { id: 'gamepad', icon: Gamepad2, label: 'Spel', color: '#7C4DFF', cats: ['sports', 'fun'] },
   // Fun
-  { id: 'gem', icon: Gem, label: 'Kristall', cats: ['fun'] },
-  { id: 'music', icon: Music, label: 'Musik', cats: ['fun'] },
-  { id: 'anchor', icon: Anchor, label: 'Ankare', cats: ['fun'] },
-  { id: 'skull', icon: Skull, label: 'Dödskalle', cats: ['fun'] },
-  { id: 'ghost', icon: Ghost, label: 'Spöke', cats: ['fun'] },
-  { id: 'flame', icon: Flame, label: 'Eld', cats: ['fun'] },
-  { id: 'zap', icon: Zap, label: 'Blixt', cats: ['fun'] },
+  { id: 'gem', icon: Gem, label: 'Kristall', color: '#00BCD4', cats: ['fun'] },
+  { id: 'music', icon: Music, label: 'Musik', color: '#9C27B0', cats: ['fun'] },
+  { id: 'anchor', icon: Anchor, label: 'Ankare', color: '#37474F', cats: ['fun'] },
+  { id: 'skull', icon: Skull, label: 'Dödskalle', color: '#455A64', cats: ['fun'] },
+  { id: 'ghost', icon: Ghost, label: 'Spöke', color: '#7E57C2', cats: ['fun'] },
+  { id: 'flame', icon: Flame, label: 'Eld', color: '#FF5722', cats: ['fun'] },
+  { id: 'zap', icon: Zap, label: 'Blixt', color: '#FFC107', cats: ['fun'] },
   // Food
-  { id: 'icecream', icon: IceCream, label: 'Glass', cats: ['food'] },
-  { id: 'cherry', icon: Cherry, label: 'Körsbär', cats: ['food'] },
-  { id: 'apple', icon: Apple, label: 'Äpple', cats: ['food'] },
-  { id: 'pizza', icon: Pizza, label: 'Pizza', cats: ['food'] },
-  { id: 'cake', icon: Cake, label: 'Tårta', cats: ['food'] },
+  { id: 'icecream', icon: IceCream, label: 'Glass', color: '#F48FB1', cats: ['food'] },
+  { id: 'cherry', icon: Cherry, label: 'Körsbär', color: '#D32F2F', cats: ['food'] },
+  { id: 'apple', icon: Apple, label: 'Äpple', color: '#4CAF50', cats: ['food'] },
+  { id: 'pizza', icon: Pizza, label: 'Pizza', color: '#FF9800', cats: ['food'] },
+  { id: 'cake', icon: Cake, label: 'Tårta', color: '#EC407A', cats: ['food'] },
 ];
 
 // ─── BACKGROUNDS ──────────────────────────────────────
@@ -194,6 +194,8 @@ const NameTagEditor = () => {
 
   // Design state
   const [childName, setChildName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedFont, setSelectedFont] = useState('pacifico');
   const [fontColor, setFontColor] = useState('#000000');
   const [selectedMotif, setSelectedMotif] = useState('star');
@@ -254,6 +256,8 @@ const NameTagEditor = () => {
 
   const handleReset = () => {
     setChildName('');
+    setLastName('');
+    setPhoneNumber('');
     setSelectedFont('pacifico');
     setFontColor('#000000');
     setSelectedMotif('star');
@@ -264,7 +268,7 @@ const NameTagEditor = () => {
 
   const handleAddToCart = async () => {
     if (!childName.trim()) {
-      toast.error('Skriv in ett namn');
+      toast.error('Skriv in ett förnamn');
       return;
     }
     try {
@@ -284,6 +288,8 @@ const NameTagEditor = () => {
         customization: {
           type: 'nametag',
           child_name: childName,
+          last_name: lastName,
+          phone_number: phoneNumber,
           font: selectedFont,
           font_color: fontColor,
           motif: motifEnabled ? selectedMotif : null,
@@ -349,22 +355,32 @@ const NameTagEditor = () => {
             <div className="bg-white rounded-xl border p-6" data-testid="nametag-preview">
               <div className="flex justify-center mb-5">
                 <div
-                  className="relative w-72 h-[88px] rounded-lg shadow-md flex items-center justify-center gap-3 border overflow-hidden"
-                  style={bgStyle}
+                  className="relative w-72 rounded-lg shadow-md flex items-center justify-center gap-3 border overflow-hidden"
+                  style={{ ...bgStyle, minHeight: '88px', padding: '10px 12px' }}
                   data-testid="nametag-preview-main"
                 >
                   {motifEnabled && currentMotif && !uploadedImage && (
-                    <currentMotif.icon className="w-9 h-9 flex-shrink-0" style={{ color: autoTextColor }} />
+                    <currentMotif.icon className="w-9 h-9 flex-shrink-0" style={{ color: currentMotif.color }} />
                   )}
                   {motifEnabled && uploadedImage && (
                     <img src={uploadedImage} alt="uploaded" className="w-10 h-10 object-contain flex-shrink-0 rounded" />
                   )}
-                  <span
-                    className="text-xl font-medium truncate max-w-[180px]"
-                    style={{ fontFamily: currentFont.family, color: autoTextColor }}
-                  >
-                    {childName || 'Ditt Namn'}
-                  </span>
+                  <div className="flex flex-col items-center min-w-0">
+                    <span
+                      className="text-xl font-medium truncate max-w-[180px]"
+                      style={{ fontFamily: currentFont.family, color: autoTextColor }}
+                    >
+                      {childName || 'Förnamn'}{lastName ? ` ${lastName}` : ''}
+                    </span>
+                    {phoneNumber && (
+                      <span
+                        className="text-xs truncate max-w-[180px] opacity-80"
+                        style={{ fontFamily: currentFont.family, color: autoTextColor }}
+                      >
+                        {phoneNumber}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -378,13 +394,13 @@ const NameTagEditor = () => {
                     style={bgStyle}
                   >
                     {motifEnabled && currentMotif && !uploadedImage && (
-                      <currentMotif.icon className="w-3 h-3 flex-shrink-0" style={{ color: autoTextColor }} />
+                      <currentMotif.icon className="w-3 h-3 flex-shrink-0" style={{ color: currentMotif.color }} />
                     )}
                     <span
                       className="truncate"
                       style={{ fontFamily: currentFont.family, color: autoTextColor, fontSize: '8px' }}
                     >
-                      {childName || 'Namn'}
+                      {childName || 'Namn'}{lastName ? ` ${lastName.charAt(0)}` : ''}
                     </span>
                   </div>
                 ))}
@@ -421,11 +437,11 @@ const NameTagEditor = () => {
                 <div className="space-y-6">
                   {/* 1. Name input */}
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-2">1. Ange text</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-2">1. Ange förnamn</h3>
                     <Input
                       value={childName}
                       onChange={(e) => setChildName(e.target.value)}
-                      placeholder="Skriv namn här..."
+                      placeholder="Skriv förnamn här..."
                       maxLength={25}
                       className="text-base h-11"
                       data-testid="child-name-input"
@@ -433,9 +449,37 @@ const NameTagEditor = () => {
                     <p className="text-xs text-slate-400 mt-1">Max 25 tecken</p>
                   </div>
 
-                  {/* 2. Font selection */}
+                  {/* 2. Last name input */}
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">2. Välj typsnitt</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-2">2. Ange efternamn</h3>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Skriv efternamn här..."
+                      maxLength={25}
+                      className="text-base h-11"
+                      data-testid="last-name-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Max 25 tecken (valfritt)</p>
+                  </div>
+
+                  {/* 3. Phone number input */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-2">3. Ange telefonnummer</h3>
+                    <Input
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="T.ex. 070-123 45 67"
+                      maxLength={20}
+                      className="text-base h-11"
+                      data-testid="phone-number-input"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Valfritt - visas på namnlappen</p>
+                  </div>
+
+                  {/* 4. Font selection */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">4. Välj typsnitt</h3>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2" data-testid="font-grid">
                       {FONTS.map(font => (
                         <button
@@ -456,9 +500,9 @@ const NameTagEditor = () => {
                     </div>
                   </div>
 
-                  {/* 3. Font color */}
+                  {/* 5. Font color */}
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">3. Välj typsnittsfärg</h3>
+                    <h3 className="text-sm font-semibold text-slate-700 mb-3">5. Välj typsnittsfärg</h3>
                     <div className="flex flex-wrap gap-2" data-testid="font-color-grid">
                       {FONT_COLORS.map(color => (
                         <button
@@ -562,7 +606,7 @@ const NameTagEditor = () => {
                           title={motif.label}
                           data-testid={`motif-${motif.id}`}
                         >
-                          <Icon className="w-6 h-6 text-slate-700" />
+                          <Icon className="w-6 h-6" style={{ color: motif.color }} />
                           <span className="text-[9px] text-slate-500 leading-none">{motif.label}</span>
                         </button>
                       );
@@ -672,7 +716,7 @@ const NameTagEditor = () => {
 
               {!childName.trim() && (
                 <p className="text-xs text-slate-400 text-center mt-2">
-                  Ange ett namn för att fortsätta
+                  Ange ett förnamn för att fortsätta
                 </p>
               )}
             </div>

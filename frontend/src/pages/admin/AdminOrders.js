@@ -94,7 +94,9 @@ const AdminOrders = () => {
       if (!c) return '';
       const lines = [];
       if (c.type === 'nametag') {
-        if (c.child_name) lines.push(`Namn: ${c.child_name}`);
+        if (c.child_name) lines.push(`Förnamn: ${c.child_name}`);
+        if (c.last_name) lines.push(`Efternamn: ${c.last_name}`);
+        if (c.phone_number) lines.push(`Telefon: ${c.phone_number}`);
         if (c.font) lines.push(`Typsnitt: ${c.font}`);
         if (c.font_color) lines.push(`Typsnittsfärg: ${c.font_color}`);
         if (c.motif) lines.push(`Motiv: ${c.motif}`);
@@ -486,7 +488,9 @@ const AdminOrders = () => {
                           <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
                             {item.customization.type === 'nametag' && (
                               <>
-                                {item.customization.child_name && <p>Namn: <strong>{item.customization.child_name}</strong></p>}
+                                {item.customization.child_name && <p>Förnamn: <strong>{item.customization.child_name}</strong></p>}
+                                {item.customization.last_name && <p>Efternamn: <strong>{item.customization.last_name}</strong></p>}
+                                {item.customization.phone_number && <p>Telefon: <strong>{item.customization.phone_number}</strong></p>}
                                 {item.customization.font && <p>Typsnitt: {item.customization.font}</p>}
                                 {item.customization.font_color && <p>Typsnittsfärg: <span style={{color: item.customization.font_color}}>{item.customization.font_color}</span></p>}
                                 {item.customization.motif && <p>Motiv: {item.customization.motif}</p>}
