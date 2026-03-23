@@ -20,10 +20,16 @@ import jwt
 import bcrypt
 import base64
 import bleach
+import resend
+import asyncio
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Resend email config
+resend.api_key = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -1378,6 +1384,104 @@ async def delete_discount_code(code: str, admin = Depends(verify_admin_token)):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Kod hittades inte")
     return {"message": "Rabattkod raderad"}
+
+
+@admin_router.post("/send-discount-email")
+async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
+    """Send a discount code email to all registered customers"""
+    discount_code = data.get("code", "").strip().upper()
+    custom_message = data.get("message", "")
+    
+    if not discount_code:
+        raise HTTPException(status_code=400, detail="Ange en rabattkod")
+    
+    # Verify code exists
+    code_doc = await db.discount_codes.find_one({"code": discount_code}, {"_id": 0})
+    if not code_doc:
+        raise HTTPException(status_code=404, detail="Rabattkoden finns inte")
+    
+    # Get all customer emails
+    users = await db.users.find({"role": {"$ne": "admin"}}, {"_id": 0, "email": 1, "name": 1}).to_list(1000)
+    
+    # Also collect unique emails from orders (guests)
+    order_emails = await db.orders.distinct("email")
+    
+    # Merge unique emails
+    all_emails = set()
+    email_names = {}
+    for u in users:
+        if u.get("email"):
+            all_emails.add(u["email"])
+            email_names[u["email"]] = u.get("name", "")
+    for e in order_emails:
+        if e:
+            all_emails.add(e)
+    
+    if not all_emails:
+        raise HTTPException(status_code=400, detail="Inga kunder hittade")
+    
+    site_url = os.environ.get("SITE_URL", "https://printout-lab.preview.emergentagent.com")
+    
+    html_template = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: #1a1a2e; padding: 30px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Printout</h1>
+      </div>
+      <div style="padding: 30px;">
+        <h2 style="color: #1a1a2e; margin-top: 0;">Exklusiv rabatt till dig!</h2>
+        {f'<p style="color: #333; font-size: 16px; line-height: 1.6;">{custom_message}</p>' if custom_message else ''}
+        <div style="background: #f0fdf4; border: 2px dashed #2a9d8f; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+          <p style="color: #666; margin: 0 0 8px 0; font-size: 14px;">Din rabattkod:</p>
+          <p style="font-size: 32px; font-weight: bold; color: #1a1a2e; margin: 0; letter-spacing: 3px; font-family: monospace;">{discount_code}</p>
+          <p style="color: #2a9d8f; margin: 12px 0 0 0; font-size: 20px; font-weight: bold;">{code_doc['discount_percent']}% rabatt</p>
+        </div>
+        <p style="color: #333; font-size: 16px; line-height: 1.6;">
+          Ange koden i kassan for att fa rabatten. 
+          {f'Koden gäller till {code_doc["expires_at"][:10]}.' if code_doc.get('expires_at') else ''}
+        </p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{site_url}/produkter" style="background: #2a9d8f; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Handla nu</a>
+        </div>
+      </div>
+      <div style="background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
+        <p>Printout — Personliga produkter med dina bilder</p>
+      </div>
+    </div>
+    """
+    
+    sent_count = 0
+    failed_emails = []
+    
+    for email in all_emails:
+        try:
+            params = {
+                "from": SENDER_EMAIL,
+                "to": [email],
+                "subject": f"Din exklusiva rabattkod: {discount_code} — {code_doc['discount_percent']}% rabatt!",
+                "html": html_template,
+            }
+            await asyncio.to_thread(resend.Emails.send, params)
+            sent_count += 1
+        except Exception as e:
+            logger.error(f"Failed to send email to {email}: {str(e)}")
+            failed_emails.append(email)
+    
+    await db.admin_logs.insert_one({
+        "action": "send_discount_email",
+        "code": discount_code,
+        "sent_count": sent_count,
+        "failed_count": len(failed_emails),
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"E-post skickad till {sent_count} kunder",
+        "sent_count": sent_count,
+        "failed_count": len(failed_emails),
+        "failed_emails": failed_emails
+    }
+
 
 @api_router.post("/validate-discount-code")
 async def validate_discount_code(data: dict):

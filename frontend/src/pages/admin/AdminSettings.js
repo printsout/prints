@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from 'sonner';
-import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent, Plus, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Save, Globe, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Truck, Percent, Plus, Trash2, ToggleLeft, ToggleRight, Send } from 'lucide-react';
 
 const AdminSettings = () => {
   const { getAuthHeaders } = useAdmin();
@@ -35,6 +35,8 @@ const AdminSettings = () => {
   // Discount codes
   const [discountCodes, setDiscountCodes] = useState([]);
   const [newCode, setNewCode] = useState({ code: '', discount_percent: 10, max_uses: 0, expires_at: '' });
+  const [sendingEmail, setSendingEmail] = useState(null);
+  const [emailMessage, setEmailMessage] = useState('');
 
   useEffect(() => {
     fetchSettings();
@@ -133,6 +135,23 @@ const AdminSettings = () => {
       toast.success(`Kod "${code}" raderad`);
     } catch (error) {
       toast.error('Kunde inte radera koden');
+    }
+  };
+
+  const handleSendEmail = async (code) => {
+    if (!window.confirm(`Skicka rabattkod "${code}" till ALLA kunder via e-post?`)) return;
+    setSendingEmail(code);
+    try {
+      const res = await api.post('/admin/send-discount-email', {
+        code,
+        message: emailMessage,
+      }, { headers: getAuthHeaders() });
+      toast.success(`${res.data.message}${res.data.failed_count > 0 ? ` (${res.data.failed_count} misslyckades)` : ''}`);
+      setEmailMessage('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Kunde inte skicka e-post');
+    } finally {
+      setSendingEmail(null);
     }
   };
 
@@ -533,6 +552,21 @@ const AdminSettings = () => {
             </div>
           </div>
 
+          {/* Optional email message */}
+          {discountCodes.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Meddelande i e-post (valfritt)
+              </label>
+              <Input
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                placeholder="T.ex. Tack för att du är kund hos oss! Här är en rabatt..."
+                data-testid="email-message-input"
+              />
+            </div>
+          )}
+
           {/* Existing codes */}
           {discountCodes.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">Inga rabattkoder skapade ännu.</p>
@@ -561,23 +595,38 @@ const AdminSettings = () => {
                           {dc.active ? 'Aktiv' : 'Inaktiv'}
                         </span>
                       </td>
-                      <td className="py-3 text-right space-x-2">
-                        <button
-                          onClick={() => handleToggleCode(dc.code, dc.active)}
-                          className="text-slate-500 hover:text-[#2a9d8f] transition-colors"
-                          title={dc.active ? 'Inaktivera' : 'Aktivera'}
-                          data-testid={`toggle-code-${dc.code}`}
-                        >
-                          {dc.active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCode(dc.code)}
-                          className="text-slate-500 hover:text-red-500 transition-colors"
-                          title="Radera"
-                          data-testid={`delete-code-${dc.code}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <td className="py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleSendEmail(dc.code)}
+                            disabled={sendingEmail === dc.code || !dc.active}
+                            className="text-slate-500 hover:text-blue-600 transition-colors disabled:opacity-30"
+                            title="Skicka till alla kunder via e-post"
+                            data-testid={`email-code-${dc.code}`}
+                          >
+                            {sendingEmail === dc.code ? (
+                              <span className="text-xs">Skickar...</span>
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleToggleCode(dc.code, dc.active)}
+                            className="text-slate-500 hover:text-[#2a9d8f] transition-colors"
+                            title={dc.active ? 'Inaktivera' : 'Aktivera'}
+                            data-testid={`toggle-code-${dc.code}`}
+                          >
+                            {dc.active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCode(dc.code)}
+                            className="text-slate-500 hover:text-red-500 transition-colors"
+                            title="Radera"
+                            data-testid={`delete-code-${dc.code}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
