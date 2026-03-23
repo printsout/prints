@@ -18,6 +18,7 @@ import ProductDetail from "./pages/ProductDetail";
 import DesignEditor from "./pages/DesignEditor";
 import CalendarEditor from "./pages/CalendarEditor";
 import NameTagEditor from "./pages/NameTagEditor";
+import PhotoAlbumEditor from "./pages/PhotoAlbumEditor";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -67,6 +68,7 @@ function App() {
                       <Route path="/design/:productId" element={<DesignEditor />} />
                       <Route path="/kalender/:productId" element={<CalendarEditor />} />
                       <Route path="/namnskylt/:productId" element={<NameTagEditor />} />
+                      <Route path="/fotoalbum/:productId" element={<PhotoAlbumEditor />} />
                       <Route path="/varukorg" element={<Cart />} />
                       <Route path="/kassa" element={<Checkout />} />
                       <Route path="/order-confirmation" element={<OrderConfirmation />} />

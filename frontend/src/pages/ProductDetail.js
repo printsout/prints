@@ -64,20 +64,14 @@ const ProductDetail = () => {
   };
 
   const handleDesign = () => {
-    // Check if it's a calendar product
     if (product?.model_type === 'calendar' || product?.category === 'kalender') {
-      navigate(`/kalender/${productId}`, {
-        state: { size: selectedSize }
-      });
-    // Check if it's a name tag product
+      navigate(`/kalender/${productId}`, { state: { size: selectedSize } });
     } else if (product?.model_type === 'nametag' || product?.category === 'namnskylt') {
-      navigate(`/namnskylt/${productId}`, {
-        state: { size: selectedSize }
-      });
+      navigate(`/namnskylt/${productId}`, { state: { size: selectedSize } });
+    } else if (product?.category === 'fotoalbum') {
+      navigate(`/fotoalbum/${productId}`, { state: { size: selectedSize } });
     } else {
-      navigate(`/design/${productId}`, {
-        state: { color: selectedColor, size: selectedSize }
-      });
+      navigate(`/design/${productId}`, { state: { color: selectedColor, size: selectedSize } });
     }
   };
 
@@ -131,7 +125,7 @@ const ProductDetail = () => {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left - Preview */}
           <div className="lg:sticky lg:top-24 lg:h-fit">
-            {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' ? (
+            {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' || product.category === 'fotoalbum' ? (
               <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
                 <img
                   src={product.images?.[0]}
@@ -263,6 +257,8 @@ const ProductDetail = () => {
                   ? 'Skapa din kalender' 
                   : product?.model_type === 'nametag' || product?.category === 'namnskylt'
                   ? 'Skapa namnlappar'
+                  : product?.category === 'fotoalbum'
+                  ? 'Skapa ditt fotoalbum'
                   : 'Designa med egen bild'
                 }
               </Button>
