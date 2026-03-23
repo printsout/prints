@@ -35,6 +35,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminTax from "./pages/admin/AdminTax";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminPayments from "./pages/admin/AdminPayments";
 
@@ -55,6 +56,7 @@ function App() {
                 <Route path="content" element={<AdminContent />} />
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="tax" element={<AdminTax />} />
               </Route>
 
               {/* Public Routes - With Navbar/Footer */}

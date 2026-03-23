@@ -1387,6 +1387,58 @@ async def delete_discount_code(code: str, admin = Depends(verify_admin_token)):
 
 
 @admin_router.post("/send-discount-email")
+
+@admin_router.get("/tax-report")
+async def get_tax_report(admin = Depends(verify_admin_token)):
+    """Get tax/VAT report grouped by month"""
+    TAX_RATE = 0.25
+    
+    pipeline = [
+        {"$addFields": {
+            "month": {"$substr": ["$created_at", 0, 7]},
+        }},
+        {"$group": {
+            "_id": "$month",
+            "total_sales": {"$sum": "$total_amount"},
+            "order_count": {"$sum": 1},
+        }},
+        {"$sort": {"_id": -1}},
+    ]
+    
+    monthly = await db.orders.aggregate(pipeline).to_list(100)
+    
+    months = []
+    grand_total = 0
+    grand_vat = 0
+    grand_net = 0
+    
+    for m in monthly:
+        total = m["total_sales"] or 0
+        vat = round(total * TAX_RATE / (1 + TAX_RATE), 2)
+        net = round(total - vat, 2)
+        grand_total += total
+        grand_vat += vat
+        grand_net += net
+        months.append({
+            "month": m["_id"],
+            "order_count": m["order_count"],
+            "total_sales": round(total, 2),
+            "vat_amount": vat,
+            "net_amount": net,
+        })
+    
+    return {
+        "tax_rate": TAX_RATE * 100,
+        "months": months,
+        "summary": {
+            "total_sales": round(grand_total, 2),
+            "total_vat": round(grand_vat, 2),
+            "total_net": round(grand_net, 2),
+            "total_orders": sum(m["order_count"] for m in months),
+        }
+    }
+
+
 async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
     """Send a discount code email to all registered customers"""
     discount_code = data.get("code", "").strip().upper()

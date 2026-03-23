@@ -99,6 +99,7 @@ const Cart = () => {
     : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
     : shippingConfig.shipping_cost;
   const total = afterDiscount + shipping;
+  const vatAmount = Math.round(total * 25 / 125 * 100) / 100;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -323,7 +324,7 @@ const Cart = () => {
                       <span>Totalt</span>
                       <span className="text-primary">{total.toFixed(2)} kr</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">inkl. moms</p>
+                    <p className="text-xs text-slate-500 mt-1">varav moms (25%): {vatAmount.toFixed(2)} kr</p>
                   </div>
                 </div>
 
