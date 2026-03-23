@@ -314,6 +314,7 @@ class Review(BaseModel):
     rating: int
     text: str
     product_id: Optional[str] = None
+    source: Optional[str] = "manual"  # manual, google, trustpilot, etc.
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 # ============== AUTH HELPERS ==============
@@ -774,6 +775,14 @@ async def stripe_webhook(request: Request):
 async def get_reviews():
     reviews = await db.reviews.find({}, {"_id": 0}).sort("created_at", -1).to_list(20)
     return [Review(**r) for r in reviews]
+
+@api_router.get("/review-platforms")
+async def get_review_platforms():
+    """Public endpoint: get external review platform links"""
+    settings = await db.review_settings.find_one({"type": "platforms"}, {"_id": 0})
+    if not settings:
+        return {"platforms": []}
+    return {"platforms": settings.get("platforms", [])}
 
 # ============== INIT DATA ==============
 
@@ -1300,6 +1309,50 @@ async def update_payment_settings(settings: PaymentSettings, admin = Depends(ver
     })
     
     return {"message": "Betalningsinställningar uppdaterade"}
+
+# ============== ADMIN REVIEW ROUTES ==============
+
+@api_router.get("/admin/reviews")
+async def admin_get_reviews(admin=Depends(verify_admin_token)):
+    reviews = await db.reviews.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return reviews
+
+@api_router.post("/admin/reviews")
+async def admin_create_review(review: Review, admin=Depends(verify_admin_token)):
+    await db.reviews.insert_one(review.model_dump())
+    return {"message": "Recension skapad", "review_id": review.review_id}
+
+@api_router.put("/admin/reviews/{review_id}")
+async def admin_update_review(review_id: str, data: dict, admin=Depends(verify_admin_token)):
+    update_data = {k: v for k, v in data.items() if k not in ["review_id", "_id"]}
+    result = await db.reviews.update_one({"review_id": review_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Recension hittades inte")
+    return {"message": "Recension uppdaterad"}
+
+@api_router.delete("/admin/reviews/{review_id}")
+async def admin_delete_review(review_id: str, admin=Depends(verify_admin_token)):
+    result = await db.reviews.delete_one({"review_id": review_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Recension hittades inte")
+    return {"message": "Recension raderad"}
+
+@api_router.get("/admin/review-platforms")
+async def admin_get_review_platforms(admin=Depends(verify_admin_token)):
+    settings = await db.review_settings.find_one({"type": "platforms"}, {"_id": 0})
+    if not settings:
+        return {"platforms": []}
+    return {"platforms": settings.get("platforms", [])}
+
+@api_router.put("/admin/review-platforms")
+async def admin_update_review_platforms(data: dict, admin=Depends(verify_admin_token)):
+    platforms = data.get("platforms", [])
+    await db.review_settings.update_one(
+        {"type": "platforms"},
+        {"$set": {"type": "platforms", "platforms": platforms}},
+        upsert=True
+    )
+    return {"message": "Recensionsplattformar uppdaterade"}
 
 # ============== CONTENT PAGES ==============
 

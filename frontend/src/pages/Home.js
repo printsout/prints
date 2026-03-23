@@ -1,25 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Upload, Palette, ShoppingBag, Star, ChevronRight } from 'lucide-react';
+import { ArrowRight, Upload, Palette, ShoppingBag, Star, ChevronRight, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [reviewPlatforms, setReviewPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch categories and reviews
-        const [catRes, revRes] = await Promise.all([
+        const [catRes, revRes, platRes] = await Promise.all([
           api.get('/products/categories'),
-          api.get('/reviews')
+          api.get('/reviews'),
+          api.get('/review-platforms')
         ]);
         
         setCategories(catRes.data);
         setReviews(revRes.data);
+        setReviewPlatforms(platRes.data.platforms || []);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -218,10 +220,42 @@ const Home = () => {
                   ))}
                 </div>
                 <p className="text-slate-600 mb-4 italic">"{review.text}"</p>
-                <p className="font-semibold text-slate-800">{review.user_name}</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-slate-800">{review.user_name}</p>
+                  {review.source && review.source !== 'manual' && (
+                    <span className="text-xs px-2 py-0.5 bg-slate-200 text-slate-500 rounded-full capitalize">{review.source}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
+
+          {reviewPlatforms.length > 0 && (
+            <div className="mt-10 text-center" data-testid="review-platforms-links">
+              <p className="text-sm text-slate-500 mb-4">Läs fler recensioner eller lämna ditt omdöme:</p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {reviewPlatforms.map(p => (
+                  <a
+                    key={p.id}
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium text-slate-700 hover:border-slate-400 hover:shadow-sm transition-all"
+                    data-testid={`platform-link-${p.id}`}
+                  >
+                    <span
+                      className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                      style={{ backgroundColor: p.color }}
+                    >
+                      {p.icon}
+                    </span>
+                    {p.name}
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
