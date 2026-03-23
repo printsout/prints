@@ -11,7 +11,7 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
-    site_name: 'Printout',
+    site_name: 'Printsout',
     site_logo: '',
     contact_email: 'info@printout.se',
     phone: '',
@@ -212,7 +212,7 @@ const AdminSettings = () => {
               <Input
                 value={settings.site_name}
                 onChange={(e) => setSettings(prev => ({ ...prev, site_name: e.target.value }))}
-                placeholder="Printout"
+                placeholder="Printsout"
               />
             </div>
 

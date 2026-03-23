@@ -10,7 +10,7 @@ const Footer = () => {
             <Link to="/" className="block">
               <img 
                 src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
-                alt="Printout" 
+                alt="Printsout" 
                 className="h-16 w-auto"
               />
             </Link>
@@ -90,7 +90,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="border-t border-slate-200 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-400 text-sm">
-            © 2024 Printout. Alla rättigheter förbehållna.
+            © 2024 Printsout. Alla rättigheter förbehållna.
           </p>
           <div className="flex items-center gap-4">
             <img 

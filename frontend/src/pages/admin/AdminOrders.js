@@ -215,7 +215,7 @@ const AdminOrders = () => {
       <body>
         <div class="header">
           <div class="logo">
-            Printout
+            Printsout
             <span>Personliga tryckprodukter</span>
           </div>
           <div class="order-id">
@@ -273,7 +273,7 @@ const AdminOrders = () => {
         </div>
 
         <div class="footer">
-          <p>Printout AB &bull; info@printout.se &bull; 08-123 456 78</p>
+          <p>Printsout AB &bull; info@printout.se &bull; 08-123 456 78</p>
           <p style="margin-top:4px;">Utskriven ${new Date().toLocaleString('sv-SE')}</p>
         </div>
       </body>

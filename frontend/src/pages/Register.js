@@ -65,7 +65,7 @@ const Register = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="text-3xl font-bold text-primary font-accent">
-            Printout
+            Printsout
           </Link>
           <h1 className="text-2xl font-semibold text-slate-900 mt-6">Skapa konto</h1>
           <p className="text-slate-500 mt-2">Registrera dig för att komma igång</p>

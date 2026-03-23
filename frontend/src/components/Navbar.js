@@ -60,7 +60,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-2" data-testid="logo-link">
             <img
               src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png"
-              alt="Printout"
+              alt="Printsout"
               className="h-12 w-auto"
             />
           </Link>

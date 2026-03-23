@@ -32,7 +32,7 @@ const AdminLogin = () => {
         <div className="text-center mb-8">
           <img 
             src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
-            alt="Printout" 
+            alt="Printsout" 
             className="h-20 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>

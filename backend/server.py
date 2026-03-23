@@ -52,7 +52,7 @@ ADMIN_PASSWORD_HASH = os.environ['ADMIN_PASSWORD_HASH']
 limiter = Limiter(key_func=get_remote_address)
 
 # Create the main app with redirect_slashes disabled to handle both /products and /products/
-app = FastAPI(title="Printout API", redirect_slashes=False)
+app = FastAPI(title="Printsout API", redirect_slashes=False)
 app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)
@@ -225,9 +225,9 @@ class AdminOrderUpdate(BaseModel):
     notes: Optional[str] = None
 
 class SiteSettings(BaseModel):
-    site_name: str = "Printout"
+    site_name: str = "Printsout"
     site_logo: Optional[str] = None
-    contact_email: str = "info@printout.se"
+    contact_email: str = "info@printsout.se"
     phone: Optional[str] = None
     address: Optional[str] = None
     social_links: Dict[str, str] = {}
@@ -1425,7 +1425,7 @@ async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
     html_template = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
       <div style="background: #1a1a2e; padding: 30px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Printout</h1>
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Printsout</h1>
       </div>
       <div style="padding: 30px;">
         <h2 style="color: #1a1a2e; margin-top: 0;">Exklusiv rabatt till dig!</h2>
@@ -1444,7 +1444,7 @@ async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
         </div>
       </div>
       <div style="background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-        <p>Printout — Personliga produkter med dina bilder</p>
+        <p>Printsout — Personliga produkter med dina bilder</p>
       </div>
     </div>
     """
@@ -1597,7 +1597,7 @@ async def get_upload(filename: str):
 
 @api_router.get("/")
 async def root():
-    return {"message": "Printout API", "version": "1.0.0"}
+    return {"message": "Printsout API", "version": "1.0.0"}
 
 # ============== INCLUDE ROUTERS ==============
 
