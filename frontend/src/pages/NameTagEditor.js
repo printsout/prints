@@ -268,6 +268,13 @@ const NameTagEditor = () => {
       return;
     }
     try {
+      // Upload image to server if one was uploaded
+      let uploadedImageUrl = null;
+      if (uploadedImage) {
+        const uploadRes = await api.post('/upload-base64', { image: uploadedImage });
+        uploadedImageUrl = uploadRes.data.url;
+      }
+
       await addToCart({
         product_id: product.product_id,
         name: product.name,
@@ -280,7 +287,7 @@ const NameTagEditor = () => {
           font: selectedFont,
           font_color: fontColor,
           motif: motifEnabled ? selectedMotif : null,
-          uploaded_image: uploadedImage ? true : false,
+          uploaded_image_url: uploadedImageUrl,
           background: selectedBg,
         }
       });

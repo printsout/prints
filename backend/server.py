@@ -1,6 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -1290,6 +1291,78 @@ async def get_public_page(slug: str):
     if not page:
         raise HTTPException(status_code=404, detail="Sidan hittades inte")
     return page
+
+# ============== FILE UPLOADS ==============
+
+UPLOADS_DIR = ROOT_DIR / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
+
+from typing import List as TypingList
+
+@api_router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Upload an image file and return the URL"""
+    allowed = {'image/jpeg', 'image/png', 'image/webp'}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Bara JPG, PNG och WebP tillåtet")
+    
+    max_size = 10 * 1024 * 1024  # 10MB
+    contents = await file.read()
+    if len(contents) > max_size:
+        raise HTTPException(status_code=400, detail="Max filstorlek: 10MB")
+    
+    ext = file.filename.rsplit('.', 1)[-1] if '.' in file.filename else 'jpg'
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = UPLOADS_DIR / filename
+    
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    return {"filename": filename, "url": f"/api/uploads/{filename}"}
+
+@api_router.post("/upload-base64")
+async def upload_base64(data: dict):
+    """Upload a base64 encoded image and return the URL"""
+    image_data = data.get("image")
+    if not image_data:
+        raise HTTPException(status_code=400, detail="Ingen bild skickad")
+    
+    # Remove data:image/xxx;base64, prefix
+    if "base64," in image_data:
+        header, image_data = image_data.split("base64,", 1)
+        if "png" in header:
+            ext = "png"
+        elif "webp" in header:
+            ext = "webp"
+        else:
+            ext = "jpg"
+    else:
+        ext = "jpg"
+    
+    try:
+        contents = base64.b64decode(image_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Ogiltig bilddata")
+    
+    max_size = 10 * 1024 * 1024
+    if len(contents) > max_size:
+        raise HTTPException(status_code=400, detail="Max filstorlek: 10MB")
+    
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = UPLOADS_DIR / filename
+    
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    return {"filename": filename, "url": f"/api/uploads/{filename}"}
+
+@api_router.get("/uploads/{filename}")
+async def get_upload(filename: str):
+    """Serve an uploaded file"""
+    filepath = UPLOADS_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Filen hittades inte")
+    return FileResponse(filepath)
 
 # ============== ROOT ==============
 

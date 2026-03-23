@@ -5,7 +5,9 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer } from 'lucide-react';
+import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Download, Image as ImageIcon } from 'lucide-react';
+
+const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
 const AdminOrders = () => {
   const { getAuthHeaders } = useAdmin();
@@ -99,18 +101,35 @@ const AdminOrders = () => {
       return lines.join('<br/>');
     };
 
-    const itemsHtml = (order.items || []).map((item, i) => `
-      <tr>
-        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${i + 1}</td>
-        <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
-          <strong>${item.name || 'Produkt'}</strong>
-          ${item.customization ? `<br/><span style="font-size:12px;color:#64748b;">${formatCustomization(item.customization)}</span>` : ''}
-        </td>
-        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">${item.quantity || 1}</td>
-        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;">${item.price || 0} kr</td>
-        <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;">${(item.price || 0) * (item.quantity || 1)} kr</td>
-      </tr>
-    `).join('');
+    const itemsHtml = (order.items || []).map((item, i) => {
+      let imagesHtml = '';
+      if (item.customization?.uploaded_image_url) {
+        imagesHtml = `<br/><img src="${API_BASE}${item.customization.uploaded_image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;margin-top:6px;border:1px solid #e2e8f0;"/>`;
+      }
+      if (item.customization?.pages) {
+        const pageImgs = item.customization.pages
+          .filter(pg => pg.image_urls?.length > 0)
+          .map(pg => pg.image_urls.map(url =>
+            `<img src="${API_BASE}${url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/>`
+          ).join('')).join('');
+        if (pageImgs) {
+          imagesHtml = `<br/><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">${pageImgs}</div>`;
+        }
+      }
+      return `
+        <tr>
+          <td style="padding:10px;border-bottom:1px solid #e2e8f0;">${i + 1}</td>
+          <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+            <strong>${item.name || 'Produkt'}</strong>
+            ${item.customization ? `<br/><span style="font-size:12px;color:#64748b;">${formatCustomization(item.customization)}</span>` : ''}
+            ${imagesHtml}
+          </td>
+          <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:center;">${item.quantity || 1}</td>
+          <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;">${item.price || 0} kr</td>
+          <td style="padding:10px;border-bottom:1px solid #e2e8f0;text-align:right;">${(item.price || 0) * (item.quantity || 1)} kr</td>
+        </tr>
+      `;
+    }).join('');
 
     const printWindow = window.open('', '_blank', 'width=800,height=900');
     printWindow.document.write(`
@@ -223,6 +242,20 @@ const AdminOrders = () => {
     order.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const downloadAllImages = (item) => {
+    const urls = item.customization?.pages?.flatMap(pg => pg.image_urls || []) || [];
+    if (urls.length === 0) { toast.error('Inga bilder att ladda ner'); return; }
+    urls.forEach((url, i) => {
+      const a = document.createElement('a');
+      a.href = `${API_BASE}${url}`;
+      a.download = `sida-${i + 1}${url.substring(url.lastIndexOf('.'))}`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      setTimeout(() => { a.click(); document.body.removeChild(a); }, i * 300);
+    });
+    toast.success(`Laddar ner ${urls.length} bilder...`);
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>;
@@ -359,12 +392,31 @@ const AdminOrders = () => {
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">Antal: {item.quantity || 1}</p>
                         {item.customization && (
-                          <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-0.5">
+                          <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
                             {item.customization.type === 'nametag' && (
                               <>
                                 {item.customization.child_name && <p>Namn: <strong>{item.customization.child_name}</strong></p>}
                                 {item.customization.font && <p>Typsnitt: {item.customization.font}</p>}
                                 {item.customization.background && <p>Bakgrund: {item.customization.background}</p>}
+                                {item.customization.uploaded_image_url && (
+                                  <div className="mt-2">
+                                    <p className="mb-1 font-medium">Uppladdad bild:</p>
+                                    <img
+                                      src={`${API_BASE}${item.customization.uploaded_image_url}`}
+                                      alt="Kunduppladdning"
+                                      className="w-20 h-20 object-cover rounded border"
+                                    />
+                                    <a
+                                      href={`${API_BASE}${item.customization.uploaded_image_url}`}
+                                      download
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline"
+                                    >
+                                      <Download className="w-3 h-3" /> Ladda ner
+                                    </a>
+                                  </div>
+                                )}
                               </>
                             )}
                             {item.customization.type === 'photoalbum' && (
@@ -372,6 +424,46 @@ const AdminOrders = () => {
                                 <p>Sidor: {item.customization.total_pages}</p>
                                 <p>Bilder: {item.customization.total_images || item.customization.images_count}</p>
                                 {item.customization.size && <p>Storlek: {item.customization.size}</p>}
+                                {item.customization.pages?.some(pg => pg.image_urls?.length > 0) && (
+                                  <div className="mt-2">
+                                    <p className="font-medium mb-1">Bilder per sida:</p>
+                                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                                      {item.customization.pages.filter(pg => pg.image_urls?.length > 0).map((pg) => (
+                                        <div key={pg.page_number} className="border rounded p-2 bg-white">
+                                          <p className="text-xs text-slate-500 mb-1">Sida {pg.page_number} ({pg.layout})</p>
+                                          <div className="flex gap-1 flex-wrap">
+                                            {pg.image_urls.map((url, imgIdx) => (
+                                              <div key={imgIdx} className="relative group">
+                                                <img
+                                                  src={`${API_BASE}${url}`}
+                                                  alt={`S${pg.page_number}-${imgIdx + 1}`}
+                                                  className="w-14 h-14 object-cover rounded border"
+                                                />
+                                                <a
+                                                  href={`${API_BASE}${url}`}
+                                                  download
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                                                >
+                                                  <Download className="w-4 h-4 text-white" />
+                                                </a>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <button
+                                      onClick={() => downloadAllImages(item)}
+                                      className="flex items-center gap-1.5 mt-2 text-xs font-medium text-[#2a9d8f] hover:underline"
+                                      data-testid="download-all-images"
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                      Ladda ner alla bilder
+                                    </button>
+                                  </div>
+                                )}
                               </>
                             )}
                             {!['nametag', 'photoalbum'].includes(item.customization.type) && (

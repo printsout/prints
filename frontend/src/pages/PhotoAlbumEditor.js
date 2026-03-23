@@ -226,6 +226,29 @@ const PhotoAlbumEditor = () => {
       return;
     }
     try {
+      toast.info('Laddar upp bilder...');
+
+      // Upload all images to server
+      const uploadedPages = [];
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const uploadedImages = [];
+        for (const img of page.images) {
+          if (img) {
+            const uploadRes = await api.post('/upload-base64', { image: img });
+            uploadedImages.push(uploadRes.data.url);
+          } else {
+            uploadedImages.push(null);
+          }
+        }
+        uploadedPages.push({
+          page_number: i + 1,
+          layout: page.layout,
+          image_count: getPageImageCount(page),
+          image_urls: uploadedImages.filter(Boolean),
+        });
+      }
+
       await addToCart({
         product_id: product.product_id,
         name: product.name,
@@ -237,11 +260,7 @@ const PhotoAlbumEditor = () => {
           total_pages: pages.length,
           total_images: getTotalImages(),
           size: selectedSize,
-          pages: pages.map((p, i) => ({
-            page_number: i + 1,
-            layout: p.layout,
-            image_count: getPageImageCount(p),
-          })),
+          pages: uploadedPages,
         },
       });
       toast.success('Fotoalbum tillagt i varukorgen!');
