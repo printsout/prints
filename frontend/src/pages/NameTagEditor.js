@@ -28,6 +28,19 @@ const HorseIcon = ({ className, style }) => (
   </svg>
 );
 
+// Custom Football/Soccer ball icon
+const FootballIcon = ({ className, style }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2L10 6.5L6 7.5L3.5 11" />
+    <path d="M12 2L14 6.5L18 7.5L20.5 11" />
+    <path d="M3.5 11L5 15L4 19.5" />
+    <path d="M20.5 11L19 15L20 19.5" />
+    <path d="M4 19.5L8.5 18L12 22L15.5 18L20 19.5" />
+    <polygon points="10,6.5 14,6.5 18,7.5 19,15 15.5,18 8.5,18 5,15 6,7.5" strokeWidth="1.8" fill="none" />
+  </svg>
+);
+
 // ─── FONTS ────────────────────────────────────────────
 const FONTS = [
   { id: 'pacifico', label: 'Moonlight', family: "'Pacifico', cursive" },
@@ -102,7 +115,7 @@ const ALL_MOTIFS = [
   { id: 'trophy', icon: Trophy, label: 'Trofé', color: '#FFB300', cats: ['sports'] },
   { id: 'medal', icon: Medal, label: 'Medalj', color: '#FFC107', cats: ['sports'] },
   { id: 'gamepad', icon: Gamepad2, label: 'Spel', color: '#7C4DFF', cats: ['sports', 'fun'] },
-  { id: 'football', icon: Goal, label: 'Fotboll', color: '#4CAF50', cats: ['sports', 'popular'] },
+  { id: 'football', icon: FootballIcon, label: 'Fotboll', color: '#1B5E20', cats: ['sports', 'popular'] },
   { id: 'volleyball', icon: Volleyball, label: 'Volleyboll', color: '#FF9800', cats: ['sports'] },
   { id: 'dumbbell', icon: Dumbbell, label: 'Gym', color: '#546E7A', cats: ['sports'] },
   { id: 'target', icon: Target, label: 'Bågskytte', color: '#E53935', cats: ['sports'] },
