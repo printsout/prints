@@ -31,9 +31,18 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 5. **JWT Timeout**: 8 timmars session, auto-logout vid expired token
 6. **Admin-lösenord**: Hashad med bcrypt, lagrad i .env (ej hårdkodad)
 
+### Admin Orderdetaljer (2026-03-23) - FIXAD
+- **Rotorsak**: CartItem och OrderItem Pydantic-modeller saknade `name`, `price`, `image`, `customization` fält
+- **Fix**: Lade till alla fält i backend-modeller + uppdaterade checkout-flödet att kopiera customization data
+- **Resultat**: Admin kan nu se alla kunddetaljer (namn, typsnitt, bakgrund, motiv, uppladdade bilder) och skriva ut ordrar
+- **Testade**: Backend 13/13, Frontend 100% - iteration_5.json
+
 ### Pågående (P1)
 1. Stripe Checkout - Komplett betalningsflöde
 2. Kundkontosida - Orderhistorik, sparade designer
+
+### Kommande (P1)
+- Fixa trasiga produkt-bilder (Unsplash/ORB-problem)
 
 ### Framtida (P2)
 1. E-postbekräftelse, Klarna/Swish, Backend-refaktorisering
@@ -47,6 +56,7 @@ En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa desig
 - Iteration 2: NameTagEditor - 100% (19/19)
 - Iteration 3: PhotoAlbumEditor - 100% (17/17)
 - Iteration 4: PhotoAlbumEditor multi-image - 100% (19/19)
+- Iteration 5: Order customization E2E - 100% (Backend 13/13, Frontend 100%)
 - Security: Rate limiting, headers, JWT timeout, password validation - ALL VERIFIED
 
 ## Preview URL
