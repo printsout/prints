@@ -16,12 +16,36 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  // Check token expiration
+  const isTokenExpired = (t) => {
+    if (!t) return true;
+    try {
+      const payload = JSON.parse(atob(t.split('.')[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
+  };
+
   useEffect(() => {
-    if (token) {
+    if (token && !isTokenExpired(token)) {
       fetchProfile();
+    } else if (token && isTokenExpired(token)) {
+      logout();
+      setLoading(false);
     } else {
       setLoading(false);
     }
+  }, [token]);
+
+  // Auto-logout check every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (token && isTokenExpired(token)) {
+        logout();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
   }, [token]);
 
   const fetchProfile = async () => {

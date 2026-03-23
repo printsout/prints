@@ -13,17 +13,38 @@ export const useAdmin = () => {
 
 export const AdminProvider = ({ children }) => {
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken'));
-  const [isAuthenticated, setIsAuthenticated] = useState(!!adminToken);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const isTokenExpired = (t) => {
+    if (!t) return true;
+    try {
+      const payload = JSON.parse(atob(t.split('.')[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
+  };
+
   useEffect(() => {
-    if (adminToken) {
+    if (adminToken && !isTokenExpired(adminToken)) {
       localStorage.setItem('adminToken', adminToken);
       setIsAuthenticated(true);
     } else {
       localStorage.removeItem('adminToken');
+      setAdminToken(null);
       setIsAuthenticated(false);
     }
+  }, [adminToken]);
+
+  // Auto-logout check every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (adminToken && isTokenExpired(adminToken)) {
+        logout();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
   }, [adminToken]);
 
   const login = async (email, password) => {

@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useAuth } from '../context/AuthContext';
+
+const passwordChecks = (pw) => [
+  { label: 'Minst 8 tecken', ok: pw.length >= 8 },
+  { label: 'En stor bokstav', ok: /[A-Z]/.test(pw) },
+  { label: 'En liten bokstav', ok: /[a-z]/.test(pw) },
+  { label: 'En siffra', ok: /\d/.test(pw) },
+  { label: 'Ett specialtecken', ok: /[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(pw) },
+];
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,6 +26,9 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const checks = passwordChecks(password);
+  const allPassed = checks.every(c => c.ok);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -26,13 +37,13 @@ const Register = () => {
       return;
     }
 
-    if (password !== confirmPassword) {
-      toast.error('Lösenorden matchar inte');
+    if (!allPassed) {
+      toast.error('Lösenordet uppfyller inte alla krav');
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('Lösenordet måste vara minst 6 tecken');
+    if (password !== confirmPassword) {
+      toast.error('Lösenorden matchar inte');
       return;
     }
 
@@ -104,7 +115,7 @@ const Register = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
-                  placeholder="Minst 6 tecken"
+                  placeholder="Starkt lösenord"
                   data-testid="register-password"
                 />
                 <button
@@ -115,6 +126,16 @@ const Register = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {password && (
+                <div className="mt-2 space-y-1" data-testid="password-requirements">
+                  {checks.map((c, i) => (
+                    <div key={i} className={`flex items-center gap-1.5 text-xs ${c.ok ? 'text-green-600' : 'text-slate-400'}`}>
+                      {c.ok ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                      {c.label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>

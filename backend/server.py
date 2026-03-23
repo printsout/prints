@@ -1,9 +1,14 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
+import re
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
@@ -13,6 +18,7 @@ from datetime import datetime, timezone, timedelta
 import jwt
 import bcrypt
 import base64
+import bleach
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
@@ -24,15 +30,30 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'nordicprint_secret')
+JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
+JWT_EXPIRATION_HOURS = 8  # Session timeout: 8 hours
 
 # Stripe Config
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 
+# Admin credentials from environment
+ADMIN_EMAIL = os.environ['ADMIN_EMAIL']
+ADMIN_PASSWORD_HASH = os.environ['ADMIN_PASSWORD_HASH']
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Create the main app with redirect_slashes disabled to handle both /products and /products/
 app = FastAPI(title="Printout API", redirect_slashes=False)
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "För många förfrågningar. Vänta en stund och försök igen."}
+    )
 
 # Create routers
 api_router = APIRouter(prefix="/api")
@@ -46,9 +67,33 @@ admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 
 security = HTTPBearer(auto_error=False)
 
-# Admin credentials (in production, store these securely)
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@printout.se')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'PrintoutAdmin2024!')
+# ─── Password validation ──────────────────────────
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_REGEX = re.compile(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]).{8,}$'
+)
+
+def validate_password(password: str) -> str:
+    """Validate password strength. Returns error message or empty string."""
+    if len(password) < PASSWORD_MIN_LENGTH:
+        return f"Lösenordet måste vara minst {PASSWORD_MIN_LENGTH} tecken"
+    if not re.search(r'[a-z]', password):
+        return "Lösenordet måste innehålla minst en liten bokstav"
+    if not re.search(r'[A-Z]', password):
+        return "Lösenordet måste innehålla minst en stor bokstav"
+    if not re.search(r'\d', password):
+        return "Lösenordet måste innehålla minst en siffra"
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
+        return "Lösenordet måste innehålla minst ett specialtecken"
+    return ""
+
+# ─── HTML sanitization ────────────────────────────
+ALLOWED_TAGS = ['h1', 'h2', 'h3', 'h4', 'p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote']
+ALLOWED_ATTRS = {'a': ['href', 'title']}
+
+def sanitize_html(content: str) -> str:
+    """Sanitize HTML content to prevent XSS attacks."""
+    return bleach.clean(content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -282,7 +327,13 @@ async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(secur
 # ============== AUTH ROUTES ==============
 
 @auth_router.post("/register", response_model=TokenResponse)
-async def register(user_data: UserCreate):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserCreate):
+    # Validate password strength
+    pwd_error = validate_password(user_data.password)
+    if pwd_error:
+        raise HTTPException(status_code=400, detail=pwd_error)
+    
     # Check if user exists
     existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing:
@@ -310,7 +361,8 @@ async def register(user_data: UserCreate):
     )
 
 @auth_router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user or not verify_password(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Felaktig e-post eller lösenord")
@@ -885,9 +937,10 @@ def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         raise HTTPException(status_code=401, detail="Ogiltig token")
 
 @admin_router.post("/login")
-async def admin_login(login_data: AdminLogin):
-    """Admin login endpoint"""
-    if login_data.email != ADMIN_EMAIL or login_data.password != ADMIN_PASSWORD:
+@limiter.limit("5/minute")
+async def admin_login(request: Request, login_data: AdminLogin):
+    """Admin login endpoint with rate limiting"""
+    if login_data.email != ADMIN_EMAIL or not verify_password(login_data.password, ADMIN_PASSWORD_HASH):
         raise HTTPException(status_code=401, detail="Felaktiga inloggningsuppgifter")
     
     # Create admin token
@@ -1187,8 +1240,10 @@ async def get_content_pages(admin = Depends(verify_admin_token)):
 
 @admin_router.post("/content")
 async def create_content_page(page: ContentPage, admin = Depends(verify_admin_token)):
-    """Create a new content page"""
+    """Create a new content page with XSS sanitization"""
     page_data = page.model_dump()
+    page_data["content"] = sanitize_html(page_data["content"])
+    page_data["title"] = bleach.clean(page_data["title"], tags=[], strip=True)
     page_data["page_id"] = str(uuid.uuid4())
     page_data["created_at"] = datetime.now(timezone.utc).isoformat()
     page_data["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -1200,8 +1255,10 @@ async def create_content_page(page: ContentPage, admin = Depends(verify_admin_to
 
 @admin_router.put("/content/{page_id}")
 async def update_content_page(page_id: str, page: ContentPage, admin = Depends(verify_admin_token)):
-    """Update a content page"""
+    """Update a content page with XSS sanitization"""
     page_data = page.model_dump()
+    page_data["content"] = sanitize_html(page_data["content"])
+    page_data["title"] = bleach.clean(page_data["title"], tags=[], strip=True)
     page_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     slug = page_data["slug"].strip("/")
     if not slug.startswith("/"):
@@ -1259,6 +1316,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ─── Security Headers Middleware ───────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 @app.on_event("startup")
 async def startup_init():
