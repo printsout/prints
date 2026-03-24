@@ -12,11 +12,12 @@ import { useAuth } from '../context/AuthContext';
 const Checkout = () => {
   const navigate = useNavigate();
   const { cart, sessionId, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   
   const [products, setProducts] = useState({});
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState(null);
   const [shippingConfig, setShippingConfig] = useState({ shipping_enabled: true, shipping_cost: 49, free_shipping_threshold: 500, discount_enabled: false, discount_percent: 0, tax_enabled: true, tax_rate: 25 });
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -148,21 +149,29 @@ const Checkout = () => {
         }
       };
 
-      const response = await api.post('/payments/checkout', checkoutData, {
-        headers: {
-          'Origin': window.location.origin
-        }
-      });
+      const headers = { 'Origin': window.location.origin };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await api.post('/payments/checkout', checkoutData, { headers });
 
       if (response.data.checkout_url) {
-        // Redirect to Stripe
-        window.location.href = response.data.checkout_url;
+        setCheckoutUrl(response.data.checkout_url);
+        // Try redirect to Stripe
+        try {
+          window.location.assign(response.data.checkout_url);
+        } catch (redirectErr) {
+          // Fallback: open in same tab
+          window.open(response.data.checkout_url, '_self');
+        }
       } else {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      toast.error('Kunde inte skapa betalning. Försök igen.');
+      const errMsg = error.response?.data?.detail || 'Kunde inte skapa betalning. Försök igen.';
+      toast.error(errMsg);
       setProcessing(false);
     }
   };
@@ -310,16 +319,8 @@ const Checkout = () => {
                       <p className="font-medium">Kort (Visa/Mastercard)</p>
                       <p className="text-sm text-slate-500">Säker betalning via Stripe</p>
                     </div>
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
-                      alt="Visa" 
-                      className="h-6"
-                    />
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                      alt="Mastercard" 
-                      className="h-6"
-                    />
+                    <span className="text-xs font-bold text-[#1A1F71] border border-[#1A1F71] rounded px-1.5 py-0.5">VISA</span>
+                    <span className="text-xs font-bold text-white bg-[#EB001B] rounded px-1.5 py-0.5">MC</span>
                   </label>
 
                   <label 
@@ -479,12 +480,26 @@ const Checkout = () => {
                   {processing ? (
                     <>
                       <div className="spinner w-5 h-5 mr-2" />
-                      Bearbetar...
+                      Omdirigerar till Stripe...
                     </>
                   ) : (
                     `Betala ${total.toFixed(2)} kr`
                   )}
                 </Button>
+
+                {/* Fallback link if redirect doesn't work */}
+                {processing && checkoutUrl && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-center">
+                    <p className="text-sm text-amber-800 mb-2">Omdirigeras inte? Klicka här:</p>
+                    <a 
+                      href={checkoutUrl}
+                      className="text-sm font-semibold text-[#2a9d8f] hover:underline"
+                      data-testid="stripe-fallback-link"
+                    >
+                      Gå till betalningssidan
+                    </a>
+                  </div>
+                )}
 
                 {/* Security badge */}
                 <div className="flex items-center justify-center gap-2 mt-4 text-xs text-slate-500">
