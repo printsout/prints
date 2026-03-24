@@ -24,7 +24,7 @@ const LAYOUTS = [
 ];
 
 function createPage(id) {
-  return { id, layout: 'single', images: [null] };
+  return { id, layout: 'single', images: [null], captions: [''] };
 }
 
 function resizeImages(images, newSlots) {
@@ -33,8 +33,14 @@ function resizeImages(images, newSlots) {
   return result.slice(0, newSlots);
 }
 
+function resizeCaptions(captions, newSlots) {
+  const result = [...(captions || [])];
+  while (result.length < newSlots) result.push('');
+  return result.slice(0, newSlots);
+}
+
 // ─── SLOT COMPONENT ────────────────────────────────
-function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove }) {
+function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove, caption, onCaptionChange }) {
   const inputRef = useRef(null);
 
   const handleFile = (e) => {
@@ -48,15 +54,27 @@ function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove }) {
 
   if (image) {
     return (
-      <div className="relative w-full h-full group">
-        <img src={image} alt="" className="w-full h-full object-cover" />
-        <button
-          onClick={(e) => { e.stopPropagation(); onRemove(pageIndex, slotIndex); }}
-          className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+      <div className="relative w-full h-full group flex flex-col">
+        <div className="relative flex-1 min-h-0">
+          <img src={image} alt="" className="w-full h-full object-cover" />
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(pageIndex, slotIndex); }}
+            className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
           data-testid={`remove-img-${pageIndex}-${slotIndex}`}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
+        </div>
+        <input
+          type="text"
+          value={caption || ''}
+          onChange={(e) => onCaptionChange(pageIndex, slotIndex, e.target.value)}
+          placeholder="Bildtext..."
+          maxLength={80}
+          className="w-full px-2 py-1 text-xs border-t border-slate-200 bg-white/90 focus:outline-none focus:bg-white placeholder:text-slate-300"
+          onClick={(e) => e.stopPropagation()}
+          data-testid={`caption-${pageIndex}-${slotIndex}`}
+        />
       </div>
     );
   }
@@ -75,8 +93,8 @@ function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove }) {
 }
 
 // ─── LAYOUT RENDERER ───────────────────────────────
-function PagePreview({ page, pageIndex, onUpload, onRemove }) {
-  const { layout, images } = page;
+function PagePreview({ page, pageIndex, onUpload, onRemove, onCaptionChange }) {
+  const { layout, images, captions } = page;
   const slot = (idx) => (
     <ImageSlot
       key={idx}
@@ -85,6 +103,8 @@ function PagePreview({ page, pageIndex, onUpload, onRemove }) {
       pageIndex={pageIndex}
       onUpload={onUpload}
       onRemove={onRemove}
+      caption={captions?.[idx] || ''}
+      onCaptionChange={onCaptionChange}
     />
   );
 
@@ -199,6 +219,17 @@ const PhotoAlbumEditor = () => {
     });
   };
 
+  const handleCaptionChange = (pageIdx, slotIdx, text) => {
+    setPages(prev => {
+      const updated = [...prev];
+      const newCaptions = [...(updated[pageIdx].captions || [])];
+      while (newCaptions.length <= slotIdx) newCaptions.push('');
+      newCaptions[slotIdx] = text;
+      updated[pageIdx] = { ...updated[pageIdx], captions: newCaptions };
+      return updated;
+    });
+  };
+
   // ── Layout change ──
   const changeLayout = (layoutId) => {
     const layoutDef = LAYOUTS.find(l => l.id === layoutId);
@@ -210,6 +241,7 @@ const PhotoAlbumEditor = () => {
         ...updated[currentPage],
         layout: layoutId,
         images: resizeImages(oldImages, layoutDef.slots),
+        captions: resizeCaptions(updated[currentPage].captions, layoutDef.slots),
       };
       return updated;
     });
@@ -270,6 +302,7 @@ const PhotoAlbumEditor = () => {
           layout: page.layout,
           image_count: getPageImageCount(page),
           image_urls: uploadedImages.filter(Boolean),
+          captions: (page.captions || []).filter((c, idx) => page.images[idx] && c),
         });
       }
 
@@ -549,6 +582,7 @@ const PhotoAlbumEditor = () => {
                   pageIndex={currentPage}
                   onUpload={handleUpload}
                   onRemove={handleRemoveImage}
+                  onCaptionChange={handleCaptionChange}
                 />
               </div>
               <div className="px-4 py-2 border-t bg-slate-50 flex items-center justify-between">
