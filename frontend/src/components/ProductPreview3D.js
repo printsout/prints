@@ -27,12 +27,12 @@ const ProductPreview3D = ({
   // Product base images - using realistic product photos
   const productImages = {
     mug: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/5873ed5acaeb522542d8481578b5d918c617c0025ae609a5088862d7374e4318.png',
-    tshirt: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/d60fb33f6192fec66526af917d04b6feb30e9199596ef2fe9dff6989050a50b9.png',
-    hoodie: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/f87b9b809a4adfebf0b5999e3bbf45b194a60be0474d3fe7b92a066a1448d811.png',
-    poster: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/f8098c64534fa9bcee11f896b75494d3de0342fa8e94566d05fe95c61d14bbc6.png',
+    tshirt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600',
+    hoodie: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600',
+    poster: 'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=600',
     phonecase: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/85a45f02a7e9178632d56b673ee19b1c5ee40cbb0d3c4c37dd4c5ea35eaaf2e4.png',
-    totebag: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/402ace3c28503c6ce3f64ec8a4a0aec70e0dbdc01db985f79f7ef08898bc5973.png',
-    calendar: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/73ab1b12f8b3c2e29854c9bac9986efe2365b62e7046bef4f997ba996a49989a.png'
+    totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600',
+    calendar: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600'
   };
 
   // Texture area bounds for each product (the printable area on the product)
