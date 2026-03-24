@@ -57,6 +57,12 @@ function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove, caption, o
       <div className="relative w-full h-full group flex flex-col">
         <div className="relative flex-1 min-h-0">
           <img src={image} alt="" className="w-full h-full object-cover" />
+          {/* Caption overlay on image */}
+          {caption && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+              <p className="text-white text-xs font-medium text-center drop-shadow-md leading-tight">{caption}</p>
+            </div>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(pageIndex, slotIndex); }}
             className="absolute top-1.5 right-1.5 p-1.5 bg-red-500/90 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
@@ -69,9 +75,9 @@ function ImageSlot({ image, slotIndex, pageIndex, onUpload, onRemove, caption, o
           type="text"
           value={caption || ''}
           onChange={(e) => onCaptionChange(pageIndex, slotIndex, e.target.value)}
-          placeholder="Bildtext..."
+          placeholder="Skriv bildtext..."
           maxLength={80}
-          className="w-full px-2 py-1 text-xs border-t border-slate-200 bg-white/90 focus:outline-none focus:bg-white placeholder:text-slate-300"
+          className="w-full px-2 py-1.5 text-xs border-t border-slate-200 bg-slate-50 focus:outline-none focus:bg-white placeholder:text-slate-300"
           onClick={(e) => e.stopPropagation()}
           data-testid={`caption-${pageIndex}-${slotIndex}`}
         />
