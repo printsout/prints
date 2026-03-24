@@ -26,24 +26,24 @@ const ProductPreview3D = ({
 
   // Product base images - using realistic product photos
   const productImages = {
-    mug: 'https://images.unsplash.com/photo-1680818080459-1b9ad0e9cd78?w=600',
-    tshirt: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600',
-    hoodie: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600',
-    poster: 'https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=600',
+    mug: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/5873ed5acaeb522542d8481578b5d918c617c0025ae609a5088862d7374e4318.png',
+    tshirt: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/d60fb33f6192fec66526af917d04b6feb30e9199596ef2fe9dff6989050a50b9.png',
+    hoodie: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/f87b9b809a4adfebf0b5999e3bbf45b194a60be0474d3fe7b92a066a1448d811.png',
+    poster: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/f8098c64534fa9bcee11f896b75494d3de0342fa8e94566d05fe95c61d14bbc6.png',
     phonecase: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/85a45f02a7e9178632d56b673ee19b1c5ee40cbb0d3c4c37dd4c5ea35eaaf2e4.png',
-    totebag: 'https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=600',
-    calendar: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600'
+    totebag: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/402ace3c28503c6ce3f64ec8a4a0aec70e0dbdc01db985f79f7ef08898bc5973.png',
+    calendar: 'https://static.prod-images.emergentagent.com/jobs/cd68a842-19ed-45bc-a36c-2389ae41c63e/images/73ab1b12f8b3c2e29854c9bac9986efe2365b62e7046bef4f997ba996a49989a.png'
   };
 
   // Texture area bounds for each product (the printable area on the product)
   const textureAreas = {
     mug: { 
-      top: 15, 
-      left: 12, 
-      width: 45, 
-      height: 65,
-      containerWidth: 45,
-      containerHeight: 65
+      top: 18, 
+      left: 8, 
+      width: 55, 
+      height: 60,
+      containerWidth: 55,
+      containerHeight: 60
     },
     tshirt: { 
       top: 22, 
@@ -163,9 +163,10 @@ const ProductPreview3D = ({
       left: `${posX}%`,
       top: `${posY}%`,
       transform: `translate(-50%, -50%) rotate(${rot}deg)`,
-      objectFit: 'cover',
+      objectFit: 'contain',
       mixBlendMode: 'multiply',
-      opacity: 0.92,
+      opacity: 0.9,
+      borderRadius: '2px',
     };
   };
 
@@ -246,7 +247,10 @@ const ProductPreview3D = ({
             <div 
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)',
+                background: modelType === 'mug' 
+                  ? 'linear-gradient(90deg, rgba(0,0,0,0.08) 0%, rgba(255,255,255,0.12) 30%, transparent 50%, rgba(0,0,0,0.06) 85%, rgba(0,0,0,0.12) 100%)'
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)',
+                borderRadius: modelType === 'mug' ? '8% / 2%' : '2%',
               }}
             />
           </div>
