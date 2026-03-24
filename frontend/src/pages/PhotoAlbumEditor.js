@@ -139,8 +139,15 @@ const PhotoAlbumEditor = () => {
   const [quantity, setQuantity] = useState(1);
   const [coverImage, setCoverImage] = useState(null);
   const [coverText, setCoverText] = useState('');
+  const [coverMaterial, setCoverMaterial] = useState('hardpaper');
   const [showCover, setShowCover] = useState(true);
   const coverInputRef = useRef(null);
+
+  const COVER_MATERIALS = [
+    { id: 'hardpaper', label: 'Hårt papper', desc: 'Klassiskt hårt kartongomslag', price: 0 },
+    { id: 'fabric', label: 'Tygbeklätt', desc: 'Hårt papper beklätt med tyg', price: 49 },
+    { id: 'leather', label: 'Konstläder', desc: 'Hårt papper beklätt med konstläder', price: 79 },
+  ];
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -234,7 +241,8 @@ const PhotoAlbumEditor = () => {
 
   const extraPageCost = Math.max(0, pages.length - DEFAULT_PAGES) * 5;
   const basePrice = product?.price || 0;
-  const totalPerItem = basePrice + extraPageCost;
+  const materialCost = COVER_MATERIALS.find(m => m.id === coverMaterial)?.price || 0;
+  const totalPerItem = basePrice + extraPageCost + materialCost;
 
   const handleAddToCart = async () => {
     if (getTotalImages() === 0) {
@@ -285,6 +293,7 @@ const PhotoAlbumEditor = () => {
           size: selectedSize,
           cover_image_url: coverImageUrl,
           cover_text: coverText || null,
+          cover_material: coverMaterial,
           pages: uploadedPages,
         },
       });
@@ -442,6 +451,38 @@ const PhotoAlbumEditor = () => {
                     data-testid="cover-text-input"
                   />
                   <p className="text-xs text-slate-400 mt-1">Visas längst ner på omslaget</p>
+                </div>
+
+                {/* Cover material selection */}
+                <div className="bg-white rounded-xl border p-4" data-testid="cover-material-section">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Välj omslagsmaterial</h3>
+                  <div className="space-y-2">
+                    {COVER_MATERIALS.map(mat => (
+                      <button
+                        key={mat.id}
+                        onClick={() => setCoverMaterial(mat.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                          coverMaterial === mat.id
+                            ? 'border-[#2a9d8f] bg-[#2a9d8f]/5'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                        data-testid={`cover-material-${mat.id}`}
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex-shrink-0 ${
+                          mat.id === 'hardpaper' ? 'bg-amber-100 border border-amber-200' :
+                          mat.id === 'fabric' ? 'bg-slate-200 border border-slate-300' :
+                          'bg-stone-800 border border-stone-700'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800">{mat.label}</p>
+                          <p className="text-xs text-slate-400">{mat.desc}</p>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-600 flex-shrink-0">
+                          {mat.price === 0 ? 'Ingår' : `+${mat.price} kr`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </>
             ) : (
@@ -715,6 +756,12 @@ const PhotoAlbumEditor = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Extra sidor ({pages.length - DEFAULT_PAGES} st)</span>
                     <span className="text-slate-700">+{extraPageCost} kr</span>
+                  </div>
+                )}
+                {materialCost > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">{COVER_MATERIALS.find(m => m.id === coverMaterial)?.label}</span>
+                    <span className="text-slate-700">+{materialCost} kr</span>
                   </div>
                 )}
                 {quantity > 1 && (
