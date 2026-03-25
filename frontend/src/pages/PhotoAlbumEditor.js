@@ -282,6 +282,49 @@ const PhotoAlbumEditor = () => {
   const materialCost = COVER_MATERIALS.find(m => m.id === coverMaterial)?.price || 0;
   const totalPerItem = basePrice + extraPageCost + materialCost;
 
+  // ── Burn caption onto image using Canvas ──
+  const burnCaptionOnImage = (imageSrc, captionText) => {
+    return new Promise((resolve) => {
+      if (!captionText) {
+        resolve(imageSrc);
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+
+        // Draw original image
+        ctx.drawImage(img, 0, 0);
+
+        // Draw gradient overlay at bottom
+        const gradientHeight = img.height * 0.18;
+        const gradient = ctx.createLinearGradient(0, img.height - gradientHeight, 0, img.height);
+        gradient.addColorStop(0, 'rgba(0,0,0,0)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, img.height - gradientHeight, img.width, gradientHeight);
+
+        // Draw text
+        const fontSize = Math.max(16, Math.round(img.width * 0.035));
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(captionText, img.width / 2, img.height - fontSize * 0.6, img.width * 0.9);
+
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      };
+      img.onerror = () => resolve(imageSrc);
+      img.src = imageSrc;
+    });
+  };
+
   const handleAddToCart = async () => {
     if (getTotalImages() === 0) {
       toast.error('Lägg till minst en bild i ditt album');
@@ -290,14 +333,17 @@ const PhotoAlbumEditor = () => {
     try {
       toast.info('Laddar upp bilder...');
 
-      // Upload all images to server
+      // Upload all images (with captions burned in) to server
       const uploadedPages = [];
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         const uploadedImages = [];
-        for (const img of page.images) {
+        for (let s = 0; s < page.images.length; s++) {
+          const img = page.images[s];
           if (img) {
-            const uploadRes = await api.post('/upload-base64', { image: img });
+            const caption = page.captions?.[s] || '';
+            const finalImg = await burnCaptionOnImage(img, caption);
+            const uploadRes = await api.post('/upload-base64', { image: finalImg });
             uploadedImages.push(uploadRes.data.url);
           } else {
             uploadedImages.push(null);
@@ -312,10 +358,11 @@ const PhotoAlbumEditor = () => {
         });
       }
 
-      // Upload cover image if exists
+      // Upload cover image if exists (with text burned in)
       let coverImageUrl = null;
       if (coverImage) {
-        const coverRes = await api.post('/upload-base64', { image: coverImage });
+        const finalCover = await burnCaptionOnImage(coverImage, coverText);
+        const coverRes = await api.post('/upload-base64', { image: finalCover });
         coverImageUrl = coverRes.data.url;
       }
 
