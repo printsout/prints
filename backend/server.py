@@ -473,10 +473,15 @@ async def customer_forgot_password(request: Request, data: dict):
         </div>
         """
         params = {
-            "from": SENDER_EMAIL,
+            "from": f"PrintsOut <{SENDER_EMAIL}>",
             "to": [email],
             "subject": "Återställ ditt lösenord - PrintsOut",
-            "html": html
+            "html": html,
+            "text": f"Hej!\n\nVi fick en begäran om att återställa lösenordet för ditt konto.\n\nKlicka på länken nedan för att välja ett nytt lösenord:\n{reset_link}\n\nLänken är giltig i 30 minuter.\n\nMed vänliga hälsningar,\nPrintsOut",
+            "headers": {
+                "X-Entity-Ref-ID": reset_token,
+                "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
+            }
         }
         await asyncio.to_thread(resend.Emails.send, params)
         logger.info(f"Password reset link sent to {email}")
@@ -579,10 +584,13 @@ async def send_order_confirmation_email(order: dict):
         """
 
         params = {
-            "from": SENDER_EMAIL,
+            "from": f"PrintsOut <{SENDER_EMAIL}>",
             "to": [order["email"]],
             "subject": f"Orderbekräftelse #{order_id} - PrintsOut",
-            "html": html
+            "html": html,
+            "headers": {
+                "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
+            }
         }
         await asyncio.to_thread(resend.Emails.send, params)
         logger.info(f"Order confirmation email sent to {order['email']} for order {order['order_id']}")
@@ -1952,10 +1960,13 @@ async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
     for email in all_emails:
         try:
             params = {
-                "from": SENDER_EMAIL,
+                "from": f"PrintsOut <{SENDER_EMAIL}>",
                 "to": [email],
                 "subject": f"Din exklusiva rabattkod: {discount_code} — {code_doc['discount_percent']}% rabatt!",
                 "html": html_template,
+                "headers": {
+                    "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
+                }
             }
             await asyncio.to_thread(resend.Emails.send, params)
             sent_count += 1
