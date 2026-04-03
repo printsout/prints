@@ -416,6 +416,73 @@ async def get_profile(user: dict = Depends(require_auth)):
         raise HTTPException(status_code=404, detail="Användare hittades inte")
     return UserResponse(**user_doc)
 
+@auth_router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def customer_forgot_password(request: Request, data: dict):
+    """Generate a password reset code for customers and attempt to email it"""
+    email = data.get("email", "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="E-post krävs")
+
+    user = await db.users.find_one({"email": email}, {"_id": 0, "password_hash": 0})
+    # Always return success to not reveal if email exists
+    if not user:
+        return {"message": "Om e-postadressen finns i systemet skickas en återställningskod"}
+
+    reset_code = str(uuid.uuid4())[:8].upper()
+    await db.user_password_resets.delete_many({"email": email})
+    await db.user_password_resets.insert_one({
+        "email": email,
+        "reset_code": reset_code,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "used": False
+    })
+
+    # Try to send email
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [email],
+            "subject": "Återställ ditt lösenord - Printsout",
+            "html": f"<h2>Återställ ditt lösenord</h2><p>Din återställningskod är:</p><h1 style='letter-spacing:4px;font-family:monospace'>{reset_code}</h1><p>Koden är giltig i 15 minuter.</p><p>Om du inte begärde detta kan du ignorera detta mail.</p>"
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Password reset email sent to {email}")
+    except Exception as e:
+        logger.warning(f"Failed to send reset email: {e}")
+
+    return {"message": "Om e-postadressen finns i systemet skickas en återställningskod"}
+
+@auth_router.post("/reset-password")
+@limiter.limit("5/minute")
+async def customer_reset_password(request: Request, data: dict):
+    """Reset customer password using reset code"""
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip().upper()
+    new_password = data.get("new_password", "")
+
+    pwd_error = validate_password(new_password)
+    if pwd_error:
+        raise HTTPException(status_code=400, detail=pwd_error)
+
+    reset = await db.user_password_resets.find_one({
+        "email": email,
+        "reset_code": code,
+        "used": False
+    }, {"_id": 0})
+
+    if not reset:
+        raise HTTPException(status_code=400, detail="Ogiltig eller utgången kod")
+
+    if datetime.now(timezone.utc).isoformat() > reset["expires_at"]:
+        raise HTTPException(status_code=400, detail="Koden har gått ut")
+
+    new_hash = hash_password(new_password)
+    await db.users.update_one({"email": email}, {"$set": {"password_hash": new_hash}})
+    await db.user_password_resets.update_one({"reset_code": code}, {"$set": {"used": True}})
+
+    return {"message": "Lösenordet har ändrats. Du kan nu logga in."}
+
 # ============== PRODUCTS ROUTES ==============
 
 @products_router.get("/", response_model=List[Product])
