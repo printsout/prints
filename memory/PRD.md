@@ -42,7 +42,7 @@ Swedish (Svenska)
 - [x] Made Admin 2FA MANDATORY - login always requires authenticator code, QR setup forced on first login (11/11 tests passed)
 - [x] Verified Forgot Password + Reset Password flows
 - [x] Added "Säkerhet" (Security) page to Admin Panel with activity log, 2FA status, login count, and security events
-- [x] Added Customer "Glömt lösenord" (Forgot Password) flow with email reset code via Resend (12/12 tests passed)
+- [x] Added Customer "Glömt lösenord" flow with clickable reset LINK via email (12/12 tests passed)
 - [x] Implemented real order confirmation email via Resend (replaces mock) - sent on both payment status check and Stripe webhook
 
 ## Pending Issues
