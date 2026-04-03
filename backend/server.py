@@ -1651,10 +1651,23 @@ async def update_settings(settings: SiteSettings, admin = Depends(verify_admin_t
     return {"message": "Inställningar uppdaterade"}
 
 @admin_router.get("/logs")
+@admin_router.get("/logs")
 async def get_admin_logs(admin = Depends(verify_admin_token), skip: int = 0, limit: int = 100):
     """Get admin activity logs"""
     logs = await db.admin_logs.find({}, {"_id": 0}).sort("timestamp", -1).skip(skip).limit(limit).to_list(limit)
     return {"logs": logs}
+
+@admin_router.delete("/logs")
+async def clear_admin_logs(admin = Depends(verify_admin_token)):
+    """Clear all admin activity logs"""
+    result = await db.admin_logs.delete_many({})
+    await db.admin_logs.insert_one({
+        "action": "clear_logs",
+        "admin_email": ADMIN_EMAIL,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "details": f"{result.deleted_count} poster raderade"
+    })
+    return {"message": f"{result.deleted_count} loggposter raderade"}
 
 @admin_router.get("/payment-settings")
 async def get_payment_settings(admin = Depends(verify_admin_token)):

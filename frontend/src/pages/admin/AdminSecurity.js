@@ -3,7 +3,7 @@ import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
-import { Shield, ShieldCheck, ShieldOff, RefreshCw, LogIn, KeyRound, UserCog, Package, CreditCard, AlertTriangle } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldOff, RefreshCw, LogIn, KeyRound, UserCog, Package, CreditCard, AlertTriangle, Trash2 } from 'lucide-react';
 
 const ACTION_META = {
   login: { label: 'Inloggning', icon: LogIn, color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -11,6 +11,7 @@ const ACTION_META = {
   setup_2fa: { label: '2FA-installation startad', icon: Shield, color: 'text-blue-600', bg: 'bg-blue-50' },
   enable_2fa: { label: '2FA aktiverad', icon: ShieldCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
   disable_2fa: { label: '2FA inaktiverad', icon: ShieldOff, color: 'text-amber-600', bg: 'bg-amber-50' },
+  clear_logs: { label: 'Logg rensad', icon: Trash2, color: 'text-slate-600', bg: 'bg-slate-50' },
   password_reset_request: { label: 'Begäran om ny kod', icon: KeyRound, color: 'text-amber-600', bg: 'bg-amber-50' },
   password_reset: { label: 'Nytt lösenord satt', icon: KeyRound, color: 'text-red-600', bg: 'bg-red-50' },
   update_payment_settings: { label: 'Betalningsinställningar ändrade', icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -60,6 +61,17 @@ const AdminSecurity = () => {
     fetchLogs();
     fetch2FAStatus();
   }, [fetchLogs, fetch2FAStatus]);
+
+  const handleClearLogs = async () => {
+    if (!window.confirm('Är du säker på att du vill rensa hela aktivitetsloggen?')) return;
+    try {
+      await api.delete('/admin/logs', { headers: getAuthHeaders() });
+      toast.success('Aktivitetsloggen har rensats');
+      fetchLogs();
+    } catch (err) {
+      toast.error('Kunde inte rensa loggen');
+    }
+  };
 
   const filteredLogs = filter === 'all' ? logs : logs.filter(l => {
     if (filter === 'auth') return ['login', 'login_2fa', 'password_reset_request', 'password_reset'].includes(l.action);
@@ -133,6 +145,9 @@ const AdminSecurity = () => {
             ))}
             <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading} data-testid="refresh-logs-btn">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleClearLogs} className="text-red-500 hover:text-red-700 hover:border-red-300" data-testid="clear-logs-btn">
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </div>
