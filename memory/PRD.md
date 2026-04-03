@@ -39,6 +39,7 @@ Swedish (Svenska)
 - [x] Fixed AdminContext.js to export setAdminToken (was breaking AdminLogin.js)
 - [x] Added 2FA management UI to AdminSettings.js (setup QR code, confirm, disable)
 - [x] Verified Admin 2FA flow end-to-end (17/17 backend tests, all frontend tests passed)
+- [x] Made Admin 2FA MANDATORY - login always requires authenticator code, QR setup forced on first login (11/11 tests passed)
 - [x] Verified Forgot Password + Reset Password flows
 - [x] Added "Säkerhet" (Security) page to Admin Panel with activity log, 2FA status, login count, and security events
 - [x] Added Customer "Glömt lösenord" (Forgot Password) flow with email reset code via Resend (12/12 tests passed)
