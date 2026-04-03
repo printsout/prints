@@ -22,6 +22,9 @@ import base64
 import bleach
 import resend
 import asyncio
+import pyotp
+import qrcode
+import io
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
@@ -1006,11 +1009,23 @@ def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 @admin_router.post("/login")
 @limiter.limit("5/minute")
 async def admin_login(request: Request, login_data: AdminLogin):
-    """Admin login endpoint with rate limiting"""
+    """Admin login step 1: verify email + password, require 2FA if enabled"""
     if login_data.email != ADMIN_EMAIL or not verify_password(login_data.password, ADMIN_PASSWORD_HASH):
         raise HTTPException(status_code=401, detail="Felaktiga inloggningsuppgifter")
     
-    # Create admin token
+    # Check if 2FA is set up
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    
+    if admin_2fa and admin_2fa.get("totp_enabled"):
+        # 2FA is enabled - return temp token for step 2
+        temp_token = jwt.encode({
+            "sub": "admin_2fa_pending",
+            "email": ADMIN_EMAIL,
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=5)
+        }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+        return {"requires_2fa": True, "temp_token": temp_token}
+    
+    # No 2FA - issue full token directly
     token_data = {
         "sub": "admin",
         "email": ADMIN_EMAIL,
@@ -1018,16 +1033,183 @@ async def admin_login(request: Request, login_data: AdminLogin):
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     }
     token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    
-    # Log admin login
     await db.admin_logs.insert_one({
         "action": "login",
         "admin_email": ADMIN_EMAIL,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "ip": "system"
     })
+    return {"access_token": token, "token_type": "bearer", "requires_2fa": False}
+
+@admin_router.post("/verify-2fa")
+@limiter.limit("5/minute")
+async def admin_verify_2fa(request: Request, data: dict):
+    """Admin login step 2: verify TOTP code"""
+    temp_token = data.get("temp_token")
+    code = data.get("code", "")
     
+    try:
+        payload = jwt.decode(temp_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("sub") != "admin_2fa_pending":
+            raise HTTPException(status_code=401, detail="Ogiltig token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Koden har gått ut, logga in igen")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Ogiltig token")
+    
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    if not admin_2fa or not admin_2fa.get("totp_secret"):
+        raise HTTPException(status_code=400, detail="2FA är inte aktiverat")
+    
+    totp = pyotp.TOTP(admin_2fa["totp_secret"])
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(status_code=401, detail="Felaktig verifieringskod")
+    
+    # Code is valid - issue full admin token
+    token_data = {
+        "sub": "admin",
+        "email": ADMIN_EMAIL,
+        "is_admin": True,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    await db.admin_logs.insert_one({
+        "action": "login_2fa",
+        "admin_email": ADMIN_EMAIL,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ip": "system"
+    })
     return {"access_token": token, "token_type": "bearer"}
+
+@admin_router.post("/setup-2fa")
+async def admin_setup_2fa(admin=Depends(verify_admin_token)):
+    """Generate TOTP secret and QR code for 2FA setup"""
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=ADMIN_EMAIL, issuer_name="Printsout Admin")
+    
+    # Generate QR code as base64
+    qr = qrcode.make(uri)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    
+    # Store secret (not yet enabled)
+    await db.admin_settings_2fa.update_one(
+        {"admin_email": ADMIN_EMAIL},
+        {"$set": {"admin_email": ADMIN_EMAIL, "totp_secret": secret, "totp_enabled": False}},
+        upsert=True
+    )
+    
+    return {"qr_code": f"data:image/png;base64,{qr_base64}", "secret": secret}
+
+@admin_router.post("/confirm-2fa")
+async def admin_confirm_2fa(data: dict, admin=Depends(verify_admin_token)):
+    """Confirm 2FA setup with a valid code"""
+    code = data.get("code", "")
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    
+    if not admin_2fa or not admin_2fa.get("totp_secret"):
+        raise HTTPException(status_code=400, detail="Starta 2FA-installationen först")
+    
+    totp = pyotp.TOTP(admin_2fa["totp_secret"])
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(status_code=400, detail="Felaktig kod. Försök igen.")
+    
+    await db.admin_settings_2fa.update_one(
+        {"admin_email": ADMIN_EMAIL},
+        {"$set": {"totp_enabled": True}}
+    )
+    return {"message": "2FA aktiverat"}
+
+@admin_router.post("/disable-2fa")
+async def admin_disable_2fa(data: dict, admin=Depends(verify_admin_token)):
+    """Disable 2FA with a valid code"""
+    code = data.get("code", "")
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    
+    if not admin_2fa or not admin_2fa.get("totp_secret"):
+        raise HTTPException(status_code=400, detail="2FA är inte aktiverat")
+    
+    totp = pyotp.TOTP(admin_2fa["totp_secret"])
+    if not totp.verify(code, valid_window=1):
+        raise HTTPException(status_code=400, detail="Felaktig kod")
+    
+    await db.admin_settings_2fa.update_one(
+        {"admin_email": ADMIN_EMAIL},
+        {"$set": {"totp_enabled": False, "totp_secret": None}}
+    )
+    return {"message": "2FA inaktiverat"}
+
+@admin_router.get("/2fa-status")
+async def admin_2fa_status(admin=Depends(verify_admin_token)):
+    """Check if 2FA is enabled"""
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    return {"enabled": bool(admin_2fa and admin_2fa.get("totp_enabled"))}
+
+@admin_router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def admin_forgot_password(request: Request, data: dict):
+    """Generate password reset token"""
+    email = data.get("email", "")
+    if email != ADMIN_EMAIL:
+        # Don't reveal if email exists
+        return {"message": "Om e-postadressen finns skickas en återställningskod"}
+    
+    reset_code = str(uuid.uuid4())[:8].upper()
+    await db.admin_password_resets.delete_many({"admin_email": ADMIN_EMAIL})
+    await db.admin_password_resets.insert_one({
+        "admin_email": ADMIN_EMAIL,
+        "reset_code": reset_code,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "used": False
+    })
+    
+    # Log the reset code (in production, send via email)
+    logger.info(f"Admin password reset code: {reset_code}")
+    
+    return {"message": "Om e-postadressen finns skickas en återställningskod", "reset_code": reset_code}
+
+@admin_router.post("/reset-password")
+@limiter.limit("5/minute")
+async def admin_reset_password(request: Request, data: dict):
+    """Reset password using reset code"""
+    code = data.get("code", "")
+    new_password = data.get("new_password", "")
+    
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Lösenordet måste vara minst 8 tecken")
+    
+    reset = await db.admin_password_resets.find_one({
+        "admin_email": ADMIN_EMAIL,
+        "reset_code": code,
+        "used": False
+    }, {"_id": 0})
+    
+    if not reset:
+        raise HTTPException(status_code=400, detail="Ogiltig eller utgången kod")
+    
+    if datetime.now(timezone.utc).isoformat() > reset["expires_at"]:
+        raise HTTPException(status_code=400, detail="Koden har gått ut")
+    
+    # Hash new password and update .env
+    new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update in-memory and store in DB
+    global ADMIN_PASSWORD_HASH
+    ADMIN_PASSWORD_HASH = new_hash
+    await db.admin_settings_2fa.update_one(
+        {"admin_email": ADMIN_EMAIL},
+        {"$set": {"password_hash": new_hash}},
+        upsert=True
+    )
+    
+    await db.admin_password_resets.update_one(
+        {"reset_code": code},
+        {"$set": {"used": True}}
+    )
+    
+    return {"message": "Lösenordet har ändrats"}
 
 @admin_router.get("/stats")
 async def get_admin_stats(admin = Depends(verify_admin_token)):
@@ -1745,10 +1927,15 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 @app.on_event("startup")
 async def startup_init():
-    """Seed initial data only if the database is completely empty"""
+    """Seed initial data and load DB-stored password if exists"""
+    global ADMIN_PASSWORD_HASH
     existing = await db.products.find_one({}, {"_id": 0})
     if not existing:
         await init_data()
+    # Check if password was reset via DB
+    admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
+    if admin_2fa and admin_2fa.get("password_hash"):
+        ADMIN_PASSWORD_HASH = admin_2fa["password_hash"]
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
