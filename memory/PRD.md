@@ -42,6 +42,7 @@ Swedish (Svenska)
 - [x] Verified Forgot Password + Reset Password flows
 - [x] Added "Säkerhet" (Security) page to Admin Panel with activity log, 2FA status, login count, and security events
 - [x] Added Customer "Glömt lösenord" (Forgot Password) flow with email reset code via Resend (12/12 tests passed)
+- [x] Implemented real order confirmation email via Resend (replaces mock) - sent on both payment status check and Stripe webhook
 
 ## Pending Issues
 - [P2] Cross-Origin Read Blocking on residual Unsplash images

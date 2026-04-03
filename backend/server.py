@@ -483,6 +483,82 @@ async def customer_reset_password(request: Request, data: dict):
 
     return {"message": "Lösenordet har ändrats. Du kan nu logga in."}
 
+async def send_order_confirmation_email(order: dict):
+    """Send order confirmation email to customer"""
+    try:
+        items_html = ""
+        for item in order.get("items", []):
+            qty = item.get("quantity", 1)
+            price = item.get("price", 0)
+            name = item.get("product_name", "Produkt")
+            items_html += f'<tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#333">{name}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center;color:#333">{qty}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;color:#333">{price:.0f} kr</td></tr>'
+
+        total = order.get("total_amount", 0)
+        order_id = order.get("order_id", "")[:8]
+        created = order.get("created_at", "")[:10]
+
+        html = f"""
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
+          <div style="background:#1a1a2e;padding:30px;text-align:center">
+            <h1 style="color:#fff;margin:0;font-size:26px">PrintsOut</h1>
+          </div>
+          <div style="padding:30px">
+            <p style="font-size:16px;color:#333">Hej!</p>
+            <p style="font-size:16px;color:#333;line-height:1.6">
+              Tack för din beställning hos oss 🎉
+            </p>
+            <p style="font-size:16px;color:#333;line-height:1.6">
+              Vi har tagit emot din order och den behandlas just nu. Här är en sammanfattning:
+            </p>
+            <div style="background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0">
+              <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Ordernummer:</strong> #{order_id}</p>
+              <p style="margin:0;color:#555;font-size:14px"><strong>Datum:</strong> {created}</p>
+            </div>
+            <p style="font-size:15px;color:#333;font-weight:600;margin-bottom:8px">Dina produkter:</p>
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+              <thead>
+                <tr style="border-bottom:2px solid #1a1a2e">
+                  <th style="text-align:left;padding:8px 0;color:#1a1a2e">Produkt</th>
+                  <th style="text-align:center;padding:8px 0;color:#1a1a2e">Antal</th>
+                  <th style="text-align:right;padding:8px 0;color:#1a1a2e">Pris</th>
+                </tr>
+              </thead>
+              <tbody>{items_html}</tbody>
+            </table>
+            <div style="text-align:right;margin-top:16px;padding-top:12px;border-top:2px solid #1a1a2e">
+              <p style="font-size:18px;font-weight:700;color:#1a1a2e;margin:0">Totalt: {total:.0f} kr</p>
+            </div>
+            <p style="font-size:15px;color:#333;line-height:1.6;margin-top:24px">
+              Vi återkommer med en leveransbekräftelse så snart din order har skickats.
+            </p>
+            <p style="font-size:15px;color:#333;line-height:1.6">
+              Har du några frågor är du alltid välkommen att kontakta oss.
+            </p>
+            <p style="font-size:15px;color:#333;line-height:1.6">
+              Tack för att du handlar hos oss!
+            </p>
+            <p style="font-size:15px;color:#555;margin-top:24px">
+              Med vänliga hälsningar<br>
+              <strong style="color:#1a1a2e">PrintsOut</strong>
+            </p>
+          </div>
+          <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;color:#999">
+            <p style="margin:0">© {datetime.now().year} PrintsOut. Alla rättigheter förbehållna.</p>
+          </div>
+        </div>
+        """
+
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [order["email"]],
+            "subject": f"Orderbekräftelse #{order_id} - PrintsOut",
+            "html": html
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Order confirmation email sent to {order['email']} for order {order['order_id']}")
+    except Exception as e:
+        logger.warning(f"Failed to send order confirmation email: {e}")
+
 # ============== PRODUCTS ROUTES ==============
 
 @products_router.get("/", response_model=List[Product])
@@ -798,8 +874,8 @@ async def get_payment_status(session_id: str, request: Request):
                         "payment_status": "paid"
                     }}
                 )
-                # Send confirmation email (mocked)
-                logger.info(f"[MOCK EMAIL] Order confirmation sent to {order['email']} for order {order['order_id']}")
+                # Send confirmation email
+                await send_order_confirmation_email(order)
         
         return {
             "status": status.status,
@@ -833,6 +909,10 @@ async def stripe_webhook(request: Request):
                 {"session_id": webhook_response.session_id},
                 {"$set": {"status": "completed", "payment_status": "paid"}}
             )
+            # Send confirmation email via webhook
+            order = await db.orders.find_one({"stripe_session_id": webhook_response.session_id}, {"_id": 0})
+            if order:
+                await send_order_confirmation_email(order)
         
         return {"received": True}
     except Exception as e:
