@@ -10,11 +10,13 @@ import api from '../../services/api';
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { setAdminToken } = useAdmin();
-  const [step, setStep] = useState('login'); // login, 2fa, forgot, reset
+  const [step, setStep] = useState('login'); // login, setup, verify, forgot, reset
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [tempToken, setTempToken] = useState('');
+  const [qrCode, setQrCode] = useState('');
+  const [manualSecret, setManualSecret] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,14 +27,17 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const res = await api.post('/admin/login', { email, password });
-      if (res.data.requires_2fa) {
-        setTempToken(res.data.temp_token);
-        setStep('2fa');
-        toast.info('Ange verifieringskoden från din Authenticator-app');
+      setTempToken(res.data.temp_token);
+      if (res.data.needs_setup) {
+        // First time - show QR code
+        setQrCode(res.data.qr_code);
+        setManualSecret(res.data.secret);
+        setStep('setup');
+        toast.info('Skanna QR-koden med Microsoft Authenticator');
       } else {
-        setAdminToken(res.data.access_token);
-        toast.success('Inloggad som administratör');
-        navigate('/admin/dashboard');
+        // Already set up - ask for code
+        setStep('verify');
+        toast.info('Ange koden från din Authenticator-app');
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Inloggning misslyckades');
@@ -41,13 +46,13 @@ const AdminLogin = () => {
     }
   };
 
-  const handleVerify2FA = async (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const res = await api.post('/admin/verify-2fa', { temp_token: tempToken, code: totpCode });
       setAdminToken(res.data.access_token);
-      toast.success('Inloggad med tvåstegsverifiering');
+      toast.success('Inloggad!');
       navigate('/admin/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Felaktig kod');
@@ -112,13 +117,14 @@ const AdminLogin = () => {
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
           <p className="text-slate-400 mt-2">
             {step === 'login' && 'Logga in för att hantera din webshop'}
-            {step === '2fa' && 'Ange koden från Microsoft Authenticator'}
+            {step === 'setup' && 'Konfigurera tvåstegsverifiering'}
+            {step === 'verify' && 'Ange koden från Microsoft Authenticator'}
             {step === 'forgot' && 'Återställ ditt lösenord'}
             {step === 'reset' && 'Ange ny lösenord'}
           </p>
         </div>
 
-        {/* LOGIN STEP */}
+        {/* STEP 1: LOGIN */}
         {step === 'login' && (
           <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-xl p-8" data-testid="login-form">
             <div className="space-y-6">
@@ -145,7 +151,7 @@ const AdminLogin = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="........"
                     className="pl-10"
                     required
                     data-testid="admin-password"
@@ -167,9 +173,69 @@ const AdminLogin = () => {
           </form>
         )}
 
-        {/* 2FA STEP */}
-        {step === '2fa' && (
-          <form onSubmit={handleVerify2FA} className="bg-white rounded-2xl shadow-xl p-8" data-testid="2fa-form">
+        {/* STEP 2A: FIRST-TIME SETUP - QR code */}
+        {step === 'setup' && (
+          <form onSubmit={handleVerify} className="bg-white rounded-2xl shadow-xl p-8" data-testid="setup-2fa-form">
+            <div className="space-y-5">
+              <div className="flex justify-center">
+                <div className="w-14 h-14 rounded-full bg-[#2a9d8f]/10 flex items-center justify-center">
+                  <Shield className="w-7 h-7 text-[#2a9d8f]" />
+                </div>
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 text-center">Konfigurera Authenticator</h2>
+              <p className="text-sm text-slate-500 text-center">
+                Skanna QR-koden med Microsoft Authenticator för att aktivera tvåstegsverifiering
+              </p>
+              
+              <div className="flex justify-center">
+                <img
+                  src={qrCode}
+                  alt="QR-kod"
+                  className="w-48 h-48 border-4 border-white shadow-lg rounded-lg"
+                  data-testid="2fa-qr-code-img"
+                />
+              </div>
+
+              <details className="text-center">
+                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600">
+                  Kan du inte skanna? Ange manuell kod
+                </summary>
+                <p className="mt-2 font-mono text-xs bg-slate-50 p-2 rounded border select-all break-all" data-testid="2fa-manual-secret">
+                  {manualSecret}
+                </p>
+              </details>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Ange 6-siffrig kod från appen</label>
+                <Input
+                  type="text"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="text-center text-2xl tracking-[0.5em] font-mono h-14"
+                  maxLength={6}
+                  autoFocus
+                  required
+                  data-testid="totp-code-input"
+                />
+              </div>
+              <Button type="submit" className="w-full" size="lg" disabled={loading || totpCode.length !== 6} data-testid="verify-2fa-btn">
+                {loading ? 'Verifierar...' : 'Aktivera & Logga in'}
+              </Button>
+              <button
+                type="button"
+                onClick={() => { setStep('login'); setTotpCode(''); setQrCode(''); }}
+                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1"
+              >
+                <ArrowLeft className="w-4 h-4" /> Tillbaka
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 2B: RETURNING USER - just enter code */}
+        {step === 'verify' && (
+          <form onSubmit={handleVerify} className="bg-white rounded-2xl shadow-xl p-8" data-testid="2fa-form">
             <div className="space-y-6">
               <div className="flex justify-center mb-2">
                 <div className="w-16 h-16 rounded-full bg-[#2a9d8f]/10 flex items-center justify-center">
@@ -207,7 +273,7 @@ const AdminLogin = () => {
           </form>
         )}
 
-        {/* FORGOT PASSWORD STEP */}
+        {/* FORGOT PASSWORD */}
         {step === 'forgot' && (
           <form onSubmit={handleForgotPassword} className="bg-white rounded-2xl shadow-xl p-8" data-testid="forgot-form">
             <div className="space-y-6">
@@ -248,7 +314,7 @@ const AdminLogin = () => {
           </form>
         )}
 
-        {/* RESET PASSWORD STEP */}
+        {/* RESET PASSWORD */}
         {step === 'reset' && (
           <form onSubmit={handleResetPassword} className="bg-white rounded-2xl shadow-xl p-8" data-testid="reset-form">
             <div className="space-y-6">

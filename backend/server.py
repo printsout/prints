@@ -1156,42 +1156,50 @@ def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(secur
 @admin_router.post("/login")
 @limiter.limit("5/minute")
 async def admin_login(request: Request, login_data: AdminLogin):
-    """Admin login step 1: verify email + password, require 2FA if enabled"""
+    """Admin login step 1: verify email + password, always require 2FA"""
     if login_data.email != ADMIN_EMAIL or not verify_password(login_data.password, ADMIN_PASSWORD_HASH):
         raise HTTPException(status_code=401, detail="Felaktiga inloggningsuppgifter")
     
-    # Check if 2FA is set up
     admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
     
-    if admin_2fa and admin_2fa.get("totp_enabled"):
-        # 2FA is enabled - return temp token for step 2
-        temp_token = jwt.encode({
-            "sub": "admin_2fa_pending",
-            "email": ADMIN_EMAIL,
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=5)
-        }, JWT_SECRET, algorithm=JWT_ALGORITHM)
-        return {"requires_2fa": True, "temp_token": temp_token}
-    
-    # No 2FA - issue full token directly
-    token_data = {
-        "sub": "admin",
+    temp_token = jwt.encode({
+        "sub": "admin_2fa_pending",
         "email": ADMIN_EMAIL,
-        "is_admin": True,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=10)
+    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    if admin_2fa and admin_2fa.get("totp_enabled") and admin_2fa.get("totp_secret"):
+        # 2FA already set up - just ask for the code
+        return {"requires_2fa": True, "needs_setup": False, "temp_token": temp_token}
+    
+    # 2FA not set up yet - generate QR code and force setup
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=ADMIN_EMAIL, issuer_name="Printsout Admin")
+    
+    qr = qrcode.make(uri)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    
+    await db.admin_settings_2fa.update_one(
+        {"admin_email": ADMIN_EMAIL},
+        {"$set": {"admin_email": ADMIN_EMAIL, "totp_secret": secret, "totp_enabled": False}},
+        upsert=True
+    )
+    
+    return {
+        "requires_2fa": True,
+        "needs_setup": True,
+        "temp_token": temp_token,
+        "qr_code": f"data:image/png;base64,{qr_base64}",
+        "secret": secret
     }
-    token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    await db.admin_logs.insert_one({
-        "action": "login",
-        "admin_email": ADMIN_EMAIL,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "ip": "system"
-    })
-    return {"access_token": token, "token_type": "bearer", "requires_2fa": False}
 
 @admin_router.post("/verify-2fa")
 @limiter.limit("5/minute")
 async def admin_verify_2fa(request: Request, data: dict):
-    """Admin login step 2: verify TOTP code"""
+    """Admin login step 2: verify TOTP code (also activates 2FA on first use)"""
     temp_token = data.get("temp_token")
     code = data.get("code", "")
     
@@ -1206,11 +1214,18 @@ async def admin_verify_2fa(request: Request, data: dict):
     
     admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
     if not admin_2fa or not admin_2fa.get("totp_secret"):
-        raise HTTPException(status_code=400, detail="2FA är inte aktiverat")
+        raise HTTPException(status_code=400, detail="2FA är inte konfigurerat")
     
     totp = pyotp.TOTP(admin_2fa["totp_secret"])
     if not totp.verify(code, valid_window=1):
         raise HTTPException(status_code=401, detail="Felaktig verifieringskod")
+    
+    # Enable 2FA if this is the first verification (setup flow)
+    if not admin_2fa.get("totp_enabled"):
+        await db.admin_settings_2fa.update_one(
+            {"admin_email": ADMIN_EMAIL},
+            {"$set": {"totp_enabled": True}}
+        )
     
     # Code is valid - issue full admin token
     token_data = {
