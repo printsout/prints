@@ -419,67 +419,97 @@ async def get_profile(user: dict = Depends(require_auth)):
 @auth_router.post("/forgot-password")
 @limiter.limit("3/minute")
 async def customer_forgot_password(request: Request, data: dict):
-    """Generate a password reset code for customers and attempt to email it"""
+    """Generate a password reset token and send a reset link via email"""
     email = data.get("email", "").strip().lower()
     if not email:
         raise HTTPException(status_code=400, detail="E-post krävs")
 
     user = await db.users.find_one({"email": email}, {"_id": 0, "password_hash": 0})
-    # Always return success to not reveal if email exists
     if not user:
-        return {"message": "Om e-postadressen finns i systemet skickas en återställningskod"}
+        return {"message": "Om e-postadressen finns i systemet skickas en återställningslänk"}
 
-    reset_code = str(uuid.uuid4())[:8].upper()
+    reset_token = str(uuid.uuid4())
     await db.user_password_resets.delete_many({"email": email})
     await db.user_password_resets.insert_one({
         "email": email,
-        "reset_code": reset_code,
-        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "reset_token": reset_token,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat(),
         "used": False
     })
 
-    # Try to send email
+    site_url = os.environ.get('SITE_URL', '')
+    reset_link = f"{site_url}/aterstall-losenord?token={reset_token}"
+
     try:
+        html = f"""
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
+          <div style="background:#1a1a2e;padding:30px;text-align:center">
+            <h1 style="color:#fff;margin:0;font-size:26px">PrintsOut</h1>
+          </div>
+          <div style="padding:30px">
+            <p style="font-size:16px;color:#333">Hej!</p>
+            <p style="font-size:16px;color:#333;line-height:1.6">
+              Vi fick en begäran om att återställa lösenordet för ditt konto.
+            </p>
+            <p style="font-size:16px;color:#333;line-height:1.6">
+              Klicka på knappen nedan för att välja ett nytt lösenord:
+            </p>
+            <div style="text-align:center;margin:30px 0">
+              <a href="{reset_link}" style="background:#1a1a2e;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;display:inline-block">
+                Återställ lösenord
+              </a>
+            </div>
+            <p style="font-size:13px;color:#999;line-height:1.6">
+              Länken är giltig i 30 minuter. Om du inte begärde detta kan du ignorera detta mail.
+            </p>
+            <p style="font-size:15px;color:#555;margin-top:24px">
+              Med vänliga hälsningar<br>
+              <strong style="color:#1a1a2e">PrintsOut</strong>
+            </p>
+          </div>
+          <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;color:#999">
+            <p style="margin:0">© {datetime.now().year} PrintsOut. Alla rättigheter förbehållna.</p>
+          </div>
+        </div>
+        """
         params = {
             "from": SENDER_EMAIL,
             "to": [email],
-            "subject": "Återställ ditt lösenord - Printsout",
-            "html": f"<h2>Återställ ditt lösenord</h2><p>Din återställningskod är:</p><h1 style='letter-spacing:4px;font-family:monospace'>{reset_code}</h1><p>Koden är giltig i 15 minuter.</p><p>Om du inte begärde detta kan du ignorera detta mail.</p>"
+            "subject": "Återställ ditt lösenord - PrintsOut",
+            "html": html
         }
         await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Password reset email sent to {email}")
+        logger.info(f"Password reset link sent to {email}")
     except Exception as e:
         logger.warning(f"Failed to send reset email: {e}")
 
-    return {"message": "Om e-postadressen finns i systemet skickas en återställningskod"}
+    return {"message": "Om e-postadressen finns i systemet skickas en återställningslänk"}
 
 @auth_router.post("/reset-password")
 @limiter.limit("5/minute")
 async def customer_reset_password(request: Request, data: dict):
-    """Reset customer password using reset code"""
-    email = data.get("email", "").strip().lower()
-    code = data.get("code", "").strip().upper()
-    new_password = data.get("new_password", "")
+    """Reset customer password using reset token from email link"""
+    token = (data.get("token") or "").strip()
+    new_password = data.get("new_password") or ""
 
     pwd_error = validate_password(new_password)
     if pwd_error:
         raise HTTPException(status_code=400, detail=pwd_error)
 
     reset = await db.user_password_resets.find_one({
-        "email": email,
-        "reset_code": code,
+        "reset_token": token,
         "used": False
     }, {"_id": 0})
 
     if not reset:
-        raise HTTPException(status_code=400, detail="Ogiltig eller utgången kod")
+        raise HTTPException(status_code=400, detail="Ogiltig eller utgången länk")
 
     if datetime.now(timezone.utc).isoformat() > reset["expires_at"]:
-        raise HTTPException(status_code=400, detail="Koden har gått ut")
+        raise HTTPException(status_code=400, detail="Länken har gått ut. Begär en ny.")
 
     new_hash = hash_password(new_password)
-    await db.users.update_one({"email": email}, {"$set": {"password_hash": new_hash}})
-    await db.user_password_resets.update_one({"reset_code": code}, {"$set": {"used": True}})
+    await db.users.update_one({"email": reset["email"]}, {"$set": {"password_hash": new_hash}})
+    await db.user_password_resets.update_one({"reset_token": token}, {"$set": {"used": True}})
 
     return {"message": "Lösenordet har ändrats. Du kan nu logga in."}
 

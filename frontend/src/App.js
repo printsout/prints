@@ -27,6 +27,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Account from "./pages/Account";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -83,6 +84,7 @@ function App() {
                       <Route path="/konto" element={<Account />} />
                       <Route path="/logga-in" element={<Login />} />
                       <Route path="/registrera" element={<Register />} />
+                      <Route path="/aterstall-losenord" element={<ResetPassword />} />
                       <Route path="/sida/:slug" element={<ContentPage />} />
                     </Routes>
                   </main>

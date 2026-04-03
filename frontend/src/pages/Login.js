@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, KeyRound, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,14 +12,11 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [step, setStep] = useState('login'); // login, forgot, reset
+  const [step, setStep] = useState('login'); // login, forgot, sent
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resetCode, setResetCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -48,32 +45,9 @@ const Login = () => {
     setLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
-      toast.success('En återställningskod har skickats till din e-post');
-      setStep('reset');
+      setStep('sent');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Något gick fel');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error('Lösenorden matchar inte');
-      return;
-    }
-    setLoading(true);
-    try {
-      await api.post('/auth/reset-password', { email, code: resetCode, new_password: newPassword });
-      toast.success('Lösenordet har ändrats! Logga in med ditt nya lösenord.');
-      setStep('login');
-      setPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setResetCode('');
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Kunde inte ändra lösenord');
     } finally {
       setLoading(false);
     }
@@ -89,12 +63,12 @@ const Login = () => {
           <h1 className="text-2xl font-semibold text-slate-900 mt-6">
             {step === 'login' && 'Välkommen tillbaka'}
             {step === 'forgot' && 'Glömt lösenord'}
-            {step === 'reset' && 'Nytt lösenord'}
+            {step === 'sent' && 'Kolla din e-post'}
           </h1>
           <p className="text-slate-500 mt-2">
             {step === 'login' && 'Logga in på ditt konto'}
-            {step === 'forgot' && 'Ange din e-post för att få en återställningskod'}
-            {step === 'reset' && 'Ange koden och ditt nya lösenord'}
+            {step === 'forgot' && 'Ange din e-post så skickar vi en återställningslänk'}
+            {step === 'sent' && ''}
           </p>
         </div>
 
@@ -178,7 +152,7 @@ const Login = () => {
                 </div>
               </div>
               <Button type="submit" className="btn-primary w-full" disabled={loading} data-testid="customer-forgot-submit">
-                {loading ? 'Skickar...' : 'Skicka återställningskod'}
+                {loading ? 'Skickar...' : 'Skicka återställningslänk'}
               </Button>
               <button
                 type="button"
@@ -190,63 +164,27 @@ const Login = () => {
             </form>
           )}
 
-          {/* RESET PASSWORD */}
-          {step === 'reset' && (
-            <form onSubmit={handleResetPassword} className="space-y-5" data-testid="customer-reset-form">
-              <div>
-                <Label>Återställningskod</Label>
-                <Input
-                  type="text"
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
-                  placeholder="XXXXXXXX"
-                  className="mt-1 text-center font-mono tracking-wider"
-                  required
-                  data-testid="customer-reset-code"
-                />
-                <p className="text-xs text-slate-400 mt-1">Kolla din e-post efter koden</p>
-              </div>
-              <div>
-                <Label>Nytt lösenord</Label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minst 8 tecken"
-                    className="pl-10"
-                    required
-                    data-testid="customer-new-password"
-                  />
+          {/* EMAIL SENT CONFIRMATION */}
+          {step === 'sent' && (
+            <div className="text-center space-y-4" data-testid="email-sent-confirmation">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-emerald-500" />
                 </div>
               </div>
-              <div>
-                <Label>Bekräfta lösenord</Label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <Input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Upprepa lösenord"
-                    className="pl-10"
-                    required
-                    data-testid="customer-confirm-password"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="btn-primary w-full" disabled={loading} data-testid="customer-reset-submit">
-                {loading ? 'Ändrar...' : 'Ändra lösenord'}
-              </Button>
+              <h2 className="text-lg font-semibold text-slate-900">Återställningslänk skickad!</h2>
+              <p className="text-slate-500 text-sm leading-relaxed">
+                Om e-postadressen <strong>{email}</strong> finns i vårt system har vi skickat en länk för att återställa ditt lösenord. Kolla din inkorg (och skräppost).
+              </p>
+              <p className="text-slate-400 text-xs">Länken är giltig i 30 minuter.</p>
               <button
                 type="button"
                 onClick={() => setStep('login')}
-                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1"
+                className="w-full text-center text-sm text-primary hover:underline flex items-center justify-center gap-1 mt-4"
               >
                 <ArrowLeft className="w-4 h-4" /> Tillbaka till inloggning
               </button>
-            </form>
+            </div>
           )}
         </div>
 
