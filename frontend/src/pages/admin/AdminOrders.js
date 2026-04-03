@@ -181,12 +181,14 @@ const AdminOrders = () => {
     }).join('');
 
     const printWindow = window.open('', '_blank', 'width=800,height=900');
-    printWindow.document.write(`
+    const doc = printWindow.document;
+    doc.open();
+    const sanitizedHtml = DOMPurify.sanitize(`
       <!DOCTYPE html>
       <html lang="sv">
       <head>
         <meta charset="UTF-8"/>
-        <title>Order #${order.order_id?.slice(0, 8)}</title>
+        <title>Order #${escapeHtml(order.order_id?.slice(0, 8))}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; padding: 40px; font-size: 14px; }
@@ -286,8 +288,9 @@ const AdminOrders = () => {
         </div>
       </body>
       </html>
-    `);
-    printWindow.document.close();
+    `, { WHOLE_DOCUMENT: true, ADD_TAGS: ['style', 'meta', 'title', 'link'], ADD_ATTR: ['charset', 'lang'] });
+    doc.write(sanitizedHtml);
+    doc.close();
     printWindow.focus();
     setTimeout(() => printWindow.print(), 300);
   };

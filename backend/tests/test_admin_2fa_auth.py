@@ -13,8 +13,8 @@ import pyotp
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Admin credentials
-ADMIN_EMAIL = "info@printsout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
+ADMIN_EMAIL = admin_email
+ADMIN_PASSWORD = admin_password
 
 class TestAdminLogin:
     """Test admin login without 2FA"""

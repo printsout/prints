@@ -4,6 +4,7 @@ import { Filter, Grid, List } from 'lucide-react';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { toast } from 'sonner';
 
 const Products = () => {
   const { category } = useParams();
@@ -24,6 +25,7 @@ const Products = () => {
         setProducts(productsRes.data);
         setCategories(categoriesRes.data);
       } catch (error) {
+        toast.error('Kunde inte hämta produkter');
       } finally {
         setLoading(false);
       }

@@ -17,8 +17,8 @@ from pymongo import MongoClient
 
 # Configuration
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://printout-lab.preview.emergentagent.com')
-ADMIN_EMAIL = "info@printsout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
+ADMIN_EMAIL = admin_email
+ADMIN_PASSWORD = admin_password
 
 # MongoDB connection for cleanup
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')

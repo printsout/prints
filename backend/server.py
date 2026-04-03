@@ -1866,7 +1866,7 @@ async def get_tax_report(admin = Depends(verify_admin_token)):
             "total_sales": round(grand_total, 2),
             "total_vat": round(grand_vat, 2),
             "total_net": round(grand_net, 2),
-            "total_orders": sum(m["order_count"] for m in months),
+            "total_orders": sum(month["order_count"] for month in months),
         }
     }
 

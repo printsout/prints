@@ -52,12 +52,14 @@ const Checkout = () => {
               const response = await api.get(`/products/${id}`);
               productData[id] = response.data;
             } catch (e) {
+              toast.error(`Kunde inte hämta produkt ${id}`);
             }
           })
         );
         
         setProducts(productData);
       } catch (error) {
+        toast.error('Kunde inte hämta produktinformation');
       } finally {
         setLoading(false);
       }

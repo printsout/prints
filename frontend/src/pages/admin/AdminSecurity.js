@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
+import { toast } from 'sonner';
 import { Shield, ShieldCheck, ShieldOff, RefreshCw, LogIn, KeyRound, UserCog, Package, CreditCard, AlertTriangle } from 'lucide-react';
 
 const ACTION_META = {
@@ -40,6 +41,7 @@ const AdminSecurity = () => {
       const res = await api.get('/admin/logs?limit=200', { headers: getAuthHeaders() });
       setLogs(res.data.logs || []);
     } catch (err) {
+      toast.error('Kunde inte hämta aktivitetsloggen');
     } finally {
       setLoading(false);
     }
@@ -49,13 +51,15 @@ const AdminSecurity = () => {
     try {
       const res = await api.get('/admin/2fa-status', { headers: getAuthHeaders() });
       setTwoFAEnabled(res.data.enabled);
-    } catch {}
+    } catch (err) {
+      toast.error('Kunde inte hämta 2FA-status');
+    }
   }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchLogs();
     fetch2FAStatus();
-  }, []);
+  }, [fetchLogs, fetch2FAStatus]);
 
   const filteredLogs = filter === 'all' ? logs : logs.filter(l => {
     if (filter === 'auth') return ['login', 'login_2fa', 'password_reset_request', 'password_reset'].includes(l.action);
@@ -146,7 +150,7 @@ const AdminSecurity = () => {
               const Icon = meta.icon;
               return (
                 <div
-                  key={idx}
+                  key={`${log.timestamp}-${log.action}-${idx}`}
                   className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-slate-50 transition-colors"
                   data-testid={`log-entry-${idx}`}
                 >

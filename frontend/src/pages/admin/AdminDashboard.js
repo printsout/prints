@@ -87,7 +87,7 @@ const AdminDashboard = () => {
           const Icon = stat.icon;
           return (
             <div 
-              key={index}
+              key={stat.label}
               className="bg-white rounded-xl p-6 shadow-sm border border-slate-200"
               data-testid={`stat-card-${index}`}
             >

@@ -11,8 +11,8 @@ import base64
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Admin credentials
-ADMIN_EMAIL = "admin@printout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "info@printsout.se")
+ADMIN_PASSWORD = admin_password
 
 
 class TestAPIHealth:

@@ -52,6 +52,7 @@ const AdminSettings = () => {
       const response = await api.get('/admin/settings', { headers: getAuthHeaders() });
       setSettings(prev => ({ ...prev, ...response.data }));
     } catch (error) {
+      toast.error('Kunde inte hämta inställningar');
     } finally {
       setLoading(false);
     }
@@ -70,6 +71,7 @@ const AdminSettings = () => {
         tax_rate: response.data.tax_rate ?? 25,
       });
     } catch (error) {
+      toast.error('Kunde inte hämta leveransinställningar');
     }
   }, [getAuthHeaders]);
 
@@ -78,6 +80,7 @@ const AdminSettings = () => {
       const response = await api.get('/admin/discount-codes', { headers: getAuthHeaders() });
       setDiscountCodes(response.data);
     } catch (error) {
+      toast.error('Kunde inte hämta rabattkoder');
     }
   }, [getAuthHeaders]);
 
