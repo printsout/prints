@@ -1,71 +1,58 @@
-# Printsout - E-commerce för Personliga Produkter
+# Printsout - E-commerce Platform for Custom Photo Prints
 
-## Projektöversikt
-En e-commerce webbplats där användare kan ladda upp egna bilder, anpassa designen på produkter, se en förhandsvisning och beställa tryck på olika artiklar.
+## Original Problem Statement
+E-commerce website called "Printsout" for custom photo prints on various products (mugs, t-shirts, posters, nametags, calendars, photo albums). Features live 3D/2D previews, custom editors for specialized products, cart/checkout flow, customer accounts, and comprehensive Admin Panel.
+
+## User Language
+Swedish (Svenska)
 
 ## Tech Stack
-- **Frontend**: React 19, Tailwind CSS, Shadcn/UI, React Router, Google Fonts
-- **Backend**: FastAPI, Motor (MongoDB), bleach (sanitering), slowapi (rate limiting)
-- **Databas**: MongoDB
-- **Auth**: JWT (8h timeout) + bcrypt
-- **Betalning**: Stripe Checkout (live-redo, testat med test-nycklar)
-- **3D**: @react-three/fiber, @react-three/drei
+- Frontend: React, Tailwind CSS, @react-three/fiber, Canvas API
+- Backend: FastAPI, MongoDB (Motor), JWT, pyotp (2FA), qrcode
+- Payments: Stripe (LIVE mode)
+- Deployment: Kubernetes container
 
-## Implementerat
+## Core Features Implemented
+- Product listing, categories, and detail pages
+- 3D product customizer for mugs (drag, zoom, rotate)
+- Multi-page calendar editor (12 months)
+- Photo album editor with cover design, material selection, per-page captions (Canvas text burning)
+- Name tag editor (inspired by namly.se)
+- Cart & Stripe Checkout (LIVE)
+- JWT authentication for users
+- Admin Panel with Dashboard, Products, Users, Orders, Content, Payments, Tax, Reviews, Settings management
+- Admin TOTP 2FA (Microsoft Authenticator) with setup, confirm, disable flows
+- Admin Forgot Password / Reset Password flow
+- Dynamic shipping, tax/VAT, global discount codes
+- External review platform links (Google, Trustpilot)
+- Cookie banner
 
-### Core Features
-- Hemsida, Produktsida, Produktdetaljer, 3D mugg-preview
-- Kalender-editor (12 månader med bilduppladdning)
-- Namnskylts-editor (namly.se-stil, tab-baserad, förnamn, efternamn, telefonnummer, 50+ färgade motiv inkl. häst och sport)
-- Fotoalbum-editor (multi-bild per sida, 5 layouter)
-- Design-editor (muggar, t-shirts, posters med bilduppladdning, text, position)
-- Varukorg med anpassningsdetaljer, Kassa med Stripe redirect
-- Auth (register/login), Konto
-- Admin Panel (dashboard, produkter, användare, ordrar, betalningar, innehåll, skatt, recensioner)
-- Dropdown produktmeny i navbar (9 kategorier)
-- Footer-länkar kopplade till admin-innehåll (7 sidor)
-- Orderbekräftelsesida med polling av betalningsstatus
-- Cookie-banner med localStorage
-- Frakt/rabatt/moms-system med admin-toggle
-- Rabattkod-system (skapa, aktivera/inaktivera, ta bort)
-- Skatteövervakningssida (AdminTax) med CSV-export
+## Admin Credentials
+- URL: /admin
+- Email: info@printsout.se
+- Password: PrintoutAdmin2024!
 
-### Recensionshantering (2026-03-23)
-- Admin CRUD för kundrecensioner (skapa, redigera, radera)
-- Betyg med stjärnor (1-5), recensionstext, kundnamn, källa
-- Externa recensionsplattformar: Google Reviews, Trustpilot, Facebook, Yelp, Prisjakt, Reco.se, Annan
-- Plattformslänkar visas på hemsidan med ikoner och färger
-- Källa-badge visas på recensioner från externa plattformar
-- Backend: CRUD endpoints + review-platforms settings
+## Key DB Collections
+- users, products, orders, payment_settings, admin_settings_2fa, admin_password_resets, reviews, discount_codes, admin_logs, site_settings
 
-### Namnlappar - Uppdateringar (2026-03-23)
-- Nya fält: Efternamn och Telefonnummer (valfritt)
-- Färgade motiv-ikoner (varje ikon har unik färg)
-- 14 nya sportmotiv + häst + fotboll (custom SVG-ikoner)
-- Tassavtryck djurmotiv
+## Completed Tasks (Latest Session - April 2026)
+- [x] Fixed AdminContext.js to export setAdminToken (was breaking AdminLogin.js)
+- [x] Added 2FA management UI to AdminSettings.js (setup QR code, confirm, disable)
+- [x] Verified Admin 2FA flow end-to-end (17/17 backend tests, all frontend tests passed)
+- [x] Verified Forgot Password + Reset Password flows
 
-### Stripe Checkout - KOMPLETT
-- Backend skapar Stripe Checkout Session
-- Frontend omdirigerar kund till Stripe betalningssida
-- Webhook-hantering för betalningsbekräftelse
+## Pending Issues
+- [P2] Cross-Origin Read Blocking on residual Unsplash images
 
-### Säkerhet
-- Rate limiting, Security headers, Input-sanitering (bleach)
-- Lösenordskrav, JWT 8h timeout, Admin-lösenord hashad i .env
+## Upcoming Tasks
+- [P1] Update database connection string (user mentioned switching databases)
+- [P1] Refactor backend server.py (~2000 lines) into modular routers
 
-## Pågående
-- Ingen aktiv uppgift
+## Future/Backlog
+- [P2] Email confirmation for orders (Resend integration, needs verified domain)
+- [P2] Klarna/Swish payment support
+- [P2] Full customer account page (order history, saved designs)
 
-## Framtida (P1-P2)
-1. Backend-refaktorisering (server.py ~1750 rader behöver brytas upp)
-2. Databasbyte (användaren nämnde byte till annan databas)
-3. E-postbekräftelse vid beställning
-4. Klarna/Swish betalningar
-5. Fixa Unsplash/ORB bildproblem
-
-## Credentials
-- **Admin**: admin@printsout.se / PrintoutAdmin2024!
-- **User**: Registrera via /registrera
-
-## Preview URL
-https://printout-lab.preview.emergentagent.com
+## Mocked/Placeholder Features
+- Email order confirmations (console.log only)
+- Klarna/Swish payment methods
