@@ -40,6 +40,7 @@ Swedish (Svenska)
 - [x] Added 2FA management UI to AdminSettings.js (setup QR code, confirm, disable)
 - [x] Verified Admin 2FA flow end-to-end (17/17 backend tests, all frontend tests passed)
 - [x] Verified Forgot Password + Reset Password flows
+- [x] Added "Säkerhet" (Security) page to Admin Panel with activity log, 2FA status, login count, and security events
 
 ## Pending Issues
 - [P2] Cross-Origin Read Blocking on residual Unsplash images
