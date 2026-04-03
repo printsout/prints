@@ -39,7 +39,6 @@ const CalendarEditor = () => {
           setSelectedSize(response.data.sizes[0]);
         }
       } catch (error) {
-        console.error('Failed to fetch product:', error);
         toast.error('Kunde inte hämta produkt');
       } finally {
         setLoading(false);
@@ -138,7 +137,6 @@ const CalendarEditor = () => {
       toast.success('Kalender tillagd i varukorgen!');
       navigate('/varukorg');
     } catch (error) {
-      console.error('Failed to add calendar to cart:', error);
       toast.error('Kunde inte lägga till i varukorgen');
     }
   };

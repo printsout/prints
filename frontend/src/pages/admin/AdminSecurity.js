@@ -40,7 +40,6 @@ const AdminSecurity = () => {
       const res = await api.get('/admin/logs?limit=200', { headers: getAuthHeaders() });
       setLogs(res.data.logs || []);
     } catch (err) {
-      console.error('Failed to fetch logs:', err);
     } finally {
       setLoading(false);
     }

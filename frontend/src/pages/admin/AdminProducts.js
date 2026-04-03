@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -35,7 +35,7 @@ function TagInput({ tags, onChange, placeholder, testId }) {
       <div className="flex flex-wrap gap-1.5 mb-2">
         {tags.map((tag, i) => (
           <span
-            key={i}
+            key={`${tag}-${i}`}
             className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-sm px-2.5 py-1 rounded-full"
             data-testid={`${testId}-tag-${i}`}
           >
@@ -86,21 +86,20 @@ const AdminProducts = () => {
     model_type: 'mug'
   });
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const response = await api.get('/admin/products', { headers: getAuthHeaders() });
       setProducts(response.data.products || []);
     } catch (error) {
-      console.error('Failed to fetch products:', error);
       toast.error('Kunde inte hämta produkter');
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +122,6 @@ const AdminProducts = () => {
       resetForm();
       fetchProducts();
     } catch (error) {
-      console.error('Failed to save product:', error);
       toast.error('Kunde inte spara produkt');
     }
   };
@@ -136,7 +134,6 @@ const AdminProducts = () => {
       toast.success('Produkt raderad');
       fetchProducts();
     } catch (error) {
-      console.error('Failed to delete product:', error);
       toast.error('Kunde inte radera produkt');
     }
   };
@@ -265,14 +262,14 @@ const AdminProducts = () => {
               {product.colors?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {product.colors.map((c, i) => (
-                    <span key={i} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{c}</span>
+                    <span key={`color-${c}-${i}`} className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{c}</span>
                   ))}
                 </div>
               )}
               {product.sizes?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {product.sizes.map((s, i) => (
-                    <span key={i} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{s}</span>
+                    <span key={`size-${s}-${i}`} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{s}</span>
                   ))}
                 </div>
               )}
@@ -396,7 +393,7 @@ const AdminProducts = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Bilder (URL)</label>
                 {formData.images.map((img, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
+                  <div key={`img-${index}-${img.slice(0,10)}`} className="flex gap-2 mb-2">
                     <Input
                       value={img}
                       onChange={(e) => updateImage(index, e.target.value)}

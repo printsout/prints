@@ -39,7 +39,6 @@ const Account = () => {
       setOrders(ordersRes.data);
       setDesigns(designsRes.data);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }

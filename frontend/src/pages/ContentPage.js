@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 
@@ -49,7 +50,7 @@ const ContentPage = () => {
         </h1>
         <div
           className="prose prose-slate max-w-none text-slate-700 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: page.content.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>') }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.content.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>')) }}
           data-testid="content-page-body"
         />
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Receipt, TrendingUp, FileText, Download } from 'lucide-react';
@@ -10,11 +10,7 @@ const AdminTax = () => {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchReport();
-  }, []);
-
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       const res = await api.get('/admin/tax-report', { headers: getAuthHeaders() });
       setReport(res.data);
@@ -23,7 +19,11 @@ const AdminTax = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
 
   const exportCSV = () => {
     if (!report) return;

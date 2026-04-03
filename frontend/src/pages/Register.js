@@ -53,7 +53,6 @@ const Register = () => {
       toast.success('Konto skapat! Välkommen!');
       navigate('/konto');
     } catch (error) {
-      console.error('Register error:', error);
       toast.error(error.response?.data?.detail || 'Registreringen misslyckades');
     } finally {
       setLoading(false);

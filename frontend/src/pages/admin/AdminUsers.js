@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -14,28 +14,26 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await api.get('/admin/users', { headers: getAuthHeaders() });
       setUsers(response.data.users || []);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
       toast.error('Kunde inte hämta användare');
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const fetchUserDetails = async (userId) => {
     try {
       const response = await api.get(`/admin/users/${userId}`, { headers: getAuthHeaders() });
       setUserDetails(response.data);
     } catch (error) {
-      console.error('Failed to fetch user details:', error);
       toast.error('Kunde inte hämta användardetaljer');
     }
   };
@@ -57,7 +55,6 @@ const AdminUsers = () => {
         setUserDetails(null);
       }
     } catch (error) {
-      console.error('Failed to delete user:', error);
       toast.error('Kunde inte radera användare');
     }
   };

@@ -52,14 +52,12 @@ const Checkout = () => {
               const response = await api.get(`/products/${id}`);
               productData[id] = response.data;
             } catch (e) {
-              console.error(`Failed to fetch product ${id}`);
             }
           })
         );
         
         setProducts(productData);
       } catch (error) {
-        console.error('Failed to fetch products:', error);
       } finally {
         setLoading(false);
       }
@@ -169,7 +167,6 @@ const Checkout = () => {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error('Checkout error:', error);
       const errMsg = error.response?.data?.detail || 'Kunde inte skapa betalning. Försök igen.';
       toast.error(errMsg);
       setProcessing(false);

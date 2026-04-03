@@ -54,7 +54,6 @@ export const AdminProvider = ({ children }) => {
       setAdminToken(response.data.access_token);
       return { success: true };
     } catch (error) {
-      console.error('Admin login failed:', error);
       return { success: false, error: error.response?.data?.detail || 'Inloggning misslyckades' };
     } finally {
       setLoading(false);

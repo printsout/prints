@@ -55,7 +55,6 @@ export const AuthProvider = ({ children }) => {
       });
       setUser(response.data);
     } catch (error) {
-      console.error('Failed to fetch profile:', error);
       logout();
     } finally {
       setLoading(false);

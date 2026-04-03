@@ -55,7 +55,6 @@ const AdminPayments = () => {
         setSettings(prev => ({ ...prev, ...response.data }));
       }
     } catch (error) {
-      console.error('Failed to fetch payment settings:', error);
     } finally {
       setLoading(false);
     }
@@ -69,7 +68,6 @@ const AdminPayments = () => {
       await api.put('/admin/payment-settings', settings, { headers: getAuthHeaders() });
       toast.success('Betalningsinställningar sparade');
     } catch (error) {
-      console.error('Failed to save payment settings:', error);
       toast.error('Kunde inte spara inställningar');
     } finally {
       setSaving(false);

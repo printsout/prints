@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -47,25 +47,17 @@ const AdminSettings = () => {
   const [twoFALoading, setTwoFALoading] = useState(false);
   const [disableCode, setDisableCode] = useState('');
 
-  useEffect(() => {
-    fetchSettings();
-    fetchShippingSettings();
-    fetchDiscountCodes();
-    fetch2FAStatus();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await api.get('/admin/settings', { headers: getAuthHeaders() });
       setSettings(prev => ({ ...prev, ...response.data }));
     } catch (error) {
-      console.error('Failed to fetch settings:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchShippingSettings = async () => {
+  const fetchShippingSettings = useCallback(async () => {
     try {
       const response = await api.get('/admin/payment-settings', { headers: getAuthHeaders() });
       setShippingSettings({
@@ -78,9 +70,23 @@ const AdminSettings = () => {
         tax_rate: response.data.tax_rate ?? 25,
       });
     } catch (error) {
-      console.error('Failed to fetch shipping settings:', error);
     }
-  };
+  }, [getAuthHeaders]);
+
+  const fetchDiscountCodes = useCallback(async () => {
+    try {
+      const response = await api.get('/admin/discount-codes', { headers: getAuthHeaders() });
+      setDiscountCodes(response.data);
+    } catch (error) {
+    }
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchSettings();
+    fetchShippingSettings();
+    fetchDiscountCodes();
+    fetch2FAStatus();
+  }, [fetchSettings, fetchShippingSettings, fetchDiscountCodes]);
 
   const handleSaveShipping = async () => {
     setSavingShipping(true);
@@ -91,19 +97,9 @@ const AdminSettings = () => {
       await api.put('/admin/payment-settings', merged, { headers: getAuthHeaders() });
       toast.success('Fraktinställningar sparade');
     } catch (error) {
-      console.error('Failed to save shipping settings:', error);
       toast.error('Kunde inte spara fraktinställningar');
     } finally {
       setSavingShipping(false);
-    }
-  };
-
-  const fetchDiscountCodes = async () => {
-    try {
-      const response = await api.get('/admin/discount-codes', { headers: getAuthHeaders() });
-      setDiscountCodes(response.data);
-    } catch (error) {
-      console.error('Failed to fetch discount codes:', error);
     }
   };
 
@@ -173,7 +169,6 @@ const AdminSettings = () => {
       const res = await api.get('/admin/2fa-status', { headers: getAuthHeaders() });
       setTwoFAEnabled(res.data.enabled);
     } catch (error) {
-      console.error('Failed to fetch 2FA status:', error);
     }
   };
 
@@ -235,7 +230,6 @@ const AdminSettings = () => {
       await api.put('/admin/settings', settings, { headers: getAuthHeaders() });
       toast.success('Inställningar sparade');
     } catch (error) {
-      console.error('Failed to save settings:', error);
       toast.error('Kunde inte spara inställningar');
     } finally {
       setSaving(false);

@@ -38,7 +38,6 @@ const OrderConfirmation = () => {
           setStatus('pending');
         }
       } catch (error) {
-        console.error('Failed to check payment status:', error);
         if (attempts < 3) {
           setTimeout(() => setAttempts(prev => prev + 1), 2000);
         } else {

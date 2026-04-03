@@ -24,7 +24,6 @@ const Products = () => {
         setProducts(productsRes.data);
         setCategories(categoriesRes.data);
       } catch (error) {
-        console.error('Failed to fetch products:', error);
       } finally {
         setLoading(false);
       }

@@ -38,7 +38,6 @@ const AdminReviews = () => {
       const res = await api.get('/admin/reviews', { headers: getAuthHeaders() });
       setReviews(res.data);
     } catch (err) {
-      console.error('Failed to fetch reviews:', err);
     } finally {
       setLoading(false);
     }
@@ -49,7 +48,6 @@ const AdminReviews = () => {
       const res = await api.get('/admin/review-platforms', { headers: getAuthHeaders() });
       setPlatforms(res.data.platforms || []);
     } catch (err) {
-      console.error('Failed to fetch platforms:', err);
     }
   };
 
@@ -371,7 +369,7 @@ const AdminReviews = () => {
                   </div>
                   <div className="flex gap-0.5 mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
+                      <Star key={`star-${i}`} className={`w-3.5 h-3.5 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`} />
                     ))}
                   </div>
                   <p className="text-sm text-slate-600 italic">"{review.text}"</p>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -256,7 +257,7 @@ const AdminContent = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Förhandsgranskning</label>
                   <div
                     className="p-4 border border-slate-200 rounded-lg bg-slate-50 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: formData.content.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>') }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.content.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>')) }}
                     data-testid="content-preview"
                   />
                 </div>

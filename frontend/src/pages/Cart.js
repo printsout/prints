@@ -33,14 +33,12 @@ const Cart = () => {
               const response = await api.get(`/products/${id}`);
               productData[id] = response.data;
             } catch (e) {
-              console.error(`Failed to fetch product ${id}`);
             }
           })
         );
         
         setProducts(productData);
       } catch (error) {
-        console.error('Failed to fetch products:', error);
       } finally {
         setLoadingProducts(false);
       }

@@ -58,7 +58,6 @@ const DesignEditor = () => {
           setSelectedSize(response.data.sizes[0]);
         }
       } catch (error) {
-        console.error('Failed to fetch product:', error);
         toast.error('Kunde inte ladda produkten');
       } finally {
         setLoading(false);
@@ -138,7 +137,6 @@ const DesignEditor = () => {
 
       toast.success('Design sparad!');
     } catch (error) {
-      console.error('Failed to save design:', error);
       toast.error('Kunde inte spara designen');
     } finally {
       setSaving(false);

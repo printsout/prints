@@ -182,7 +182,6 @@ const PhotoAlbumEditor = () => {
         setProduct(response.data);
         if (response.data.sizes?.length > 0) setSelectedSize(response.data.sizes[0]);
       } catch (error) {
-        console.error('Failed to fetch product:', error);
         toast.error('Kunde inte hämta produkt');
       } finally {
         setLoading(false);

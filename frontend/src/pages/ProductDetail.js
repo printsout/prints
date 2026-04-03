@@ -32,7 +32,6 @@ const ProductDetail = () => {
           setSelectedSize(response.data.sizes[0]);
         }
       } catch (error) {
-        console.error('Failed to fetch product:', error);
         toast.error('Kunde inte ladda produkten');
       } finally {
         setLoading(false);

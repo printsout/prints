@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -9,6 +10,11 @@ import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Download, Ima
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
 
+const escapeHtml = (str) => {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+};
+
 const AdminOrders = () => {
   const { getAuthHeaders } = useAdmin();
   const [orders, setOrders] = useState([]);
@@ -17,9 +23,7 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  useEffect(() => { fetchOrders(); }, [statusFilter]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
       const response = await api.get(`/admin/orders${params}`, { headers: getAuthHeaders() });
@@ -29,7 +33,9 @@ const AdminOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, getAuthHeaders]);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -129,7 +135,7 @@ const AdminOrders = () => {
     };
 
     const itemsHtml = (order.items || []).map((item, i) => {
-      const itemName = item.product_name || item.name || 'Produkt';
+      const itemName = escapeHtml(item.product_name || item.name || 'Produkt');
       let imagesHtml = '';
       if (item.customization?.uploaded_image_url) {
         const imgUrl = item.customization.uploaded_image_url.startsWith('http')
@@ -232,15 +238,15 @@ const AdminOrders = () => {
             <h3>Kunduppgifter</h3>
             ${order.shipping_address ? `
               <div class="info-row"><div class="info-label">Namn</div><div class="info-value">
-                ${order.shipping_address.name || [order.shipping_address.first_name, order.shipping_address.last_name].filter(Boolean).join(' ') || '—'}
+                ${escapeHtml(order.shipping_address.name || [order.shipping_address.first_name, order.shipping_address.last_name].filter(Boolean).join(' ') || '—')}
               </div></div>
             ` : ''}
-            ${order.email ? `<div class="info-row"><div class="info-label">E-post</div><div class="info-value">${order.email}</div></div>` : ''}
-            ${order.shipping_address?.phone ? `<div class="info-row"><div class="info-label">Telefon</div><div class="info-value">${order.shipping_address.phone}</div></div>` : ''}
+            ${order.email ? `<div class="info-row"><div class="info-label">E-post</div><div class="info-value">${escapeHtml(order.email)}</div></div>` : ''}
+            ${order.shipping_address?.phone ? `<div class="info-row"><div class="info-label">Telefon</div><div class="info-value">${escapeHtml(order.shipping_address.phone)}</div></div>` : ''}
             ${order.shipping_address ? `
               <div class="info-row"><div class="info-label">Leveransadress</div><div class="info-value">
-                ${order.shipping_address.street || order.shipping_address.address || ''}<br/>
-                ${order.shipping_address.zip || order.shipping_address.postal_code || ''} ${order.shipping_address.city || ''}
+                ${escapeHtml(order.shipping_address.street || order.shipping_address.address || '')}<br/>
+                ${escapeHtml(order.shipping_address.zip || order.shipping_address.postal_code || '')} ${escapeHtml(order.shipping_address.city || '')}
               </div></div>
             ` : ''}
           </div>
@@ -478,7 +484,7 @@ const AdminOrders = () => {
                   <p className="text-xs text-slate-500 uppercase">Produkter</p>
                   <div className="mt-2 space-y-3">
                     {selectedOrder.items?.map((item, index) => (
-                      <div key={index} className="border border-slate-100 rounded-lg p-3">
+                      <div key={item.product_id || `item-${index}`} className="border border-slate-100 rounded-lg p-3">
                         <div className="flex justify-between text-sm">
                           <span className="font-medium text-slate-800">{item.product_name || item.name || 'Produkt'}</span>
                           <span className="text-slate-900">{item.price} kr</span>
@@ -578,7 +584,7 @@ const AdminOrders = () => {
                                       {item.customization.months.filter(m => m.image_url).map((m, idx) => {
                                         const imgUrl = m.image_url.startsWith('http') ? m.image_url : `${API_BASE}${m.image_url}`;
                                         return (
-                                          <div key={idx} className="flex items-center gap-2 border rounded p-1.5 bg-white">
+                                          <div key={m.month || `month-${idx}`} className="flex items-center gap-2 border rounded p-1.5 bg-white">
                                             <img src={imgUrl} alt={m.month} className="w-10 h-10 object-cover rounded border" />
                                             <span className="text-xs text-slate-600">{m.month}</span>
                                             <a href={imgUrl} download target="_blank" rel="noreferrer" className="ml-auto text-[#2a9d8f] hover:underline">

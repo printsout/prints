@@ -252,7 +252,6 @@ const NameTagEditor = () => {
         const response = await api.get(`/products/${productId}`);
         setProduct(response.data);
       } catch (error) {
-        console.error('Failed to fetch product:', error);
         toast.error('Kunde inte hämta produkt');
       } finally {
         setLoading(false);
@@ -427,7 +426,7 @@ const NameTagEditor = () => {
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-w-md mx-auto">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
-                    key={i}
+                    key={`preview-tag-${i}`}
                     className="h-7 rounded shadow-sm flex items-center justify-center gap-1 border overflow-hidden"
                     style={bgStyle}
                   >

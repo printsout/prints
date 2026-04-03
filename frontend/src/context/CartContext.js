@@ -33,7 +33,6 @@ export const CartProvider = ({ children }) => {
       const response = await api.get(`/cart/${sid}`);
       setCart(response.data);
     } catch (error) {
-      console.error('Failed to fetch cart:', error);
     }
   };
 
@@ -44,7 +43,6 @@ export const CartProvider = ({ children }) => {
       setCart(response.data);
       return response.data;
     } catch (error) {
-      console.error('Failed to add to cart:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -58,7 +56,6 @@ export const CartProvider = ({ children }) => {
       setCart(response.data);
       return response.data;
     } catch (error) {
-      console.error('Failed to update cart:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -72,7 +69,6 @@ export const CartProvider = ({ children }) => {
       setCart(response.data);
       return response.data;
     } catch (error) {
-      console.error('Failed to remove from cart:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -85,7 +81,6 @@ export const CartProvider = ({ children }) => {
       await api.delete(`/cart/${sessionId}`);
       setCart({ items: [] });
     } catch (error) {
-      console.error('Failed to clear cart:', error);
       throw error;
     } finally {
       setLoading(false);
