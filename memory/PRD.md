@@ -41,6 +41,7 @@ Swedish (Svenska)
 - [x] Verified Admin 2FA flow end-to-end (17/17 backend tests, all frontend tests passed)
 - [x] Verified Forgot Password + Reset Password flows
 - [x] Added "Säkerhet" (Security) page to Admin Panel with activity log, 2FA status, login count, and security events
+- [x] Added Customer "Glömt lösenord" (Forgot Password) flow with email reset code via Resend (12/12 tests passed)
 
 ## Pending Issues
 - [P2] Cross-Origin Read Blocking on residual Unsplash images
