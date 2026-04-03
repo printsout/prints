@@ -76,7 +76,8 @@ export const AdminProvider = ({ children }) => {
     login,
     logout,
     getAuthHeaders,
-    adminToken
+    adminToken,
+    setAdminToken
   };
 
   return (
