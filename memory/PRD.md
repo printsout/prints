@@ -70,7 +70,6 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ### P1
 - [ ] Dela PhotoAlbumEditor (900 rader) → PhotoAlbumControls + PhotoGrid + Preview
 - [ ] Bryt ut server.py routers till separata filer
-- [ ] Koppla "Lägg i varukorg" för Kalender-editorn till kundvagn
 - [ ] Minska Cart.js komplexitet med custom hook
 
 ### P2
