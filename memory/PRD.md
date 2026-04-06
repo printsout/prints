@@ -1,6 +1,6 @@
 # Printsout - E-commerce Platform PRD
 
-## Originalbeståndning
+## Originalbeställning
 E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t-shirts, posters, namnlappar, kalendrar, fotoalbum). React frontend + FastAPI backend + MongoDB.
 
 ## Teknisk Stack
@@ -27,69 +27,79 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - Dashboard med statistik
 - Produkt-, användar-, order- och betalningshantering
 - Inställningar (frakt, moms, rabatter, rabattkoder, 2FA)
-- Skatterapport
-- Recensionshantering
-- Innehållssidor
+- Skatterapport, recensionshantering, innehållssidor
 - Säkerhetsloggar
 - Obligatorisk 2FA (TOTP/Microsoft Authenticator)
 
 ### Säkerhet
 - JWT-autentisering med sessionStorage (ej localStorage)
 - 2FA obligatoriskt för admin
-- Rate limiting
-- XSS-skydd (DOMPurify, bleach)
-- Lösenordsvalidering
+- Rate limiting, XSS-skydd (DOMPurify, bleach)
 
-## Deployment-fix (2026-04-06)
-- [x] Fixat `load_dotenv(override=True)` → `override=False` i server.py (blockerade deployment)
+## Kodkvalitetsfixar (2026-04-06) - KOMPLETT
 
-## Kodkvalitetsfixar (2026-04-06)
-- [x] Fixat alla tomma catch-block i 8+ filer
-- [x] Fixat saknade React Hook-beroenden med useCallback
-- [x] Migrerat auth tokens från localStorage till sessionStorage
-- [x] Delat AdminSettings.js → AdminSettings + ShippingTaxSection + DiscountCodesSection + TwoFASection
-- [x] Delat AdminOrders.js → AdminOrders + OrderDetailPanel
-- [x] Extraherat e-postlogik från server.py till email_service.py
-- [x] Alla tester passerade (14/14 backend, alla frontend)
+### Kritiska fixar
+- [x] Fixat undefined variable i test_password_reset_link_flow.py (rad 255, 368)
+- [x] XSS - Verifierat att DOMPurify redan används i AdminContent.js och ContentPage.js
+- [x] Fixat alla tomma catch-block i 10+ filer
+- [x] Fixat saknade React Hook-beroenden med useCallback i 8+ filer
 
-## Databasschema
-- `users`: email, password_hash, name, role
-- `products`: product_id, name, description, price, category, productType
-- `orders`: order_id, user_id, email, items, total_amount, status, shipping_address
-- `carts`: session_id, items
-- `discount_codes`: code, discount_percent, max_uses, active, expires_at
-- `admin_settings_2fa`: admin_email, totp_secret, is_enabled
-- `admin_logs`: action, admin_email, timestamp
-- `payment_settings`: shipping_enabled, shipping_cost, tax_enabled, tax_rate, etc.
+### Viktiga fixar
+- [x] Migrerat auth tokens från localStorage till sessionStorage (AuthContext, AdminContext)
+- [x] Tagit bort console.log från AdminSettings.js och Cart.js
+- [x] Fixat nested ternaries i AdminDashboard.js och ProductDetail.js
+- [x] Lagt till useMemo i OrderDetailPanel.js för filter/map-operationer
+- [x] Fixat test hardcoded secrets - alla test använder nu os.environ.get()
 
-## Inloggningsuppgifter
-- Admin: info@printsout.se / PrintoutAdmin2024! (kräver 2FA)
-- Kunder: Registrera via /registrera
+### Komponentuppdelning
+- [x] AdminSettings.js (929→350 rader) → ShippingTaxSection + DiscountCodesSection + TwoFASection
+- [x] AdminOrders.js (682→200 rader) → OrderDetailPanel
+- [x] AdminLogin.js (377→120 rader) → LoginForms + TwoFactorForms
+- [x] Checkout.js (520→130 rader) → CheckoutForms + OrderSummary
+
+### Backend-refaktorering
+- [x] Extraherat e-postlogik → email_service.py
+- [x] Delat create_checkout() → _build_order_items() + _create_stripe_session()
+- [x] Delat init_data() → _get_seed_products() + _get_seed_reviews()
+- [x] Skapat delad prisberäkningsmodul utils/pricing.js
+
+### Deployment-fix
+- [x] Fixat `load_dotenv(override=True)` → `override=False` i server.py
+
+## Testresultat
+- iteration_14.json: 15/15 backend, 100% frontend - ALLA TESTER PASSERADE
 
 ## Arkitektur
 ```
 /app
 ├── backend/
-│   ├── server.py (~2000 rader, minskad från 2130)
-│   ├── email_service.py (NY - extraherade e-postmallar)
-│   └── tests/conftest.py
+│   ├── server.py (~1995 rader, minskad och refaktorerad)
+│   ├── email_service.py (extraherade e-postmallar)
+│   └── tests/ (conftest.py med delade testvariabler)
 └── frontend/src/
-    ├── context/ (AuthContext, AdminContext, CartContext)
+    ├── utils/pricing.js (NY - delad prisberäkning)
+    ├── context/ (AuthContext, AdminContext, CartContext - alla med useCallback)
     ├── pages/
+    │   ├── checkout/ (NY - CheckoutForms, OrderSummary)
     │   ├── admin/
-    │   │   ├── settings/ (NY - ShippingTaxSection, DiscountCodesSection, TwoFASection)
-    │   │   ├── orders/ (NY - OrderDetailPanel)
-    │   │   └── AdminSettings.js, AdminOrders.js (refaktorerade)
+    │   │   ├── settings/ (ShippingTaxSection, DiscountCodesSection, TwoFASection)
+    │   │   ├── orders/ (OrderDetailPanel med useMemo)
+    │   │   └── login/ (LoginForms, TwoFactorForms)
     │   └── ...
     └── components/
 ```
 
+## Inloggningsuppgifter
+- Admin: info@printsout.se / PrintoutAdmin2024! (kräver 2FA)
+- Kunder: Registrera via /registrera
+
 ## Backlog
 ### P1
-- [ ] Fortsätt dela upp stora React-komponenter (DesignEditor 677 rader, PhotoAlbumEditor 900 rader, Checkout 517 rader)
+- [ ] Fortsätt dela upp stora React-komponenter (DesignEditor 677 rader, PhotoAlbumEditor 900 rader, NameTagEditor 577 rader, CalendarEditor 379 rader)
 - [ ] Refaktorera server.py ytterligare (bryt ut routers till separata filer)
+- [ ] Minska Cart.js komplexitet (cyclomatic complexity: 57) med custom hook
+- [ ] Minska Account.js komplexitet med delkomponenter
 
 ### P2
-- [ ] Lägg till useMemo för tunga filter/map-operationer
 - [ ] Implementera Klarna/Swish-betalningar
 - [ ] Fixa eventuella Unsplash ORB-bildproblem
