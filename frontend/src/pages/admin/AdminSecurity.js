@@ -157,7 +157,9 @@ const AdminSecurity = () => {
             <RefreshCw className="w-5 h-5 animate-spin text-slate-400" />
           </div>
         ) : filteredLogs.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-8" data-testid="no-logs-message">Inga händelser att visa.</p>
+          <p className="text-sm text-slate-500 text-center py-8" data-testid="no-logs-message">
+            Inga händelser att visa.
+          </p>
         ) : (
           <div className="space-y-1" data-testid="activity-log-list">
             {filteredLogs.map((log, idx) => {

@@ -165,106 +165,99 @@ def _get_bg_color(bg_id: str) -> str:
     return "#FFFFFF"
 
 
-def generate_nametag_pdf(customization: dict, output_path: str):
-    """Generate an A4 PDF with 140 name tag stickers."""
+def _parse_customization(customization: dict) -> dict:
+    """Extract and prepare sticker data from order customization."""
     child_name = customization.get("child_name", "")
     last_name = customization.get("last_name", "")
-    phone_number = customization.get("phone_number", "")
-    font_id = customization.get("font", "roboto")
-    font_color_hex = customization.get("font_color", "#000000")
-    motif_id = customization.get("motif")
-    bg_id = customization.get("background", "white")
+    display_name = f"{child_name} {last_name}" if last_name else child_name
+    return {
+        "display_name": display_name,
+        "phone_number": customization.get("phone_number", ""),
+        "font_id": customization.get("font", "roboto"),
+        "font_color_hex": customization.get("font_color", "#000000"),
+        "motif_id": customization.get("motif"),
+        "bg_hex": _get_bg_color(customization.get("background", "white")),
+    }
 
-    display_name = child_name
-    if last_name:
-        display_name = f"{child_name} {last_name}"
 
-    bg_hex = _get_bg_color(bg_id)
-    font_color = HexColor(font_color_hex)
-    bg_color = HexColor(bg_hex)
+def _draw_cut_marks(c: canvas.Canvas):
+    """Draw light gray cut-mark guidelines on the page."""
+    c.setStrokeColor(HexColor("#DDDDDD"))
+    c.setLineWidth(0.25)
+    for row in range(ROWS + 1):
+        y = PAGE_H - MARGIN_TOP - row * STICKER_H
+        c.line(MARGIN_LEFT - 2 * mm, y, MARGIN_LEFT + GRID_W + 2 * mm, y)
+    for col in range(COLS + 1):
+        x = MARGIN_LEFT + col * STICKER_W
+        c.line(x, PAGE_H - MARGIN_TOP + 2 * mm, x, PAGE_H - MARGIN_TOP - GRID_H - 2 * mm)
+
+
+def _calc_font_size(name: str) -> float:
+    """Return a font size that fits the sticker width."""
+    if len(name) > 15:
+        return 5.5
+    if len(name) > 10:
+        return 6.0
+    return 7.0
+
+
+def _draw_sticker(c: canvas.Canvas, x: float, y: float, data: dict, font_name: str):
+    """Render a single sticker at (x, y) bottom-left."""
+    bg_color = HexColor(data["bg_hex"])
+    font_color = HexColor(data["font_color_hex"])
+
+    # Background + border
+    c.setFillColor(bg_color)
+    c.rect(x, y, STICKER_W, STICKER_H, fill=1, stroke=0)
+    c.setStrokeColor(HexColor("#CCCCCC"))
+    c.setLineWidth(0.15)
+    c.rect(x, y, STICKER_W, STICKER_H, fill=0, stroke=1)
+
+    content_x = x + 1.5 * mm
+    motif_x_offset = 0
+
+    # Motif symbol
+    motif_id = data["motif_id"]
+    if motif_id and motif_id in MOTIF_SYMBOLS:
+        c.setFillColor(HexColor(MOTIF_COLORS.get(motif_id, "#000000")))
+        c.setFont("Helvetica", 6)
+        try:
+            c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, MOTIF_SYMBOLS[motif_id])
+        except Exception:
+            c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, "\u2022")
+        motif_x_offset = 4 * mm
+
+    # Text
+    text_x = content_x + motif_x_offset
+    name_size = _calc_font_size(data["display_name"])
+    c.setFillColor(font_color)
+    c.setFont(font_name, name_size)
+
+    if data["phone_number"]:
+        c.drawString(text_x, y + STICKER_H * 0.58, data["display_name"])
+        c.setFont(font_name, max(3.5, name_size - 2))
+        c.drawString(text_x, y + STICKER_H * 0.2, data["phone_number"])
+    else:
+        c.drawString(text_x, y + STICKER_H / 2 - name_size / 2.5, data["display_name"])
+
+
+def generate_nametag_pdf(customization: dict, output_path: str):
+    """Generate an A4 PDF with 140 name tag stickers."""
+    data = _parse_customization(customization)
 
     c = canvas.Canvas(output_path, pagesize=A4)
     c.setTitle("Namnlappar - Printsout")
     c.setAuthor("Printsout AB")
 
-    font_name = _register_font(c, font_id)
+    font_name = _register_font(c, data["font_id"])
+    _draw_cut_marks(c)
 
-    # Draw cut marks (light gray guidelines)
-    c.setStrokeColor(HexColor("#DDDDDD"))
-    c.setLineWidth(0.25)
-
-    for row in range(ROWS + 1):
-        y = PAGE_H - MARGIN_TOP - row * STICKER_H
-        c.line(MARGIN_LEFT - 2 * mm, y, MARGIN_LEFT + GRID_W + 2 * mm, y)
-
-    for col in range(COLS + 1):
-        x = MARGIN_LEFT + col * STICKER_W
-        c.line(x, PAGE_H - MARGIN_TOP + 2 * mm, x, PAGE_H - MARGIN_TOP - GRID_H - 2 * mm)
-
-    # Draw each sticker
     for i in range(TOTAL_STICKERS):
         col = i % COLS
         row = i // COLS
-
         x = MARGIN_LEFT + col * STICKER_W
-        y = PAGE_H - MARGIN_TOP - (row + 1) * STICKER_H  # bottom-left of sticker
-
-        # Background fill
-        c.setFillColor(bg_color)
-        c.rect(x, y, STICKER_W, STICKER_H, fill=1, stroke=0)
-
-        # Light border
-        c.setStrokeColor(HexColor("#CCCCCC"))
-        c.setLineWidth(0.15)
-        c.rect(x, y, STICKER_W, STICKER_H, fill=0, stroke=1)
-
-        # Content area
-        content_x = x + 1.5 * mm
-        content_w = STICKER_W - 3 * mm
-
-        # Motif symbol on the left
-        motif_x_offset = 0
-        if motif_id and motif_id in MOTIF_SYMBOLS:
-            symbol = MOTIF_SYMBOLS[motif_id]
-            motif_color_hex = MOTIF_COLORS.get(motif_id, "#000000")
-            c.setFillColor(HexColor(motif_color_hex))
-            c.setFont("Helvetica", 6)
-            try:
-                c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, symbol)
-            except Exception:
-                c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, "\u2022")
-            motif_x_offset = 4 * mm
-
-        # Name text
-        text_x = content_x + motif_x_offset
-        available_w = content_w - motif_x_offset
-
-        c.setFillColor(font_color)
-
-        # Calculate font size to fit
-        name_font_size = 7
-        if len(display_name) > 15:
-            name_font_size = 5.5
-        elif len(display_name) > 10:
-            name_font_size = 6
-
-        c.setFont(font_name, name_font_size)
-
-        if phone_number:
-            # Name higher, phone below
-            name_y = y + STICKER_H * 0.58
-            c.drawString(text_x, name_y, display_name)
-
-            phone_font_size = max(3.5, name_font_size - 2)
-            c.setFont(font_name, phone_font_size)
-            c.setFillColor(HexColor(font_color_hex))
-            c.globalState = None
-            phone_y = y + STICKER_H * 0.2
-            c.drawString(text_x, phone_y, phone_number)
-        else:
-            # Center name vertically
-            name_y = y + STICKER_H / 2 - name_font_size / 2.5
-            c.drawString(text_x, name_y, display_name)
+        y = PAGE_H - MARGIN_TOP - (row + 1) * STICKER_H
+        _draw_sticker(c, x, y, data, font_name)
 
     c.save()
     return output_path

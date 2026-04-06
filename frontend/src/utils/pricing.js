@@ -25,11 +25,12 @@ export const calculatePricing = (cart, products, shippingConfig, appliedCoupon) 
   const discountAmount = bestDiscount;
   const afterDiscount = subtotal - discountAmount;
 
-  const shipping = !shippingConfig.shipping_enabled
-    ? 0
-    : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold)
-    ? 0
-    : shippingConfig.shipping_cost;
+  let shipping = shippingConfig.shipping_cost;
+  if (!shippingConfig.shipping_enabled) {
+    shipping = 0;
+  } else if (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) {
+    shipping = 0;
+  }
 
   const total = afterDiscount + shipping;
 

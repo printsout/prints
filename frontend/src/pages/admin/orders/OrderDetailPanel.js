@@ -303,9 +303,10 @@ const NametagCustomization = ({ item, orderId }) => {
 
 const PhotoAlbumCustomization = ({ item, toast }) => {
   const c = item.customization;
+  const pages = c.pages;
   const pagesWithImages = useMemo(() => 
-    c.pages?.filter(pg => pg.image_urls?.length > 0) || [],
-    [c.pages]
+    pages?.filter(pg => pg.image_urls?.length > 0) || [],
+    [pages]
   );
   return (
     <>
@@ -351,9 +352,10 @@ const PhotoAlbumCustomization = ({ item, toast }) => {
 
 const CalendarCustomization = ({ item }) => {
   const c = item.customization;
+  const months = c.months;
   const monthsWithImages = useMemo(() => 
-    c.months?.filter(m => m.image_url) || [],
-    [c.months]
+    months?.filter(m => m.image_url) || [],
+    [months]
   );
   return (
     <>

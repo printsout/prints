@@ -32,8 +32,8 @@ export const CartProvider = ({ children }) => {
     try {
       const response = await api.get(`/cart/${sid}`);
       setCart(response.data);
-    } catch {
-      // Cart fetch failure handled silently - empty cart shown by default
+    } catch (error) {
+      console.error('Cart fetch failed:', error);
     }
   };
 
