@@ -66,11 +66,13 @@ export function CoverEditor({ coverImage, setCoverImage, coverText, setCoverText
               }`}
               data-testid={`cover-material-${mat.id}`}
             >
-              <div className={`w-10 h-10 rounded-lg flex-shrink-0 ${
-                mat.id === 'hardpaper' ? 'bg-amber-100 border border-amber-200' :
-                mat.id === 'fabric' ? 'bg-slate-200 border border-slate-300' :
-                'bg-stone-800 border border-stone-700'
-              }`} />
+              {(() => {
+                const styles = {
+                  hardpaper: 'bg-amber-100 border border-amber-200',
+                  fabric: 'bg-slate-200 border border-slate-300',
+                };
+                return <div className={`w-10 h-10 rounded-lg flex-shrink-0 ${styles[mat.id] || 'bg-stone-800 border border-stone-700'}`} />;
+              })()}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-800">{mat.label}</p>
                 <p className="text-xs text-slate-400">{mat.desc}</p>

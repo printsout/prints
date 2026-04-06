@@ -3,9 +3,16 @@ import { Trash2, Plus, Minus } from 'lucide-react';
 
 export function CartItemCard({ item, product, loading, onQuantityChange, onRemove }) {
   const itemPrice = item.price || product.price;
-  const thumbUrl = item.design_preview
-    ? (item.design_preview.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${item.design_preview}` : item.design_preview)
-    : item.image || product.images?.[0];
+
+  const getThumbUrl = () => {
+    if (item.design_preview) {
+      return item.design_preview.startsWith('/api')
+        ? `${process.env.REACT_APP_BACKEND_URL}${item.design_preview}`
+        : item.design_preview;
+    }
+    return item.image || product.images?.[0];
+  };
+  const thumbUrl = getThumbUrl();
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-soft flex gap-6" data-testid={`cart-item-${item.cart_item_id}`}>
