@@ -5,7 +5,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Teknisk Stack
 - **Frontend**: React, Tailwind CSS, Shadcn/UI, React Three Fiber, DOMPurify
-- **Backend**: FastAPI, MongoDB (Motor), JWT, pyotp (2FA)
+- **Backend**: FastAPI, MongoDB (Motor), JWT, pyotp (2FA), reportlab (PDF)
 - **Integrationer**: Stripe (LIVE), Resend (LIVE, info@printsout.se)
 
 ## Kärnfunktioner
@@ -14,35 +14,32 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - Admin panel med 2FA, produkthantering, ordrar, betalningar, inställningar, rabattkoder, säkerhetsloggar
 
 ## E-postfunktioner
-- [x] **Orderbekräftelse**: Skickas automatiskt till kund vid lyckad Stripe-betalning (webhook + status check)
-- [x] **Leveransbekräftelse med spårning**: Skickas automatiskt till kund när admin ändrar orderstatus till "Skickad", med spårningsnummer och klickbar spårningslänk (stöd för PostNord, DHL, Bring, DB Schenker, UPS)
+- [x] **Orderbekräftelse**: Skickas automatiskt till kund vid lyckad Stripe-betalning
+- [x] **Leveransbekräftelse med spårning**: Skickas med spårningsnummer och klickbar spårningslänk
 - [x] **Rabattkods-mail**: Skickas via admin-panelen till valda kunder
 - [x] **Lösenordsåterställning**: Skickas vid "Glömt lösenord"-flöde
 
+## Namnlappar (2026-04-06) - NYTT
+- [x] 140 st namnlappar på A4-ark, självhäftande, 30x13 mm (7 kolumner × 20 rader)
+- [x] Namnlapps-editor med 3 flikar: Text (namn, telefon, typsnitt, färg), Motiv (50+ ikoner, egen bild), Bakgrund (60+ färger/gradient)
+- [x] Live-förhandsvisning med miniatyrer i 7-kolumnsgrid
+- [x] Admin kan ladda ner utskriftsbar A4-PDF med alla 140 namnlappar via knappen "Ladda ner namnlappar (PDF - 140 st A4)"
+- [x] PDF genereras med korrekt bakgrundsfärg, typsnitt (Google Fonts), textfärg, och motivsymboler
+- [x] Produktbadges: "140 st / A4-ark", "30×13 mm", "Självhäftande"
+
 ## Spårningsfunktion (2026-04-06)
-- [x] Admin kan ange spårningsnummer och välja transportör (PostNord, DHL, Bring, DB Schenker, UPS) vid statusändring till "Skickad"
-- [x] Dialog visas med transportör-dropdown och spårningsnummer-fält
-- [x] Spårningsinformation sparas i order-dokumentet i MongoDB
-- [x] Leveransmail till kund inkluderar spårningsnummer + klickbar "Spåra ditt paket"-länk
-- [x] Spårningsnummer visas i admin orderdetaljer med extern spårningslänk
+- [x] Admin kan ange spårningsnummer och välja transportör (PostNord, DHL, Bring, DB Schenker, UPS)
+- [x] Leveransmail inkluderar spårningsnummer + klickbar "Spåra ditt paket"-länk
 
-## Deployment-fix (2026-04-06)
-- [x] Rensat .gitignore — tog bort alla `*.env` blockeringar som förhindrade deploy
-- [x] .env-filer inkluderas nu vid deploy (krävs av Emergent K8s)
-
-## Kodkvalitetsfixar - Omgång 1 & 2
-- [x] Fixat tomma catch-block, React Hook-beroenden, localStorage → sessionStorage
-- [x] Delat stora komponenter (AdminSettings, AdminOrders, AdminLogin, Checkout, Navbar, DesignEditor, AdminPayments)
-- [x] Extraherat email_service.py, delat create_checkout() + init_data()
-- [x] Deployment-fix: load_dotenv(override=False)
-- [x] Extraherat magic numbers → utils/constants.js
-- [x] Fixat nested ternaries, lagt till useMemo
+## Admin 2FA-fix (2026-04-06)
+- [x] Utökad valid_window från 1 till 2 (±60 sekunders tolerans) för TOTP-verifiering
 
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
 - iteration_15: 15/15 backend, 100% frontend
 - iteration_16: 9/9 backend, 100% frontend (shipping email)
 - iteration_17: 7/7 backend, 100% frontend (tracking number)
+- iteration_18: 7/7 backend, 100% frontend (nametag PDF + editor)
 
 ## Arkitektur
 ```
@@ -50,22 +47,18 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ├── backend/
 │   ├── server.py (~2000 rader)
 │   ├── email_service.py (shipping + order confirmation + discount + password reset)
+│   ├── nametag_pdf.py (PDF-generering för 140 namnlappar på A4)
 │   └── tests/ (conftest.py + test files)
 └── frontend/src/
     ├── utils/ (constants.js, pricing.js)
     ├── context/ (AuthContext, AdminContext, CartContext)
     ├── components/
-    │   ├── Navbar.js
-    │   ├── navbar/ (MobileMenu, UserDropdown)
+    │   ├── Navbar.js, Footer.js
     │   └── ProductPreview3D.js
     ├── pages/
-    │   ├── design/ (DesignTools, DesignCanvas)
-    │   ├── checkout/ (CheckoutForms, OrderSummary)
-    │   ├── admin/
-    │   │   ├── settings/ (ShippingTaxSection, DiscountCodesSection, TwoFASection)
-    │   │   ├── orders/ (OrderDetailPanel - with tracking dialog)
-    │   │   ├── login/ (LoginForms, TwoFactorForms)
-    │   │   └── payments/ (PaymentMethodCards)
+    │   ├── NameTagEditor.js (redesignad med 140 st, 3 flikar, live-förhandsvisning)
+    │   ├── CalendarEditor.js, PhotoAlbumEditor.js
+    │   ├── admin/orders/OrderDetailPanel.js (med PDF-nedladdning)
     │   └── ...
 ```
 
@@ -75,14 +68,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Backlog
 ### P1
-- [ ] Redesigna Namnlapps-editorn (matcha namly.se)
 - [ ] Dela PhotoAlbumEditor (900 rader) → PhotoAlbumControls + PhotoGrid + Preview
-- [ ] Dela NameTagEditor (577 rader) → NameTagForm + Customization + Preview
-- [ ] Dela CalendarEditor (379 rader)
 - [ ] Bryt ut server.py routers till separata filer
+- [ ] Koppla "Lägg i varukorg" för Kalender-editorn till kundvagn
 - [ ] Minska Cart.js komplexitet med custom hook
 
 ### P2
 - [ ] Implementera Klarna/Swish-betalningar
 - [ ] Dela ProductPreview3D (274 rader) → 3D-hooks
-- [ ] Koppla "Lägg i varukorg" för specialiserade editors (Kalender, Namnskylt)
+- [ ] Förbättra e-postmallar med Jinja2
+- [ ] Fixa Unsplash ORB-bildproblem (ersätt med lokala bilder)
