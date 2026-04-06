@@ -13,39 +13,36 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - Varukorg + Stripe-kassaflöde (LIVE), kundkonton, glömt lösenord-flöde
 - Admin panel med 2FA, produkthantering, ordrar, betalningar, inställningar, rabattkoder, säkerhetsloggar
 
-## E-postfunktioner (2026-04-06)
+## E-postfunktioner
 - [x] **Orderbekräftelse**: Skickas automatiskt till kund vid lyckad Stripe-betalning (webhook + status check)
-- [x] **Leveransbekräftelse**: Skickas automatiskt till kund när admin ändrar orderstatus till "Skickad"
+- [x] **Leveransbekräftelse med spårning**: Skickas automatiskt till kund när admin ändrar orderstatus till "Skickad", med spårningsnummer och klickbar spårningslänk (stöd för PostNord, DHL, Bring, DB Schenker, UPS)
 - [x] **Rabattkods-mail**: Skickas via admin-panelen till valda kunder
 - [x] **Lösenordsåterställning**: Skickas vid "Glömt lösenord"-flöde
+
+## Spårningsfunktion (2026-04-06)
+- [x] Admin kan ange spårningsnummer och välja transportör (PostNord, DHL, Bring, DB Schenker, UPS) vid statusändring till "Skickad"
+- [x] Dialog visas med transportör-dropdown och spårningsnummer-fält
+- [x] Spårningsinformation sparas i order-dokumentet i MongoDB
+- [x] Leveransmail till kund inkluderar spårningsnummer + klickbar "Spåra ditt paket"-länk
+- [x] Spårningsnummer visas i admin orderdetaljer med extern spårningslänk
 
 ## Deployment-fix (2026-04-06)
 - [x] Rensat .gitignore — tog bort alla `*.env` blockeringar som förhindrade deploy
 - [x] .env-filer inkluderas nu vid deploy (krävs av Emergent K8s)
 
-## Kodkvalitetsfixar - Omgång 1 (2026-04-06)
+## Kodkvalitetsfixar - Omgång 1 & 2
 - [x] Fixat tomma catch-block, React Hook-beroenden, localStorage → sessionStorage
-- [x] Delat AdminSettings, AdminOrders, AdminLogin, Checkout
+- [x] Delat stora komponenter (AdminSettings, AdminOrders, AdminLogin, Checkout, Navbar, DesignEditor, AdminPayments)
 - [x] Extraherat email_service.py, delat create_checkout() + init_data()
 - [x] Deployment-fix: load_dotenv(override=False)
-
-## Kodkvalitetsfixar - Omgång 2 (2026-04-06)
-- [x] Fixat kvarvarande hardcoded test secrets (module-level i test files)
-- [x] Borttagen console.error från CartContext.js
-- [x] Fixat empty catch i AdminSettings.js med korrekt kommentar
-- [x] Extraherat magic numbers → utils/constants.js (SESSION_CHECK_INTERVAL_MS)
-- [x] Delat Navbar (295→120 rader) → MobileMenu + UserDropdown
-- [x] Delat DesignEditor (678→165 rader) → DesignTools + DesignCanvas
-- [x] Delat AdminPayments (456→110 rader) → PaymentMethodCards
-- [x] Verifierat XSS-skydd (DOMPurify.sanitize() redan på plats)
-- [x] Verifierat hook-deps (falska positiver för module-level imports)
-- [x] Fixat nested ternaries i AdminDashboard + ProductDetail
-- [x] Lagt till useMemo i OrderDetailPanel
+- [x] Extraherat magic numbers → utils/constants.js
+- [x] Fixat nested ternaries, lagt till useMemo
 
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
 - iteration_15: 15/15 backend, 100% frontend
-- iteration_16: 9/9 backend, 100% frontend (shipping email feature)
+- iteration_16: 9/9 backend, 100% frontend (shipping email)
+- iteration_17: 7/7 backend, 100% frontend (tracking number)
 
 ## Arkitektur
 ```
@@ -58,7 +55,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
     ├── utils/ (constants.js, pricing.js)
     ├── context/ (AuthContext, AdminContext, CartContext)
     ├── components/
-    │   ├── Navbar.js (120 rader)
+    │   ├── Navbar.js
     │   ├── navbar/ (MobileMenu, UserDropdown)
     │   └── ProductPreview3D.js
     ├── pages/
@@ -66,7 +63,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
     │   ├── checkout/ (CheckoutForms, OrderSummary)
     │   ├── admin/
     │   │   ├── settings/ (ShippingTaxSection, DiscountCodesSection, TwoFASection)
-    │   │   ├── orders/ (OrderDetailPanel)
+    │   │   ├── orders/ (OrderDetailPanel - with tracking dialog)
     │   │   ├── login/ (LoginForms, TwoFactorForms)
     │   │   └── payments/ (PaymentMethodCards)
     │   └── ...
