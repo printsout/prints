@@ -70,7 +70,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ### P1
 - [x] ~~Dela PhotoAlbumEditor (900 rader) → separata komponenter~~ (2026-04-06: 7 filer, max 245 rader)
 - [x] ~~Bryt ut server.py routers till separata filer~~ (2026-04-06: 1 fil 2035→16 filer, server.py=119 rader)
-- [ ] Minska Cart.js komplexitet med custom hook
+- [x] ~~Minska Cart.js komplexitet med custom hook~~ (2026-04-06: 334→4 filer, Cart.js=92 rader, useCartData hook)
 
 ### P2
 - [ ] Implementera Klarna/Swish-betalningar
