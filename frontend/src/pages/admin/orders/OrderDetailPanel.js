@@ -246,7 +246,7 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
           {item.customization.type === 'nametag' && <NametagCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
-          {item.customization.type === 'calendar' && <CalendarCustomization item={item} />}
+          {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
           {!['nametag', 'photoalbum', 'calendar', 'design'].includes(item.customization.type) && (
             <p>Typ: {item.customization.type}</p>
@@ -350,13 +350,32 @@ const PhotoAlbumCustomization = ({ item, toast }) => {
   );
 };
 
-const CalendarCustomization = ({ item }) => {
+const CalendarCustomization = ({ item, orderId }) => {
   const c = item.customization;
   const months = c.months;
   const monthsWithImages = useMemo(() => 
     months?.filter(m => m.image_url) || [],
     [months]
   );
+
+  const handleDownloadZip = () => {
+    const token = sessionStorage.getItem('adminToken');
+    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-images`;
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error('Kunde inte ladda ner');
+        return res.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `kalenderbilder_${orderId?.slice(0, 8)}.zip`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       {c.year && <p>År: <strong>{c.year}</strong></p>}
@@ -379,6 +398,14 @@ const CalendarCustomization = ({ item }) => {
               );
             })}
           </div>
+          <button
+            onClick={handleDownloadZip}
+            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
+            data-testid="download-calendar-zip"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Ladda ner alla bilder (ZIP)
+          </button>
         </div>
       )}
     </>

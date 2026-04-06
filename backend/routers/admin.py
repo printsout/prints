@@ -1,6 +1,7 @@
 """Admin routes: auth, CRUD, settings, content, discounts, reviews."""
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import FileResponse
+from starlette.responses import StreamingResponse
 from database import db
 from models import (
     AdminLogin, AdminUserUpdate, AdminProductCreate, AdminOrderUpdate,
@@ -294,6 +295,47 @@ async def download_nametag_pdf(order_id: str, admin=Depends(verify_admin_token))
     child_name = customization.get("child_name", "namnlapp")
     filename = f"namnlappar_{child_name}_{order_id[:8]}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+@router.get("/orders/{order_id}/calendar-images")
+async def download_calendar_images(order_id: str, admin=Depends(verify_admin_token)):
+    """Download all calendar images as a ZIP file."""
+    import zipfile
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    calendar_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "calendar":
+            calendar_item = item
+            break
+    if not calendar_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller ingen kalender")
+
+    customization = calendar_item["customization"]
+    months = customization.get("months", [])
+    uploads_dir = Path(os.path.dirname(__file__)).parent / "uploads"
+
+    zip_path = Path("/tmp") / f"kalender_{order_id[:8]}.zip"
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for m in months:
+            img_url = m.get("image_url")
+            if not img_url:
+                continue
+            filename = img_url.split("/")[-1]
+            filepath = uploads_dir / filename
+            if filepath.exists():
+                month_name = m.get("month", "bild")
+                ext = filename.rsplit(".", 1)[-1] if "." in filename else "jpg"
+                zf.write(filepath, f"{month_name}.{ext}")
+
+    if not zip_path.exists() or zip_path.stat().st_size < 22:
+        raise HTTPException(status_code=404, detail="Inga kalenderbilder hittades på servern")
+
+    return FileResponse(
+        zip_path, media_type="application/zip",
+        filename=f"kalenderbilder_{order_id[:8]}.zip",
+        headers={"Content-Disposition": f'attachment; filename="kalenderbilder_{order_id[:8]}.zip"'}
+    )
 
 
 # ─── Products ───────────────────────────────────────
