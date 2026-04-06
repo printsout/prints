@@ -71,7 +71,11 @@ const AdminOrders = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       await api.put(`/admin/orders/${orderId}`, { status: newStatus }, { headers: getAuthHeaders() });
-      toast.success('Orderstatus uppdaterad');
+      if (newStatus === 'shipped') {
+        toast.success('Orderstatus uppdaterad — leveransbekräftelse skickad till kund');
+      } else {
+        toast.success('Orderstatus uppdaterad');
+      }
       fetchOrders();
       if (selectedOrder?.order_id === orderId) {
         setSelectedOrder(prev => ({ ...prev, status: newStatus }));

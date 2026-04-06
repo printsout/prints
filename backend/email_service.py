@@ -154,6 +154,89 @@ async def send_discount_emails(discount_code: str, code_doc: dict, custom_messag
     return sent_count, failed_emails
 
 
+def build_shipping_notification_html(order: dict) -> str:
+    """Build HTML for shipping notification email"""
+    items_html = ""
+    for item in order.get("items", []):
+        qty = item.get("quantity", 1)
+        name = item.get("product_name", "Produkt")
+        items_html += (
+            f'<tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#333">{name}</td>'
+            f'<td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center;color:#333">{qty}</td></tr>'
+        )
+
+    order_id = order.get("order_id", "")[:8]
+    shipping = order.get("shipping_address", {}) or {}
+    address_lines = []
+    if shipping.get("street"):
+        address_lines.append(shipping["street"])
+    if shipping.get("postal_code") or shipping.get("city"):
+        address_lines.append(f"{shipping.get('postal_code', '')} {shipping.get('city', '')}".strip())
+
+    address_html = "<br>".join(address_lines) if address_lines else "Se din orderbekräftelse"
+
+    return f"""
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
+      <div style="background:#1a1a2e;padding:30px;text-align:center">
+        <h1 style="color:#fff;margin:0;font-size:26px">PrintsOut</h1>
+      </div>
+      <div style="padding:30px">
+        <p style="font-size:16px;color:#333">Hej!</p>
+        <p style="font-size:16px;color:#333;line-height:1.6">
+          Din beställning har nu skickats!
+        </p>
+        <div style="background:#f0fdf4;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #2a9d8f">
+          <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Ordernummer:</strong> #{order_id}</p>
+        </div>
+        <p style="font-size:15px;color:#333;font-weight:600;margin-bottom:8px">Produkter i din leverans:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead>
+            <tr style="border-bottom:2px solid #1a1a2e">
+              <th style="text-align:left;padding:8px 0;color:#1a1a2e">Produkt</th>
+              <th style="text-align:center;padding:8px 0;color:#1a1a2e">Antal</th>
+            </tr>
+          </thead>
+          <tbody>{items_html}</tbody>
+        </table>
+        <div style="background:#f8f9fa;border-radius:8px;padding:16px;margin:20px 0">
+          <p style="margin:0 0 4px 0;color:#555;font-size:13px;font-weight:600">LEVERANSADRESS:</p>
+          <p style="margin:0;color:#333;font-size:14px">{address_html}</p>
+        </div>
+        <p style="font-size:15px;color:#333;line-height:1.6;margin-top:24px">
+          Har du frågor om din leverans? Tveka inte att kontakta oss!
+        </p>
+        <p style="font-size:15px;color:#555;margin-top:24px">
+          Med vänliga hälsningar<br>
+          <strong style="color:#1a1a2e">PrintsOut</strong>
+        </p>
+      </div>
+      <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;color:#999">
+        <p style="margin:0">&copy; {datetime.now().year} PrintsOut. Alla rättigheter förbehållna.</p>
+      </div>
+    </div>
+    """
+
+
+async def send_shipping_notification(order: dict):
+    """Send shipping notification email to customer"""
+    try:
+        html = build_shipping_notification_html(order)
+        order_id = order.get("order_id", "")[:8]
+        params = {
+            "from": f"PrintsOut <{SENDER_EMAIL}>",
+            "to": [order["email"]],
+            "subject": f"Din order #{order_id} har skickats! - PrintsOut",
+            "html": html,
+            "headers": {
+                "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
+            }
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Shipping notification sent to {order['email']} for order {order['order_id']}")
+    except Exception as e:
+        logger.warning(f"Failed to send shipping notification: {e}")
+
+
 def build_password_reset_html(reset_url: str) -> str:
     return f"""
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">

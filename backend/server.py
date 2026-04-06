@@ -25,7 +25,7 @@ import asyncio
 import pyotp
 import qrcode
 import io
-from email_service import send_order_confirmation, send_discount_emails, build_password_reset_html
+from email_service import send_order_confirmation, send_shipping_notification, send_discount_emails, build_password_reset_html
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
@@ -1434,6 +1434,12 @@ async def update_order(order_id: str, update_data: AdminOrderUpdate, admin = Dep
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Order hittades inte")
+    
+    # Send shipping notification email when status changes to "Skickad"
+    if update_data.status and update_data.status.lower() in ("skickad", "shipped"):
+        order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+        if order and order.get("email"):
+            await send_shipping_notification(order)
     
     # Log action
     await db.admin_logs.insert_one({
