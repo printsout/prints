@@ -25,6 +25,7 @@ import asyncio
 import pyotp
 import qrcode
 import io
+from email_service import send_order_confirmation, send_discount_emails, build_password_reset_html
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
@@ -442,12 +443,7 @@ async def customer_forgot_password(request: Request, data: dict):
     reset_link = f"{site_url}/aterstall-losenord?token={reset_token}"
 
     try:
-        html = f"""<p>Hej!</p>
-<p>Vi fick en begäran om att återställa lösenordet för ditt konto hos PrintsOut.</p>
-<p>Klicka på länken nedan för att välja ett nytt lösenord:</p>
-<p><a href="{reset_link}">{reset_link}</a></p>
-<p>Länken är giltig i 30 minuter. Om du inte begärde detta kan du ignorera detta mail.</p>
-<p>Med vänliga hälsningar,<br>PrintsOut</p>"""
+        html = build_password_reset_html(reset_link)
         params = {
             "from": f"PrintsOut <{SENDER_EMAIL}>",
             "to": [email],
@@ -491,83 +487,8 @@ async def customer_reset_password(request: Request, data: dict):
     return {"message": "Lösenordet har ändrats. Du kan nu logga in."}
 
 async def send_order_confirmation_email(order: dict):
-    """Send order confirmation email to customer"""
-    try:
-        items_html = ""
-        for item in order.get("items", []):
-            qty = item.get("quantity", 1)
-            price = item.get("price", 0)
-            name = item.get("product_name", "Produkt")
-            items_html += f'<tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#333">{name}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center;color:#333">{qty}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;color:#333">{price:.0f} kr</td></tr>'
-
-        total = order.get("total_amount", 0)
-        order_id = order.get("order_id", "")[:8]
-        created = order.get("created_at", "")[:10]
-
-        html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
-          <div style="background:#1a1a2e;padding:30px;text-align:center">
-            <h1 style="color:#fff;margin:0;font-size:26px">PrintsOut</h1>
-          </div>
-          <div style="padding:30px">
-            <p style="font-size:16px;color:#333">Hej!</p>
-            <p style="font-size:16px;color:#333;line-height:1.6">
-              Tack för din beställning hos oss 🎉
-            </p>
-            <p style="font-size:16px;color:#333;line-height:1.6">
-              Vi har tagit emot din order och den behandlas just nu. Här är en sammanfattning:
-            </p>
-            <div style="background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0">
-              <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Ordernummer:</strong> #{order_id}</p>
-              <p style="margin:0;color:#555;font-size:14px"><strong>Datum:</strong> {created}</p>
-            </div>
-            <p style="font-size:15px;color:#333;font-weight:600;margin-bottom:8px">Dina produkter:</p>
-            <table style="width:100%;border-collapse:collapse;font-size:14px">
-              <thead>
-                <tr style="border-bottom:2px solid #1a1a2e">
-                  <th style="text-align:left;padding:8px 0;color:#1a1a2e">Produkt</th>
-                  <th style="text-align:center;padding:8px 0;color:#1a1a2e">Antal</th>
-                  <th style="text-align:right;padding:8px 0;color:#1a1a2e">Pris</th>
-                </tr>
-              </thead>
-              <tbody>{items_html}</tbody>
-            </table>
-            <div style="text-align:right;margin-top:16px;padding-top:12px;border-top:2px solid #1a1a2e">
-              <p style="font-size:18px;font-weight:700;color:#1a1a2e;margin:0">Totalt: {total:.0f} kr</p>
-            </div>
-            <p style="font-size:15px;color:#333;line-height:1.6;margin-top:24px">
-              Vi återkommer med en leveransbekräftelse så snart din order har skickats.
-            </p>
-            <p style="font-size:15px;color:#333;line-height:1.6">
-              Har du några frågor är du alltid välkommen att kontakta oss.
-            </p>
-            <p style="font-size:15px;color:#333;line-height:1.6">
-              Tack för att du handlar hos oss!
-            </p>
-            <p style="font-size:15px;color:#555;margin-top:24px">
-              Med vänliga hälsningar<br>
-              <strong style="color:#1a1a2e">PrintsOut</strong>
-            </p>
-          </div>
-          <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;color:#999">
-            <p style="margin:0">© {datetime.now().year} PrintsOut. Alla rättigheter förbehållna.</p>
-          </div>
-        </div>
-        """
-
-        params = {
-            "from": f"PrintsOut <{SENDER_EMAIL}>",
-            "to": [order["email"]],
-            "subject": f"Orderbekräftelse #{order_id} - PrintsOut",
-            "html": html,
-            "headers": {
-                "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
-            }
-        }
-        await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Order confirmation email sent to {order['email']} for order {order['order_id']}")
-    except Exception as e:
-        logger.warning(f"Failed to send order confirmation email: {e}")
+    """Send order confirmation email - delegated to email_service module"""
+    await send_order_confirmation(order)
 
 # ============== PRODUCTS ROUTES ==============
 
@@ -1872,79 +1793,24 @@ async def send_discount_email(data: dict, admin = Depends(verify_admin_token)):
     if not discount_code:
         raise HTTPException(status_code=400, detail="Ange en rabattkod")
     
-    # Verify code exists
     code_doc = await db.discount_codes.find_one({"code": discount_code}, {"_id": 0})
     if not code_doc:
         raise HTTPException(status_code=404, detail="Rabattkoden finns inte")
     
-    # Get all customer emails
-    users = await db.users.find({"role": {"$ne": "admin"}}, {"_id": 0, "email": 1, "name": 1}).to_list(1000)
-    
-    # Also collect unique emails from orders (guests)
+    # Collect all customer emails (registered users + guest order emails)
+    users = await db.users.find({"role": {"$ne": "admin"}}, {"_id": 0, "email": 1}).to_list(1000)
     order_emails = await db.orders.distinct("email")
     
-    # Merge unique emails
-    all_emails = set()
-    email_names = {}
-    for u in users:
-        if u.get("email"):
-            all_emails.add(u["email"])
-            email_names[u["email"]] = u.get("name", "")
-    for e in order_emails:
-        if e:
-            all_emails.add(e)
+    all_emails = {u["email"] for u in users if u.get("email")}
+    all_emails.update(e for e in order_emails if e)
     
     if not all_emails:
         raise HTTPException(status_code=400, detail="Inga kunder hittade")
     
     site_url = os.environ.get('SITE_URL', '')
-    
-    html_template = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      <div style="background: #1a1a2e; padding: 30px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Printsout</h1>
-      </div>
-      <div style="padding: 30px;">
-        <h2 style="color: #1a1a2e; margin-top: 0;">Exklusiv rabatt till dig!</h2>
-        {f'<p style="color: #333; font-size: 16px; line-height: 1.6;">{custom_message}</p>' if custom_message else ''}
-        <div style="background: #f0fdf4; border: 2px dashed #2a9d8f; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
-          <p style="color: #666; margin: 0 0 8px 0; font-size: 14px;">Din rabattkod:</p>
-          <p style="font-size: 32px; font-weight: bold; color: #1a1a2e; margin: 0; letter-spacing: 3px; font-family: monospace;">{discount_code}</p>
-          <p style="color: #2a9d8f; margin: 12px 0 0 0; font-size: 20px; font-weight: bold;">{code_doc['discount_percent']}% rabatt</p>
-        </div>
-        <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Ange koden i kassan for att fa rabatten. 
-          {f'Koden gäller till {code_doc["expires_at"][:10]}.' if code_doc.get('expires_at') else ''}
-        </p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="{site_url}/produkter" style="background: #2a9d8f; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Handla nu</a>
-        </div>
-      </div>
-      <div style="background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-        <p>Printsout — Personliga produkter med dina bilder</p>
-      </div>
-    </div>
-    """
-    
-    sent_count = 0
-    failed_emails = []
-    
-    for email in all_emails:
-        try:
-            params = {
-                "from": f"PrintsOut <{SENDER_EMAIL}>",
-                "to": [email],
-                "subject": f"Din exklusiva rabattkod: {discount_code} — {code_doc['discount_percent']}% rabatt!",
-                "html": html_template,
-                "headers": {
-                    "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
-                }
-            }
-            await asyncio.to_thread(resend.Emails.send, params)
-            sent_count += 1
-        except Exception as e:
-            logger.error(f"Failed to send email to {email}: {str(e)}")
-            failed_emails.append(email)
+    sent_count, failed_emails = await send_discount_emails(
+        discount_code, code_doc, custom_message, all_emails, site_url
+    )
     
     await db.admin_logs.insert_one({
         "action": "send_discount_email",

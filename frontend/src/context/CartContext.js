@@ -33,6 +33,7 @@ export const CartProvider = ({ children }) => {
       const response = await api.get(`/cart/${sid}`);
       setCart(response.data);
     } catch (error) {
+      console.error('Kunde inte hämta kundvagn:', error);
     }
   };
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Upload, Palette, ShoppingBag, Star, ChevronRight, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
+import { toast } from 'sonner';
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -23,6 +24,7 @@ const Home = () => {
         setReviews(revRes.data);
         setReviewPlatforms(platRes.data.platforms || []);
       } catch (error) {
+        toast.error('Kunde inte ladda startsidan');
       } finally {
         setLoading(false);
       }

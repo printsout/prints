@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -28,28 +28,30 @@ const AdminReviews = () => {
   const [platformForm, setPlatformForm] = useState({ platform_id: 'google', name: '', url: '' });
   const [savingPlatforms, setSavingPlatforms] = useState(false);
 
-  useEffect(() => {
-    fetchReviews();
-    fetchPlatforms();
-  }, []);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await api.get('/admin/reviews', { headers: getAuthHeaders() });
       setReviews(res.data);
     } catch (err) {
+      toast.error('Kunde inte hämta recensioner');
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchPlatforms = async () => {
+  const fetchPlatforms = useCallback(async () => {
     try {
       const res = await api.get('/admin/review-platforms', { headers: getAuthHeaders() });
       setPlatforms(res.data.platforms || []);
     } catch (err) {
+      toast.error('Kunde inte hämta plattformar');
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchReviews();
+    fetchPlatforms();
+  }, [fetchReviews, fetchPlatforms]);
 
   const handleSubmit = async () => {
     if (!form.user_name.trim() || !form.text.trim()) {

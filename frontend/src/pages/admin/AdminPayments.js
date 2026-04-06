@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
 import { Button } from '../../components/ui/button';
@@ -44,21 +44,22 @@ const AdminPayments = () => {
     shipping_cost: 49
   });
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await api.get('/admin/payment-settings', { headers: getAuthHeaders() });
       if (response.data && Object.keys(response.data).length > 0) {
         setSettings(prev => ({ ...prev, ...response.data }));
       }
     } catch (error) {
+      toast.error('Kunde inte hämta betalningsinställningar');
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

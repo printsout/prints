@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -13,11 +13,11 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(sessionStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
   // Check token expiration
-  const isTokenExpired = (t) => {
+  const isTokenExpired = useCallback((t) => {
     if (!t) return true;
     try {
       const payload = JSON.parse(atob(t.split('.')[1]));
@@ -25,30 +25,15 @@ export const AuthProvider = ({ children }) => {
     } catch {
       return true;
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    if (token && !isTokenExpired(token)) {
-      fetchProfile();
-    } else if (token && isTokenExpired(token)) {
-      logout();
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+  const logout = useCallback(() => {
+    sessionStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  }, []);
 
-  // Auto-logout check every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (token && isTokenExpired(token)) {
-        logout();
-      }
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [token]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await api.get('/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
@@ -59,12 +44,33 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, logout]);
+
+  useEffect(() => {
+    if (token && !isTokenExpired(token)) {
+      fetchProfile();
+    } else if (token && isTokenExpired(token)) {
+      logout();
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [token, isTokenExpired, fetchProfile, logout]);
+
+  // Auto-logout check every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (token && isTokenExpired(token)) {
+        logout();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [token, isTokenExpired, logout]);
 
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     const { access_token, user: userData } = response.data;
-    localStorage.setItem('token', access_token);
+    sessionStorage.setItem('token', access_token);
     setToken(access_token);
     setUser(userData);
     return userData;
@@ -73,16 +79,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     const response = await api.post('/auth/register', { name, email, password });
     const { access_token, user: userData } = response.data;
-    localStorage.setItem('token', access_token);
+    sessionStorage.setItem('token', access_token);
     setToken(access_token);
     setUser(userData);
     return userData;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
   };
 
   const value = {

@@ -50,7 +50,9 @@ const Cart = () => {
   }, [cart.items]);
 
   useEffect(() => {
-    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {});
+    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {
+      console.error('Kunde inte hämta fraktinställningar');
+    });
   }, []);
 
   const handleQuantityChange = async (cartItemId, newQuantity) => {

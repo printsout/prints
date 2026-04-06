@@ -6,6 +6,7 @@ import {
   TrendingUp, Clock, ArrowUpRight, ArrowDownRight 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const AdminDashboard = () => {
   const { getAuthHeaders } = useAdmin();
@@ -23,12 +24,13 @@ const AdminDashboard = () => {
         setStats(statsRes.data);
         setRecentOrders(ordersRes.data.orders || []);
       } catch (error) {
+        toast.error('Kunde inte hämta dashboard-data');
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [getAuthHeaders]);
 
   const statCards = [
     {

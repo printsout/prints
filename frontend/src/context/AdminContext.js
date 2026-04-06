@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AdminContext = createContext(null);
@@ -12,11 +12,11 @@ export const useAdmin = () => {
 };
 
 export const AdminProvider = ({ children }) => {
-  const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken'));
+  const [adminToken, setAdminToken] = useState(sessionStorage.getItem('adminToken'));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isTokenExpired = (t) => {
+  const isTokenExpired = useCallback((t) => {
     if (!t) return true;
     try {
       const payload = JSON.parse(atob(t.split('.')[1]));
@@ -24,18 +24,23 @@ export const AdminProvider = ({ children }) => {
     } catch {
       return true;
     }
-  };
+  }, []);
+
+  const logout = useCallback(() => {
+    setAdminToken(null);
+    setIsAuthenticated(false);
+  }, []);
 
   useEffect(() => {
     if (adminToken && !isTokenExpired(adminToken)) {
-      localStorage.setItem('adminToken', adminToken);
+      sessionStorage.setItem('adminToken', adminToken);
       setIsAuthenticated(true);
     } else {
-      localStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminToken');
       setAdminToken(null);
       setIsAuthenticated(false);
     }
-  }, [adminToken]);
+  }, [adminToken, isTokenExpired]);
 
   // Auto-logout check every minute
   useEffect(() => {
@@ -45,7 +50,7 @@ export const AdminProvider = ({ children }) => {
       }
     }, 60000);
     return () => clearInterval(interval);
-  }, [adminToken]);
+  }, [adminToken, isTokenExpired, logout]);
 
   const login = async (email, password) => {
     setLoading(true);
@@ -60,14 +65,9 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setAdminToken(null);
-    setIsAuthenticated(false);
-  };
-
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     return adminToken ? { Authorization: `Bearer ${adminToken}` } : {};
-  };
+  }, [adminToken]);
 
   const value = {
     isAuthenticated,

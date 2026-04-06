@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Package, Palette, LogOut } from 'lucide-react';
 import api from '../services/api';
@@ -15,18 +15,7 @@ const Account = () => {
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/logga-in');
-      return;
-    }
-
-    if (user && token) {
-      fetchData();
-    }
-  }, [user, token, authLoading, navigate]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [ordersRes, designsRes] = await Promise.all([
         api.get('/orders/my-orders', {
@@ -39,10 +28,22 @@ const Account = () => {
       setOrders(ordersRes.data);
       setDesigns(designsRes.data);
     } catch (error) {
+      toast.error('Kunde inte hämta kontodata');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/logga-in');
+      return;
+    }
+
+    if (user && token) {
+      fetchData();
+    }
+  }, [user, token, authLoading, navigate, fetchData]);
 
   const handleLogout = () => {
     logout();

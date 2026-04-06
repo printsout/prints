@@ -69,7 +69,9 @@ const Checkout = () => {
   }, [cart.items, navigate]);
 
   useEffect(() => {
-    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {});
+    api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {
+      toast.error('Kunde inte hämta fraktinställningar');
+    });
   }, []);
 
   const handleChange = (e) => {
