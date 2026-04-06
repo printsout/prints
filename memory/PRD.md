@@ -13,6 +13,16 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - Varukorg + Stripe-kassaflöde (LIVE), kundkonton, glömt lösenord-flöde
 - Admin panel med 2FA, produkthantering, ordrar, betalningar, inställningar, rabattkoder, säkerhetsloggar
 
+## E-postfunktioner (2026-04-06)
+- [x] **Orderbekräftelse**: Skickas automatiskt till kund vid lyckad Stripe-betalning (webhook + status check)
+- [x] **Leveransbekräftelse**: Skickas automatiskt till kund när admin ändrar orderstatus till "Skickad"
+- [x] **Rabattkods-mail**: Skickas via admin-panelen till valda kunder
+- [x] **Lösenordsåterställning**: Skickas vid "Glömt lösenord"-flöde
+
+## Deployment-fix (2026-04-06)
+- [x] Rensat .gitignore — tog bort alla `*.env` blockeringar som förhindrade deploy
+- [x] .env-filer inkluderas nu vid deploy (krävs av Emergent K8s)
+
 ## Kodkvalitetsfixar - Omgång 1 (2026-04-06)
 - [x] Fixat tomma catch-block, React Hook-beroenden, localStorage → sessionStorage
 - [x] Delat AdminSettings, AdminOrders, AdminLogin, Checkout
@@ -33,15 +43,16 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Lagt till useMemo i OrderDetailPanel
 
 ## Testresultat
-- iteration_14: 15/15 backend, 100% frontend ✅
-- iteration_15: 15/15 backend, 100% frontend ✅
+- iteration_14: 15/15 backend, 100% frontend
+- iteration_15: 15/15 backend, 100% frontend
+- iteration_16: 9/9 backend, 100% frontend (shipping email feature)
 
 ## Arkitektur
 ```
 /app
 ├── backend/
-│   ├── server.py (~1995 rader)
-│   ├── email_service.py
+│   ├── server.py (~2000 rader)
+│   ├── email_service.py (shipping + order confirmation + discount + password reset)
 │   └── tests/ (conftest.py + test files)
 └── frontend/src/
     ├── utils/ (constants.js, pricing.js)
@@ -67,6 +78,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Backlog
 ### P1
+- [ ] Redesigna Namnlapps-editorn (matcha namly.se)
 - [ ] Dela PhotoAlbumEditor (900 rader) → PhotoAlbumControls + PhotoGrid + Preview
 - [ ] Dela NameTagEditor (577 rader) → NameTagForm + Customization + Preview
 - [ ] Dela CalendarEditor (379 rader)
@@ -76,3 +88,4 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ### P2
 - [ ] Implementera Klarna/Swish-betalningar
 - [ ] Dela ProductPreview3D (274 rader) → 3D-hooks
+- [ ] Koppla "Lägg i varukorg" för specialiserade editors (Kalender, Namnskylt)
