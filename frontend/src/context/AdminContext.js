@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { SESSION_CHECK_INTERVAL_MS } from '../utils/constants';
 
 const AdminContext = createContext(null);
 
@@ -48,7 +49,7 @@ export const AdminProvider = ({ children }) => {
       if (adminToken && isTokenExpired(adminToken)) {
         logout();
       }
-    }, 60000);
+    }, SESSION_CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [adminToken, isTokenExpired, logout]);
 
