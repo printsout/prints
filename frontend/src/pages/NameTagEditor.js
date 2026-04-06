@@ -328,7 +328,7 @@ const NameTagEditor = () => {
         <div className="max-w-6xl mx-auto px-4 py-8 text-center">
           <h2 className="text-lg sm:text-xl font-bold mb-2">Designa dina egna namnlappar</h2>
           <p className="text-white/80 text-sm max-w-lg mx-auto leading-relaxed">
-            Med vårt stora utbud av bakgrunder och motiv kommer du att kunna märka alla dina saker - med stil!
+            140 st självhäftande namnlappar (30x13 mm) på ett A4-ark. Perfekta för kläder, skolsaker och tillhörigheter!
           </p>
         </div>
       </div>
@@ -394,9 +394,9 @@ const NameTagEditor = () => {
               <div className="flex justify-center mb-5" data-testid="nametag-preview-main">
                 <StickerPreview size="lg" />
               </div>
-              <p className="text-xs text-slate-400 text-center mb-3">Så här kommer dina namnlappar se ut:</p>
-              <div className="grid grid-cols-4 gap-1.5 max-w-xs mx-auto">
-                {Array.from({ length: 8 }).map((_, i) => (
+              <p className="text-xs text-slate-400 text-center mb-3">Så här kommer dina 140 namnlappar se ut (30x13 mm, A4-ark):</p>
+              <div className="grid grid-cols-7 gap-0.5 max-w-xs mx-auto">
+                {Array.from({ length: 14 }).map((_, i) => (
                   <div key={`mini-${i}`}><StickerPreview size="sm" /></div>
                 ))}
               </div>
@@ -405,7 +405,12 @@ const NameTagEditor = () => {
             {/* Product card */}
             <div className="bg-white rounded-xl border p-5" data-testid="product-info-card">
               <h2 className="text-lg font-bold text-slate-900 mb-1">{product.name}</h2>
-              <p className="text-sm text-slate-500 mb-4 leading-relaxed">{product.description}</p>
+              <p className="text-sm text-slate-500 mb-2 leading-relaxed">{product.description}</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-2 py-0.5 bg-[#2a9d8f]/10 text-[#2a9d8f] text-xs font-semibold rounded">140 st / A4-ark</span>
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded">30x13 mm</span>
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded">Självhäftande</span>
+              </div>
               <div className="flex items-baseline gap-2 mb-4">
                 <span className="text-2xl font-bold text-[#2a9d8f]" data-testid="product-price">{product.price} kr</span>
               </div>

@@ -150,7 +150,7 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
           <p className="text-xs text-slate-500 uppercase">Produkter</p>
           <div className="mt-2 space-y-3">
             {selectedOrder.items?.map((item, index) => (
-              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} />
+              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} />
             )) || <p className="text-sm text-slate-500">Inga produkter</p>}
           </div>
         </div>
@@ -234,7 +234,7 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
   );
 };
 
-const OrderItemDetail = ({ item, toast }) => {
+const OrderItemDetail = ({ item, toast, orderId }) => {
   return (
     <div className="border border-slate-100 rounded-lg p-3">
       <div className="flex justify-between text-sm">
@@ -244,7 +244,7 @@ const OrderItemDetail = ({ item, toast }) => {
       <p className="text-xs text-slate-500 mt-0.5">Antal: {item.quantity || 1}</p>
       {item.customization && (
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
-          {item.customization.type === 'nametag' && <NametagCustomization item={item} />}
+          {item.customization.type === 'nametag' && <NametagCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
@@ -257,8 +257,26 @@ const OrderItemDetail = ({ item, toast }) => {
   );
 };
 
-const NametagCustomization = ({ item }) => {
+const NametagCustomization = ({ item, orderId }) => {
   const c = item.customization;
+  const handleDownloadPdf = () => {
+    const token = sessionStorage.getItem('adminToken');
+    const url = `${API_BASE}/api/admin/orders/${orderId}/nametag-pdf`;
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error('PDF-generering misslyckades');
+        return res.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `namnlappar_${c.child_name || 'design'}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       {c.child_name && <p>Förnamn: <strong>{c.child_name}</strong></p>}
@@ -271,6 +289,14 @@ const NametagCustomization = ({ item }) => {
       {c.uploaded_image_url && (
         <ImagePreview url={c.uploaded_image_url} alt="Kunduppladdning" />
       )}
+      <button
+        onClick={handleDownloadPdf}
+        className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
+        data-testid="download-nametag-pdf"
+      >
+        <Download className="w-3.5 h-3.5" />
+        Ladda ner namnlappar (PDF - 140 st A4)
+      </button>
     </>
   );
 };

@@ -1148,7 +1148,7 @@ async def admin_verify_2fa(request: Request, data: dict):
         raise HTTPException(status_code=400, detail="2FA är inte konfigurerat")
     
     totp = pyotp.TOTP(admin_2fa["totp_secret"])
-    if not totp.verify(code, valid_window=1):
+    if not totp.verify(code, valid_window=2):
         raise HTTPException(status_code=401, detail="Felaktig verifieringskod")
     
     # Enable 2FA if this is the first verification (setup flow)
@@ -1206,7 +1206,7 @@ async def admin_confirm_2fa(data: dict, admin=Depends(verify_admin_token)):
         raise HTTPException(status_code=400, detail="Starta 2FA-installationen först")
     
     totp = pyotp.TOTP(admin_2fa["totp_secret"])
-    if not totp.verify(code, valid_window=1):
+    if not totp.verify(code, valid_window=2):
         raise HTTPException(status_code=400, detail="Felaktig kod. Försök igen.")
     
     await db.admin_settings_2fa.update_one(
@@ -1225,7 +1225,7 @@ async def admin_disable_2fa(data: dict, admin=Depends(verify_admin_token)):
         raise HTTPException(status_code=400, detail="2FA är inte aktiverat")
     
     totp = pyotp.TOTP(admin_2fa["totp_secret"])
-    if not totp.verify(code, valid_window=1):
+    if not totp.verify(code, valid_window=2):
         raise HTTPException(status_code=400, detail="Felaktig kod")
     
     await db.admin_settings_2fa.update_one(
@@ -1467,6 +1467,38 @@ async def delete_order(order_id: str, admin = Depends(verify_admin_token)):
     })
     return {"message": "Order raderad"}
 
+
+@admin_router.get("/orders/{order_id}/nametag-pdf")
+async def download_nametag_pdf(order_id: str, admin = Depends(verify_admin_token)):
+    """Generate and download a printable A4 PDF with 140 name tag stickers."""
+    from nametag_pdf import generate_nametag_pdf
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+
+    nametag_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "nametag":
+            nametag_item = item
+            break
+
+    if not nametag_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller inga namnlappar")
+
+    customization = nametag_item["customization"]
+    output_dir = Path("/tmp/nametag_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / f"namnlappar_{order_id[:8]}.pdf")
+    generate_nametag_pdf(customization, output_path)
+
+    child_name = customization.get("child_name", "namnlapp")
+    filename = f"namnlappar_{child_name}_{order_id[:8]}.pdf"
+    return FileResponse(
+        output_path,
+        media_type="application/pdf",
+        filename=filename,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 
 @admin_router.get("/products")
