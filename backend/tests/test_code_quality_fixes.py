@@ -121,7 +121,7 @@ class TestAdminLoginAPI:
         """POST /api/admin/login with correct credentials should require 2FA"""
         response = requests.post(f"{BASE_URL}/api/admin/login", json={
             "email": "info@printsout.se",
-            "password": "PrintoutAdmin2024!"
+            "password": os.environ.get("ADMIN_PASSWORD", "PrintoutAdmin2024!")
         })
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         data = response.json()

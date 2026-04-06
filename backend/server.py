@@ -683,22 +683,34 @@ async def get_public_shipping_settings():
 
 @payments_router.post("/checkout")
 async def create_checkout(request: Request, checkout_data: CheckoutRequest, user: dict = Depends(get_current_user)):
-    # Get cart
     cart = await db.carts.find_one({"session_id": checkout_data.cart_session_id}, {"_id": 0})
     if not cart or not cart.get("items"):
         raise HTTPException(status_code=400, detail="Varukorgen är tom")
     
-    # Calculate total
+    total_amount, order_items = await _build_order_items(cart)
+    if total_amount <= 0:
+        raise HTTPException(status_code=400, detail="Ogiltig totalsumma")
+    
+    order = Order(
+        user_id=user["user_id"] if user else None,
+        email=checkout_data.email,
+        items=[item.model_dump() for item in order_items],
+        total_amount=total_amount,
+        shipping_address=checkout_data.shipping_address
+    )
+    
+    return await _create_stripe_session(request, order, checkout_data, user, total_amount)
+
+
+async def _build_order_items(cart: dict):
+    """Build order items from cart and calculate total"""
     total_amount = 0.0
     order_items = []
-    
     for cart_item in cart["items"]:
         product = await db.products.find_one({"product_id": cart_item["product_id"]}, {"_id": 0})
         if product:
-            # Use cart item price if set (editors may add extra costs), else product price
             item_price = cart_item.get("price") or product["price"]
-            item_total = item_price * cart_item["quantity"]
-            total_amount += item_total
+            total_amount += item_price * cart_item["quantity"]
             order_items.append(OrderItem(
                 product_id=product["product_id"],
                 product_name=cart_item.get("name") or product["name"],
@@ -710,36 +722,20 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest, user
                 design_preview=cart_item.get("design_preview"),
                 customization=cart_item.get("customization"),
             ))
-    
-    if total_amount <= 0:
-        raise HTTPException(status_code=400, detail="Ogiltig totalsumma")
-    
-    # Create order
-    order = Order(
-        user_id=user["user_id"] if user else None,
-        email=checkout_data.email,
-        items=[item.model_dump() for item in order_items],
-        total_amount=total_amount,
-        shipping_address=checkout_data.shipping_address
-    )
-    
-    # Get origin URL from request
+    return total_amount, order_items
+
+
+async def _create_stripe_session(request: Request, order: Order, checkout_data: CheckoutRequest, user: dict, total_amount: float):
+    """Create Stripe checkout session and persist order"""
     origin_url = request.headers.get("origin", str(request.base_url).rstrip("/"))
-    
-    # Create Stripe checkout session
     host_url = str(request.base_url).rstrip("/")
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    
-    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
-    
-    success_url = f"{origin_url}/order-confirmation?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin_url}/kassa"
+    stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{host_url}/api/webhook/stripe")
     
     checkout_request = CheckoutSessionRequest(
         amount=float(total_amount),
         currency="sek",
-        success_url=success_url,
-        cancel_url=cancel_url,
+        success_url=f"{origin_url}/order-confirmation?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{origin_url}/kassa",
         metadata={
             "order_id": order.order_id,
             "email": checkout_data.email,
@@ -749,12 +745,9 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest, user
     
     try:
         session = await stripe_checkout.create_checkout_session(checkout_request)
-        
-        # Update order with session ID
         order.stripe_session_id = session.session_id
         await db.orders.insert_one(order.model_dump())
         
-        # Create payment transaction record
         transaction = PaymentTransaction(
             session_id=session.session_id,
             user_id=user["user_id"] if user else None,
@@ -870,14 +863,24 @@ async def get_review_platforms():
 @api_router.post("/init-data")
 async def init_data():
     """Initialize sample products and reviews"""
-    
-    # Check if already initialized
     existing = await db.products.find_one({}, {"_id": 0})
     if existing:
         return {"message": "Data redan initialiserad"}
     
-    # Sample products
-    products = [
+    products = _get_seed_products()
+    reviews = _get_seed_reviews()
+    
+    for product in products:
+        await db.products.insert_one(product.model_dump())
+    for review in reviews:
+        await db.reviews.insert_one(review.model_dump())
+    
+    return {"message": "Data initialiserad", "products": len(products), "reviews": len(reviews)}
+
+
+def _get_seed_products():
+    """Return initial product seed data"""
+    return [
         Product(
             name="Klassisk Fotomugg",
             category="mugg",
@@ -1029,12 +1032,11 @@ async def init_data():
             model_type="nametag"
         ),
     ]
-    
-    for product in products:
-        await db.products.insert_one(product.model_dump())
-    
-    # Sample reviews
-    reviews = [
+
+
+def _get_seed_reviews():
+    """Return initial review seed data"""
+    return [
         Review(
             user_name="Anna S.",
             rating=5,
@@ -1061,11 +1063,7 @@ async def init_data():
             text="Canvas-postern blev verkligen fin! Hög kvalité och snabb leverans. Rekommenderas!"
         ),
     ]
-    
-    for review in reviews:
-        await db.reviews.insert_one(review.model_dump())
-    
-    return {"message": "Data initialiserad", "products": len(products), "reviews": len(reviews)}
+
 
 # ============== ADMIN ROUTES ==============
 

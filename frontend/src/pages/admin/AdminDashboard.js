@@ -8,6 +8,16 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const getStatusBadge = (status) => {
+  const map = {
+    completed: { className: 'bg-green-100 text-green-700', label: 'Slutförd' },
+    processing: { className: 'bg-blue-100 text-blue-700', label: 'Behandlas' },
+    shipped: { className: 'bg-purple-100 text-purple-700', label: 'Skickad' },
+  };
+  const found = map[status] || { className: 'bg-amber-100 text-amber-700', label: 'Väntande' };
+  return found;
+};
+
 const AdminDashboard = () => {
   const { getAuthHeaders } = useAdmin();
   const [stats, setStats] = useState(null);
@@ -196,17 +206,14 @@ const AdminDashboard = () => {
                       {order.total?.toLocaleString('sv-SE')} kr
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'shipped' ? 'bg-purple-100 text-purple-700' :
-                        'bg-amber-100 text-amber-700'
-                      }`}>
-                        {order.status === 'completed' ? 'Slutförd' :
-                         order.status === 'processing' ? 'Behandlas' :
-                         order.status === 'shipped' ? 'Skickad' :
-                         'Väntande'}
-                      </span>
+                      {(() => {
+                        const badge = getStatusBadge(order.status);
+                        return (
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${badge.className}`}>
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))

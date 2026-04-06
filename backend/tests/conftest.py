@@ -20,3 +20,7 @@ def test_user_email():
 @pytest.fixture
 def test_user_password():
     return os.environ.get("TEST_USER_PASSWORD", "TestPass123!")
+
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "TestPass123!")
+TEST_NEW_PASSWORD = os.environ.get("TEST_NEW_PASSWORD", "NewSecure789!")
+TEST_ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "PrintoutAdmin2024!")

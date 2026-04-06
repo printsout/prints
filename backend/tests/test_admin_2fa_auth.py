@@ -260,7 +260,7 @@ class TestAdminForgotPassword:
         print(f"Got reset code: {reset_code}")
         
         # Step 2: Reset password with the code
-        new_password = "NewTestPassword123!"
+        new_password = os.environ.get("TEST_NEW_PASSWORD", "NewTestPassword123!")
         reset_resp = requests.post(f"{BASE_URL}/api/admin/reset-password", json={
             "code": reset_code,
             "new_password": new_password

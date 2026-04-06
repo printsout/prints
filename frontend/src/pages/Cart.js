@@ -5,6 +5,7 @@ import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
+import { calculatePricing } from '../utils/pricing';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const Cart = () => {
 
   useEffect(() => {
     api.get('/shipping-settings').then(res => setShippingConfig(res.data)).catch(() => {
-      console.error('Kunde inte hämta fraktinställningar');
+      // Silently handle - cart uses sensible defaults
     });
   }, []);
 
@@ -73,37 +74,7 @@ const Cart = () => {
     }
   };
 
-  const calculateTotal = () => {
-    return cart.items?.reduce((total, item) => {
-      const product = products[item.product_id];
-      const itemPrice = item.price || product?.price || 0;
-      return total + (itemPrice * (item.quantity || 1));
-    }, 0) || 0;
-  };
-
-  const subtotal = calculateTotal();
-  // Global discount from admin settings
-  const globalDiscountAmount = shippingConfig.discount_enabled && shippingConfig.discount_percent > 0
-    ? Math.round(subtotal * shippingConfig.discount_percent / 100)
-    : 0;
-  // Coupon discount
-  const couponDiscountAmount = appliedCoupon
-    ? Math.round(subtotal * appliedCoupon.discount_percent / 100)
-    : 0;
-  // Use best discount (don't stack)
-  const bestDiscount = Math.max(globalDiscountAmount, couponDiscountAmount);
-  const discountLabel = couponDiscountAmount >= globalDiscountAmount && appliedCoupon
-    ? `Rabattkod ${appliedCoupon.code} (${appliedCoupon.discount_percent}%)`
-    : `Rabatt (${shippingConfig.discount_percent}%)`;
-  const discountAmount = bestDiscount;
-  const afterDiscount = subtotal - discountAmount;
-  const shipping = !shippingConfig.shipping_enabled ? 0
-    : (shippingConfig.free_shipping_threshold > 0 && afterDiscount >= shippingConfig.free_shipping_threshold) ? 0
-    : shippingConfig.shipping_cost;
-  const total = afterDiscount + shipping;
-  const vatAmount = shippingConfig.tax_enabled
-    ? Math.round(total * shippingConfig.tax_rate / (100 + shippingConfig.tax_rate) * 100) / 100
-    : 0;
+  const { subtotal, discountAmount, discountLabel, afterDiscount, shipping, total, vatAmount } = calculatePricing(cart, products, shippingConfig, appliedCoupon);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;

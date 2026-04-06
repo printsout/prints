@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { useAdmin } from '../../context/AdminContext';
 import api from '../../services/api';
@@ -21,9 +21,7 @@ const AdminContent = () => {
     status: 'draft',
   });
 
-  useEffect(() => { fetchPages(); }, []);
-
-  const fetchPages = async () => {
+  const fetchPages = useCallback(async () => {
     try {
       const res = await api.get('/admin/content', { headers: getAuthHeaders() });
       setPages(res.data.pages || []);
@@ -32,7 +30,9 @@ const AdminContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => { fetchPages(); }, [fetchPages]);
 
   const resetForm = () => {
     setEditingPage(null);

@@ -129,7 +129,7 @@ class TestAuthentication:
     def test_register_new_user(self):
         """Register a new user"""
         test_email = f"TEST_user_{uuid.uuid4().hex[:8]}@test.com"
-        test_password = "TestPassword123!"
+        test_password = os.environ.get("TEST_PASSWORD", "TestPassword123!")
         test_name = "Test User"
         
         response = requests.post(f"{BASE_URL}/api/auth/register", json={
@@ -177,7 +177,7 @@ class TestAuthentication:
         """Login with valid credentials"""
         # First register a user
         test_email = f"TEST_login_{uuid.uuid4().hex[:8]}@test.com"
-        test_password = "LoginTestPass123!"
+        test_password = os.environ.get("TEST_PASSWORD", "LoginTestPass123!")
         
         # Register
         reg_response = requests.post(f"{BASE_URL}/api/auth/register", json={

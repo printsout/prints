@@ -252,14 +252,12 @@ const ProductDetail = () => {
                 data-testid="design-button"
               >
                 <Palette className="w-5 h-5 mr-2" />
-                {product?.model_type === 'calendar' || product?.category === 'kalender' 
-                  ? 'Skapa din kalender' 
-                  : product?.model_type === 'nametag' || product?.category === 'namnskylt'
-                  ? 'Skapa namnlappar'
-                  : product?.category === 'fotoalbum'
-                  ? 'Skapa ditt fotoalbum'
-                  : 'Designa med egen bild'
-                }
+                {(() => {
+                  if (product?.model_type === 'calendar' || product?.category === 'kalender') return 'Skapa din kalender';
+                  if (product?.model_type === 'nametag' || product?.category === 'namnskylt') return 'Skapa namnlappar';
+                  if (product?.category === 'fotoalbum') return 'Skapa ditt fotoalbum';
+                  return 'Designa med egen bild';
+                })()}
               </Button>
               <Button 
                 onClick={handleAddToCart}

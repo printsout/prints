@@ -103,8 +103,8 @@ class TestResetPasswordEndpoint:
         self.mongo_client = MongoClient(MONGO_URL)
         self.db = self.mongo_client[DB_NAME]
         self.test_email = f"test_reset_{uuid.uuid4().hex[:8]}@example.com"
-        self.test_password = "InitialPass123!"
-        self.new_password = "NewSecure789!"
+        self.test_password = os.environ.get("TEST_PASSWORD", "InitialPass123!")
+        self.new_password = os.environ.get("TEST_NEW_PASSWORD", "NewSecure789!")
         yield
         # Cleanup
         self.db.user_password_resets.delete_many({"email": self.test_email})
@@ -232,8 +232,8 @@ class TestLoginAfterPasswordReset:
         self.mongo_client = MongoClient(MONGO_URL)
         self.db = self.mongo_client[DB_NAME]
         self.test_email = f"test_login_after_reset_{uuid.uuid4().hex[:8]}@example.com"
-        self.old_password = "OldPass123!"
-        self.new_password = "NewPass456!"
+        self.old_password = os.environ.get("TEST_PASSWORD", "OldPass123!")
+        self.new_password = os.environ.get("TEST_NEW_PASSWORD", "NewPass456!")
         yield
         # Cleanup
         self.db.user_password_resets.delete_many({"email": self.test_email})
@@ -243,6 +243,7 @@ class TestLoginAfterPasswordReset:
     def _request_forgot_password_with_retry(self, email, max_retries=3):
         """Request forgot password with retry on rate limit"""
         import time
+        response = None
         for i in range(max_retries):
             response = self.session.post(f"{BASE_URL}/api/auth/forgot-password", json={
                 "email": email
@@ -345,8 +346,8 @@ class TestUsedTokenCannotBeReused:
         self.mongo_client = MongoClient(MONGO_URL)
         self.db = self.mongo_client[DB_NAME]
         self.test_email = f"test_token_reuse_{uuid.uuid4().hex[:8]}@example.com"
-        self.password = "TestPass123!"
-        self.new_password = "NewPass456!"
+        self.password = os.environ.get("TEST_PASSWORD", "TestPass123!")
+        self.new_password = os.environ.get("TEST_NEW_PASSWORD", "NewPass456!")
         yield
         # Cleanup
         self.db.user_password_resets.delete_many({"email": self.test_email})
@@ -356,6 +357,7 @@ class TestUsedTokenCannotBeReused:
     def _request_forgot_password_with_retry(self, email, max_retries=3):
         """Request forgot password with retry on rate limit"""
         import time
+        response = None
         for i in range(max_retries):
             response = self.session.post(f"{BASE_URL}/api/auth/forgot-password", json={
                 "email": email

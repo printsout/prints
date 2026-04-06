@@ -187,8 +187,8 @@ class TestCustomerForgotPasswordE2E:
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
         self.test_email = f"test_e2e_{uuid.uuid4().hex[:8]}@example.com"
-        self.test_password = "InitialPass123!"
-        self.new_password = "ResetPass456!"
+        self.test_password = os.environ.get("TEST_PASSWORD", "InitialPass123!")
+        self.new_password = os.environ.get("TEST_NEW_PASSWORD", "ResetPass456!")
         yield
     
     def test_full_forgot_password_flow(self):

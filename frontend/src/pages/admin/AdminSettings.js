@@ -80,7 +80,7 @@ const AdminSettings = () => {
       const res = await api.get('/admin/2fa-status', { headers: getAuthHeaders() });
       setTwoFAEnabled(res.data.enabled);
     } catch (error) {
-      console.error('Kunde inte hämta 2FA-status:', error);
+      // Silently handle - non-critical setting
     }
   }, [getAuthHeaders]);
 

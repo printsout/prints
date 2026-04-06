@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Download, Package, Printer, Trash2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
@@ -172,16 +173,20 @@ const NametagCustomization = ({ item }) => {
 
 const PhotoAlbumCustomization = ({ item, toast }) => {
   const c = item.customization;
+  const pagesWithImages = useMemo(() => 
+    c.pages?.filter(pg => pg.image_urls?.length > 0) || [],
+    [c.pages]
+  );
   return (
     <>
       <p>Sidor: {c.total_pages}</p>
       <p>Bilder: {c.total_images || c.images_count}</p>
       {c.size && <p>Storlek: {c.size}</p>}
-      {c.pages?.some(pg => pg.image_urls?.length > 0) && (
+      {pagesWithImages.length > 0 && (
         <div className="mt-2">
           <p className="font-medium mb-1">Bilder per sida:</p>
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {c.pages.filter(pg => pg.image_urls?.length > 0).map((pg) => (
+            {pagesWithImages.map((pg) => (
               <div key={pg.page_number} className="border rounded p-2 bg-white">
                 <p className="text-xs text-slate-500 mb-1">Sida {pg.page_number} ({pg.layout})</p>
                 <div className="flex gap-1 flex-wrap">
@@ -216,16 +221,20 @@ const PhotoAlbumCustomization = ({ item, toast }) => {
 
 const CalendarCustomization = ({ item }) => {
   const c = item.customization;
+  const monthsWithImages = useMemo(() => 
+    c.months?.filter(m => m.image_url) || [],
+    [c.months]
+  );
   return (
     <>
       {c.year && <p>År: <strong>{c.year}</strong></p>}
       {c.size && <p>Storlek: {c.size}</p>}
       <p>Bilder: {c.images_count || 0} / 12</p>
-      {c.months?.some(m => m.image_url) && (
+      {monthsWithImages.length > 0 && (
         <div className="mt-2">
           <p className="font-medium mb-1">Månadsbilder:</p>
           <div className="space-y-1 max-h-[300px] overflow-y-auto">
-            {c.months.filter(m => m.image_url).map((m, idx) => {
+            {monthsWithImages.map((m, idx) => {
               const imgUrl = m.image_url.startsWith('http') ? m.image_url : `${API_BASE}${m.image_url}`;
               return (
                 <div key={m.month || `month-${idx}`} className="flex items-center gap-2 border rounded p-1.5 bg-white">
