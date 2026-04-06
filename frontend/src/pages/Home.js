@@ -213,7 +213,7 @@ const Home = () => {
                 <div className="flex items-center gap-1 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <Star 
-                      key={i}
+                      key={`star-${i}`}
                       className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`}
                     />
                   ))}

@@ -128,7 +128,7 @@ const Register = () => {
               {password && (
                 <div className="mt-2 space-y-1" data-testid="password-requirements">
                   {checks.map((c, i) => (
-                    <div key={i} className={`flex items-center gap-1.5 text-xs ${c.ok ? 'text-green-600' : 'text-slate-400'}`}>
+                    <div key={c.label} className={`flex items-center gap-1.5 text-xs ${c.ok ? 'text-green-600' : 'text-slate-400'}`}>
                       {c.ok ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                       {c.label}
                     </div>
