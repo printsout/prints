@@ -72,28 +72,7 @@ GRADIENT_MAP = {
     "g9": "#fddb92", "g10": "#c1dfc4",
 }
 
-# Unicode symbols for motifs (simple representations for PDF)
-MOTIF_SYMBOLS = {
-    "star": "\u2605", "heart": "\u2665", "cat": "\U0001F431", "dog": "\U0001F436",
-    "rabbit": "\U0001F430", "rainbow": "\u25CF", "crown": "\u265B",
-    "rocket": "\u2191", "sparkles": "\u2728", "flower": "\u2740",
-    "fish": "\u2248", "bird": "\u266A", "bug": "\u2022", "baby": "\u263A",
-    "horse": "\u2658", "footprints": "\u2022",
-    "tree": "\u2666", "sun": "\u263C", "moon": "\u263E", "cloud": "\u2601",
-    "leaf": "\u2618", "snowflake": "\u2744",
-    "car": "\u2022", "plane": "\u2708", "ship": "\u2693", "bike": "\u2022",
-    "train": "\u2022",
-    "trophy": "\u2606", "medal": "\u2605", "gamepad": "\u2022",
-    "football": "\u26BD", "volleyball": "\u2022", "dumbbell": "\u2022",
-    "target": "\u25CE", "swords": "\u2694", "swimming": "\u2248",
-    "mountain": "\u25B2", "shield": "\u2022", "flag": "\u2691",
-    "weight": "\u2022", "running": "\u2022",
-    "gem": "\u2666", "music": "\u266B", "anchor": "\u2693",
-    "skull": "\u2620", "ghost": "\u2022", "flame": "\u2022", "zap": "\u26A1",
-    "icecream": "\u2022", "cherry": "\u2022", "apple": "\u2022",
-    "pizza": "\u2022", "cake": "\u2022",
-}
-
+# Motif colors for vector drawing
 MOTIF_COLORS = {
     "star": "#FFD700", "heart": "#E53935", "cat": "#FF8C00", "dog": "#8D6E63",
     "rabbit": "#F48FB1", "rainbow": "#FF6F00", "crown": "#FFC107",
@@ -165,6 +144,200 @@ def _get_bg_color(bg_id: str) -> str:
     return "#FFFFFF"
 
 
+import math
+
+
+def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: float = 3.0):
+    """Draw a motif icon as vector graphics at center (cx, cy)."""
+    color_hex = MOTIF_COLORS.get(motif_id, "#E53935")
+    c.setFillColor(HexColor(color_hex))
+    c.setStrokeColor(HexColor(color_hex))
+    c.setLineWidth(0.3)
+    s = size * mm
+
+    if motif_id == "star":
+        _draw_star(c, cx, cy, s * 0.45, 5)
+    elif motif_id == "heart":
+        _draw_heart(c, cx, cy, s * 0.4)
+    elif motif_id == "flower":
+        _draw_flower(c, cx, cy, s * 0.4)
+    elif motif_id == "sun":
+        _draw_sun(c, cx, cy, s * 0.4)
+    elif motif_id == "moon":
+        _draw_moon(c, cx, cy, s * 0.4)
+    elif motif_id == "snowflake":
+        _draw_snowflake(c, cx, cy, s * 0.4)
+    elif motif_id in ("tree", "leaf"):
+        _draw_tree(c, cx, cy, s * 0.45)
+    elif motif_id == "crown":
+        _draw_crown(c, cx, cy, s * 0.4)
+    elif motif_id in ("football", "volleyball"):
+        c.circle(cx, cy, s * 0.35, fill=1, stroke=0)
+    elif motif_id in ("trophy", "medal"):
+        _draw_trophy(c, cx, cy, s * 0.4)
+    elif motif_id == "cloud":
+        _draw_cloud(c, cx, cy, s * 0.4)
+    elif motif_id in ("gem", "diamond"):
+        _draw_diamond(c, cx, cy, s * 0.4)
+    elif motif_id == "music":
+        _draw_music_note(c, cx, cy, s * 0.4)
+    elif motif_id == "zap":
+        _draw_zap(c, cx, cy, s * 0.45)
+    elif motif_id == "mountain":
+        _draw_triangle(c, cx, cy, s * 0.45)
+    elif motif_id == "flag":
+        _draw_flag(c, cx, cy, s * 0.4)
+    else:
+        c.circle(cx, cy, s * 0.35, fill=1, stroke=0)
+
+
+def _draw_star(c, cx, cy, r, points=5):
+    inner_r = r * 0.4
+    path = c.beginPath()
+    for i in range(points * 2):
+        angle = math.radians(90 + i * 360 / (points * 2))
+        radius = r if i % 2 == 0 else inner_r
+        px = cx + radius * math.cos(angle)
+        py = cy + radius * math.sin(angle)
+        if i == 0:
+            path.moveTo(px, py)
+        else:
+            path.lineTo(px, py)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_heart(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx, cy - r * 0.4)
+    path.curveTo(cx + r, cy + r * 0.6, cx + r * 0.5, cy + r * 1.2, cx, cy + r * 0.6)
+    path.curveTo(cx - r * 0.5, cy + r * 1.2, cx - r, cy + r * 0.6, cx, cy - r * 0.4)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_flower(c, cx, cy, r):
+    for i in range(5):
+        angle = math.radians(i * 72)
+        px = cx + r * 0.5 * math.cos(angle)
+        py = cy + r * 0.5 * math.sin(angle)
+        c.circle(px, py, r * 0.3, fill=1, stroke=0)
+    c.setFillColor(HexColor("#FFC107"))
+    c.circle(cx, cy, r * 0.2, fill=1, stroke=0)
+
+
+def _draw_sun(c, cx, cy, r):
+    c.circle(cx, cy, r * 0.4, fill=1, stroke=0)
+    for i in range(8):
+        angle = math.radians(i * 45)
+        x1 = cx + r * 0.55 * math.cos(angle)
+        y1 = cy + r * 0.55 * math.sin(angle)
+        x2 = cx + r * 0.9 * math.cos(angle)
+        y2 = cy + r * 0.9 * math.sin(angle)
+        c.setLineWidth(0.5)
+        c.line(x1, y1, x2, y2)
+
+
+def _draw_moon(c, cx, cy, r):
+    c.circle(cx, cy, r * 0.5, fill=1, stroke=0)
+    c.setFillColor(HexColor("#FFFFFF"))
+    c.circle(cx + r * 0.2, cy + r * 0.15, r * 0.4, fill=1, stroke=0)
+
+
+def _draw_snowflake(c, cx, cy, r):
+    for i in range(6):
+        angle = math.radians(i * 60)
+        x2 = cx + r * 0.8 * math.cos(angle)
+        y2 = cy + r * 0.8 * math.sin(angle)
+        c.setLineWidth(0.4)
+        c.line(cx, cy, x2, y2)
+
+
+def _draw_tree(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.lineTo(cx - r * 0.5, cy - r * 0.3)
+    path.lineTo(cx + r * 0.5, cy - r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    c.setFillColor(HexColor("#795548"))
+    c.rect(cx - r * 0.1, cy - r * 0.7, r * 0.2, r * 0.4, fill=1, stroke=0)
+
+
+def _draw_crown(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.5, cy - r * 0.3)
+    path.lineTo(cx - r * 0.5, cy + r * 0.2)
+    path.lineTo(cx - r * 0.25, cy)
+    path.lineTo(cx, cy + r * 0.4)
+    path.lineTo(cx + r * 0.25, cy)
+    path.lineTo(cx + r * 0.5, cy + r * 0.2)
+    path.lineTo(cx + r * 0.5, cy - r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_trophy(c, cx, cy, r):
+    c.rect(cx - r * 0.3, cy - r * 0.1, r * 0.6, r * 0.6, fill=1, stroke=0)
+    c.rect(cx - r * 0.1, cy - r * 0.5, r * 0.2, r * 0.4, fill=1, stroke=0)
+    c.rect(cx - r * 0.35, cy - r * 0.55, r * 0.7, r * 0.1, fill=1, stroke=0)
+
+
+def _draw_cloud(c, cx, cy, r):
+    c.circle(cx - r * 0.25, cy, r * 0.3, fill=1, stroke=0)
+    c.circle(cx + r * 0.2, cy, r * 0.35, fill=1, stroke=0)
+    c.circle(cx, cy + r * 0.15, r * 0.3, fill=1, stroke=0)
+    c.rect(cx - r * 0.5, cy - r * 0.2, r, r * 0.3, fill=1, stroke=0)
+
+
+def _draw_diamond(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.6)
+    path.lineTo(cx + r * 0.4, cy)
+    path.lineTo(cx, cy - r * 0.6)
+    path.lineTo(cx - r * 0.4, cy)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_music_note(c, cx, cy, r):
+    c.circle(cx - r * 0.15, cy - r * 0.3, r * 0.2, fill=1, stroke=0)
+    c.setLineWidth(0.6)
+    c.line(cx + r * 0.05, cy - r * 0.3, cx + r * 0.05, cy + r * 0.5)
+
+
+def _draw_zap(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.lineTo(cx + r * 0.3, cy + r * 0.1)
+    path.lineTo(cx + r * 0.05, cy + r * 0.1)
+    path.lineTo(cx + r * 0.2, cy - r * 0.7)
+    path.lineTo(cx - r * 0.3, cy - r * 0.05)
+    path.lineTo(cx - r * 0.05, cy - r * 0.05)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_triangle(c, cx, cy, r):
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.6)
+    path.lineTo(cx - r * 0.5, cy - r * 0.4)
+    path.lineTo(cx + r * 0.5, cy - r * 0.4)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_flag(c, cx, cy, r):
+    c.setLineWidth(0.5)
+    c.line(cx - r * 0.3, cy - r * 0.6, cx - r * 0.3, cy + r * 0.6)
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.3, cy + r * 0.6)
+    path.lineTo(cx + r * 0.4, cy + r * 0.3)
+    path.lineTo(cx - r * 0.3, cy)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
 def _parse_customization(customization: dict) -> dict:
     """Extract and prepare sticker data from order customization."""
     child_name = customization.get("child_name", "")
@@ -216,16 +389,13 @@ def _draw_sticker(c: canvas.Canvas, x: float, y: float, data: dict, font_name: s
     content_x = x + 1.5 * mm
     motif_x_offset = 0
 
-    # Motif symbol
+    # Motif icon (vector graphics)
     motif_id = data["motif_id"]
-    if motif_id and motif_id in MOTIF_SYMBOLS:
-        c.setFillColor(HexColor(MOTIF_COLORS.get(motif_id, "#000000")))
-        c.setFont("Helvetica", 6)
-        try:
-            c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, MOTIF_SYMBOLS[motif_id])
-        except Exception:
-            c.drawString(content_x, y + STICKER_H / 2 - 1.5 * mm, "\u2022")
-        motif_x_offset = 4 * mm
+    if motif_id and motif_id in MOTIF_COLORS:
+        motif_cx = content_x + 1.5 * mm
+        motif_cy = y + STICKER_H / 2
+        _draw_motif(c, motif_cx, motif_cy, motif_id)
+        motif_x_offset = 4.5 * mm
 
     # Text
     text_x = content_x + motif_x_offset
