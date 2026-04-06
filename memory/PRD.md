@@ -40,6 +40,9 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - XSS-skydd (DOMPurify, bleach)
 - Lösenordsvalidering
 
+## Deployment-fix (2026-04-06)
+- [x] Fixat `load_dotenv(override=True)` → `override=False` i server.py (blockerade deployment)
+
 ## Kodkvalitetsfixar (2026-04-06)
 - [x] Fixat alla tomma catch-block i 8+ filer
 - [x] Fixat saknade React Hook-beroenden med useCallback

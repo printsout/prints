@@ -29,7 +29,7 @@ from email_service import send_order_confirmation, send_discount_emails, build_p
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env', override=True)
+load_dotenv(ROOT_DIR / '.env', override=False)
 
 # Resend email config
 resend.api_key = os.environ.get('RESEND_API_KEY', '')
