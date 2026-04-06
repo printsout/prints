@@ -28,11 +28,12 @@ import io
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+load_dotenv(ROOT_DIR / '.env', override=True)
 
 # Resend email config
 resend.api_key = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+print(f"[STARTUP] Resend key: {resend.api_key[:12]}... | From: {SENDER_EMAIL}")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
