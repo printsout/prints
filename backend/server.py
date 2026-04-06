@@ -441,47 +441,18 @@ async def customer_forgot_password(request: Request, data: dict):
     reset_link = f"{site_url}/aterstall-losenord?token={reset_token}"
 
     try:
-        html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
-          <div style="background:#1a1a2e;padding:30px;text-align:center">
-            <h1 style="color:#fff;margin:0;font-size:26px">PrintsOut</h1>
-          </div>
-          <div style="padding:30px">
-            <p style="font-size:16px;color:#333">Hej!</p>
-            <p style="font-size:16px;color:#333;line-height:1.6">
-              Vi fick en begäran om att återställa lösenordet för ditt konto.
-            </p>
-            <p style="font-size:16px;color:#333;line-height:1.6">
-              Klicka på knappen nedan för att välja ett nytt lösenord:
-            </p>
-            <div style="text-align:center;margin:30px 0">
-              <a href="{reset_link}" style="background:#1a1a2e;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;display:inline-block">
-                Återställ lösenord
-              </a>
-            </div>
-            <p style="font-size:13px;color:#999;line-height:1.6">
-              Länken är giltig i 30 minuter. Om du inte begärde detta kan du ignorera detta mail.
-            </p>
-            <p style="font-size:15px;color:#555;margin-top:24px">
-              Med vänliga hälsningar<br>
-              <strong style="color:#1a1a2e">PrintsOut</strong>
-            </p>
-          </div>
-          <div style="background:#f0f0f0;padding:20px;text-align:center;font-size:12px;color:#999">
-            <p style="margin:0">© {datetime.now().year} PrintsOut. Alla rättigheter förbehållna.</p>
-          </div>
-        </div>
-        """
+        html = f"""<p>Hej!</p>
+<p>Vi fick en begäran om att återställa lösenordet för ditt konto hos PrintsOut.</p>
+<p>Klicka på länken nedan för att välja ett nytt lösenord:</p>
+<p><a href="{reset_link}">{reset_link}</a></p>
+<p>Länken är giltig i 30 minuter. Om du inte begärde detta kan du ignorera detta mail.</p>
+<p>Med vänliga hälsningar,<br>PrintsOut</p>"""
         params = {
             "from": f"PrintsOut <{SENDER_EMAIL}>",
             "to": [email],
-            "subject": "Återställ ditt lösenord - PrintsOut",
+            "subject": "Återställ ditt lösenord",
             "html": html,
-            "text": f"Hej!\n\nVi fick en begäran om att återställa lösenordet för ditt konto.\n\nKlicka på länken nedan för att välja ett nytt lösenord:\n{reset_link}\n\nLänken är giltig i 30 minuter.\n\nMed vänliga hälsningar,\nPrintsOut",
-            "headers": {
-                "X-Entity-Ref-ID": reset_token,
-                "List-Unsubscribe": f"<mailto:{SENDER_EMAIL}?subject=unsubscribe>"
-            }
+            "text": f"Hej!\n\nVi fick en begäran om att återställa lösenordet för ditt konto hos PrintsOut.\n\nKlicka på länken nedan för att välja ett nytt lösenord:\n{reset_link}\n\nLänken är giltig i 30 minuter.\n\nMed vänliga hälsningar,\nPrintsOut"
         }
         await asyncio.to_thread(resend.Emails.send, params)
         logger.info(f"Password reset link sent to {email}")
