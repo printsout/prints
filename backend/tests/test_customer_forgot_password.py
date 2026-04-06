@@ -13,8 +13,8 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 # Test user credentials - will be created during test
 TEST_USER_EMAIL = f"test_customer_{uuid.uuid4().hex[:8]}@example.com"
 TEST_USER_NAME = "Test Customer"
-TEST_USER_PASSWORD = "TestPass123!"  # Strong password meeting requirements
-NEW_PASSWORD = "NewSecure456!"  # New password for reset test
+TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "TestPass123!")
+NEW_PASSWORD = os.environ.get("TEST_NEW_PASSWORD", "NewSecure456!")
 
 
 class TestCustomerForgotPasswordFlow:

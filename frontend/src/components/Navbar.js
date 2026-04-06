@@ -1,292 +1,117 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, ChevronDown, Coffee, Shirt, Image, Tag, Calendar, BookOpen, Smartphone, ShoppingBag, Layers } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Button } from './ui/button';
-
-const categories = [
-  { href: '/produkter/mugg', label: 'Muggar', icon: Coffee },
-  { href: '/produkter/tshirt', label: 'T-shirts', icon: Shirt },
-  { href: '/produkter/hoodie', label: 'Hoodies', icon: Layers },
-  { href: '/produkter/poster', label: 'Posters', icon: Image },
-  { href: '/produkter/mobilskal', label: 'Mobilskal', icon: Smartphone },
-  { href: '/produkter/tygkasse', label: 'Tygkassar', icon: ShoppingBag },
-  { href: '/produkter/namnskylt', label: 'Namnlappar', icon: Tag },
-  { href: '/produkter/kalender', label: 'Kalendrar', icon: Calendar },
-  { href: '/produkter/fotoalbum', label: 'Fotoalbum', icon: BookOpen },
-];
+import { MobileMenu, categories } from './navbar/MobileMenu';
+import { UserDropdown } from './navbar/UserDropdown';
 
 const Navbar = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const { itemCount } = useCart();
   const navigate = useNavigate();
-  const dropdownRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const { user, logout } = useAuth();
+  const { cart } = useCart();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleMouseEnter = () => {
-    clearTimeout(timeoutRef.current);
-    setDropdownOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setDropdownOpen(false), 200);
-  };
+  const itemCount = cart.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
 
   const handleLogout = () => {
     logout();
     navigate('/');
-    setMobileMenuOpen(false);
+    setMobileOpen(false);
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-slate-100" data-testid="navbar">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm" data-testid="navbar">
       <div className="container-main">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2" data-testid="logo-link">
+          <Link to="/" className="flex items-center gap-3 shrink-0" data-testid="logo-link">
             <img
               src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png"
               alt="Printsout"
-              className="h-12 w-auto"
+              className="h-14 w-auto"
             />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className="text-sm font-medium text-slate-600 hover:text-primary transition-colors"
-              data-testid="nav-link-hem"
-            >
+          <div className="hidden md:flex items-center gap-8">
+            <Link to="/" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors" data-testid="nav-home">
               Hem
             </Link>
 
-            {/* Produkter Dropdown */}
+            {/* Products Dropdown */}
             <div
-              ref={dropdownRef}
               className="relative"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              data-testid="products-dropdown"
+              onMouseEnter={() => setShowCategories(true)}
+              onMouseLeave={() => setShowCategories(false)}
             >
-              <button
-                onClick={() => { setDropdownOpen(!dropdownOpen); }}
-                className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                  dropdownOpen ? 'text-[#2a9d8f]' : 'text-slate-600 hover:text-primary'
-                }`}
-                data-testid="products-dropdown-trigger"
+              <Link
+                to="/produkter"
+                className="text-sm font-medium text-slate-600 hover:text-primary transition-colors flex items-center gap-1"
+                data-testid="nav-products"
               >
-                Produkter
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Dropdown Menu */}
-              {dropdownOpen && (
-                <div
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[520px] bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden"
-                  style={{ animation: 'fadeIn 0.15s ease-out' }}
-                  data-testid="dropdown-menu"
-                >
-                  {/* Header */}
-                  <div className="px-5 pt-4 pb-2 border-b border-slate-100">
+                Produkter <ChevronDown className="w-3.5 h-3.5" />
+              </Link>
+              {showCategories && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                  <Link to="/produkter" className="block px-4 py-2 text-sm font-semibold text-[#2a9d8f] hover:bg-slate-50">
+                    Alla produkter
+                  </Link>
+                  <div className="border-t border-slate-100 my-1"></div>
+                  {categories.map((cat) => (
                     <Link
-                      to="/produkter"
-                      onClick={() => setDropdownOpen(false)}
-                      className="text-sm font-semibold text-[#2a9d8f] hover:underline"
-                      data-testid="dropdown-all-products"
+                      key={cat.href}
+                      to={cat.href}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors"
+                      onClick={() => setShowCategories(false)}
                     >
-                      Visa alla produkter
+                      {cat.label}
                     </Link>
-                  </div>
-
-                  {/* Category Grid */}
-                  <div className="p-4 grid grid-cols-3 gap-1">
-                    {categories.map((cat) => {
-                      const Icon = cat.icon;
-                      return (
-                        <Link
-                          key={cat.href}
-                          to={cat.href}
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#2a9d8f]/5 transition-colors group"
-                          data-testid={`dropdown-${cat.label.toLowerCase()}`}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-[#2a9d8f]/10 flex items-center justify-center transition-colors">
-                            <Icon className="w-4 h-4 text-slate-500 group-hover:text-[#2a9d8f] transition-colors" />
-                          </div>
-                          <span className="text-sm font-medium text-slate-700 group-hover:text-[#2a9d8f] transition-colors">
-                            {cat.label}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Right: User + Cart + Mobile Toggle */}
           <div className="flex items-center gap-4">
-            {/* Cart */}
+            <div className="hidden md:block">
+              <UserDropdown user={user} onLogout={handleLogout} />
+            </div>
+
             <Link
               to="/varukorg"
-              className="relative p-2 hover:bg-slate-100 rounded-full transition-colors"
-              data-testid="cart-button"
+              className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              data-testid="cart-link"
             >
               <ShoppingCart className="w-5 h-5 text-slate-700" />
               {itemCount > 0 && (
-                <span className="cart-badge" data-testid="cart-count">{itemCount}</span>
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center" data-testid="cart-count">
+                  {itemCount}
+                </span>
               )}
             </Link>
 
-            {/* User */}
-            {user ? (
-              <div className="hidden md:flex items-center gap-4">
-                <Link
-                  to="/konto"
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                  data-testid="account-button"
-                >
-                  <User className="w-5 h-5 text-slate-700" />
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  data-testid="logout-button"
-                >
-                  Logga ut
-                </Button>
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link to="/logga-in">
-                  <Button variant="ghost" size="sm" data-testid="login-button">
-                    Logga in
-                  </Button>
-                </Link>
-                <Link to="/registrera">
-                  <Button size="sm" className="btn-primary text-sm py-2 px-4" data-testid="register-button">
-                    Registrera
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 hover:bg-slate-100 rounded-full transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              data-testid="mobile-menu-button"
+              className="md:hidden p-2 rounded-lg hover:bg-slate-100"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              data-testid="mobile-menu-toggle"
             >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-slate-700" />
-              ) : (
-                <Menu className="w-5 h-5 text-slate-700" />
-              )}
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-0 top-20 bg-white border-b border-slate-200 shadow-lg animate-fade-in z-50" data-testid="mobile-menu">
-          <div className="container-main py-4 space-y-1 max-h-[calc(100vh-80px)] overflow-y-auto">
-            <Link
-              to="/"
-              className="block text-base font-medium text-slate-700 hover:text-primary py-2.5 px-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Hem
-            </Link>
-
-            <Link
-              to="/produkter"
-              className="block text-base font-semibold text-[#2a9d8f] py-2.5 px-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Alla produkter
-            </Link>
-
-            <div className="pl-2 space-y-0.5">
-              {categories.map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <Link
-                    key={cat.href}
-                    to={cat.href}
-                    className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Icon className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm font-medium text-slate-600">{cat.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <div className="border-t border-slate-100 pt-3 mt-3 space-y-1">
-              {user ? (
-                <>
-                  <Link
-                    to="/konto"
-                    className="block text-base font-medium text-slate-700 hover:text-primary py-2.5 px-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Mitt konto
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block text-base font-medium text-slate-500 hover:text-primary py-2.5 px-2"
-                  >
-                    Logga ut
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/logga-in"
-                    className="block text-base font-medium text-slate-700 hover:text-primary py-2.5 px-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Logga in
-                  </Link>
-                  <Link
-                    to="/registrera"
-                    className="block text-base font-medium text-[#2a9d8f] py-2.5 px-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Registrera
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      <MobileMenu
+        isOpen={mobileOpen}
+        categories={categories}
+        user={user}
+        onClose={() => setMobileOpen(false)}
+        onLogout={handleLogout}
+      />
     </nav>
   );
 };

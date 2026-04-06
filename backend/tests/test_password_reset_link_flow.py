@@ -20,8 +20,8 @@ DB_NAME = os.environ.get('DB_NAME', 'test_database')
 # Test user credentials
 TEST_USER_EMAIL = f"test_reset_link_{uuid.uuid4().hex[:8]}@example.com"
 TEST_USER_NAME = "Test Reset Link User"
-TEST_USER_PASSWORD = "TestPass123!"  # Strong password meeting requirements
-NEW_PASSWORD = "NewSecure456!"  # New password for reset test
+TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "TestPass123!")
+NEW_PASSWORD = os.environ.get("TEST_NEW_PASSWORD", "NewSecure456!")
 
 
 class TestForgotPasswordEndpoint:

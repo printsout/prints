@@ -32,8 +32,8 @@ export const CartProvider = ({ children }) => {
     try {
       const response = await api.get(`/cart/${sid}`);
       setCart(response.data);
-    } catch (error) {
-      console.error('Kunde inte hämta kundvagn:', error);
+    } catch {
+      // Cart fetch failure handled silently - empty cart shown by default
     }
   };
 

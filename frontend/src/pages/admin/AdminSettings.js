@@ -79,8 +79,8 @@ const AdminSettings = () => {
     try {
       const res = await api.get('/admin/2fa-status', { headers: getAuthHeaders() });
       setTwoFAEnabled(res.data.enabled);
-    } catch (error) {
-      // Silently handle - non-critical setting
+    } catch {
+      // Non-critical: 2FA status fetch failure doesn't affect page load
     }
   }, [getAuthHeaders]);
 
