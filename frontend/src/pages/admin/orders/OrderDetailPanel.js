@@ -1,9 +1,18 @@
-import { useMemo } from 'react';
-import { Download, Package, Printer, Trash2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Download, Package, Printer, Trash2, Truck, ExternalLink } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { Input } from '../../../components/ui/input';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
+
+const CARRIERS = {
+  postnord: { name: 'PostNord', url: (n) => `https://tracking.postnord.com/tracking.html?id=${n}` },
+  dhl: { name: 'DHL', url: (n) => `https://www.dhl.com/se-sv/home/tracking.html?tracking-id=${n}` },
+  bring: { name: 'Bring', url: (n) => `https://tracking.bring.se/tracking/${n}` },
+  schenker: { name: 'DB Schenker', url: (n) => `https://www.dbschenker.com/se-sv/spara/${n}` },
+  ups: { name: 'UPS', url: (n) => `https://www.ups.com/track?tracknum=${n}` },
+};
 
 const downloadAllImages = (item, toast) => {
   const urls = item.customization?.pages?.flatMap(pg => pg.image_urls || []) || [];
@@ -20,6 +29,10 @@ const downloadAllImages = (item, toast) => {
 };
 
 const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, toast }) => {
+  const [showShippingDialog, setShowShippingDialog] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [trackingCarrier, setTrackingCarrier] = useState('postnord');
+
   if (!selectedOrder) {
     return (
       <div className="text-center text-slate-500 py-8">
@@ -28,6 +41,26 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
       </div>
     );
   }
+
+  const handleStatusChange = (value) => {
+    if (value === 'shipped') {
+      setTrackingNumber(selectedOrder.tracking_number || '');
+      setTrackingCarrier(selectedOrder.tracking_carrier || 'postnord');
+      setShowShippingDialog(true);
+    } else {
+      onUpdateStatus(selectedOrder.order_id, value);
+    }
+  };
+
+  const handleShipConfirm = () => {
+    onUpdateStatus(selectedOrder.order_id, 'shipped', trackingNumber.trim(), trackingCarrier);
+    setShowShippingDialog(false);
+    setTrackingNumber('');
+  };
+
+  const existingTracking = selectedOrder.tracking_number;
+  const existingCarrier = selectedOrder.tracking_carrier || 'postnord';
+  const carrierInfo = CARRIERS[existingCarrier] || CARRIERS.postnord;
 
   return (
     <div className="space-y-6">
@@ -92,6 +125,27 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
           <p className="text-sm text-slate-900">{new Date(selectedOrder.created_at).toLocaleString('sv-SE')}</p>
         </div>
 
+        {/* Tracking number display */}
+        {existingTracking && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3" data-testid="tracking-info">
+            <div className="flex items-center gap-2 mb-1">
+              <Truck className="w-4 h-4 text-blue-600" />
+              <p className="text-xs text-blue-600 font-semibold uppercase">Spårning ({carrierInfo.name})</p>
+            </div>
+            <p className="text-sm font-mono font-semibold text-slate-900">{existingTracking}</p>
+            <a
+              href={carrierInfo.url(existingTracking)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-blue-600 hover:underline"
+              data-testid="tracking-link"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Spåra paket
+            </a>
+          </div>
+        )}
+
         <div>
           <p className="text-xs text-slate-500 uppercase">Produkter</p>
           <div className="mt-2 space-y-3">
@@ -112,9 +166,9 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
           <p className="text-xs text-slate-500 uppercase mb-2">Uppdatera status</p>
           <Select
             value={selectedOrder.status}
-            onValueChange={(value) => onUpdateStatus(selectedOrder.order_id, value)}
+            onValueChange={handleStatusChange}
           >
-            <SelectTrigger>
+            <SelectTrigger data-testid="order-status-select">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -125,6 +179,56 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
             </SelectContent>
           </Select>
         </div>
+
+        {/* Shipping dialog */}
+        {showShippingDialog && (
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3" data-testid="shipping-dialog">
+            <div className="flex items-center gap-2">
+              <Truck className="w-5 h-5 text-blue-600" />
+              <h4 className="font-semibold text-slate-900">Leveransinformation</h4>
+            </div>
+            <p className="text-sm text-slate-600">Ange spårningsnummer för att inkludera det i kundens leveransbekräftelse.</p>
+            <div>
+              <label className="text-xs text-slate-500 font-medium mb-1 block">Transportör</label>
+              <Select value={trackingCarrier} onValueChange={setTrackingCarrier}>
+                <SelectTrigger data-testid="carrier-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CARRIERS).map(([key, c]) => (
+                    <SelectItem key={key} value={key}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500 font-medium mb-1 block">Spårningsnummer</label>
+              <Input
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="T.ex. 12345678901234"
+                data-testid="tracking-number-input"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleShipConfirm}
+                className="flex-1"
+                data-testid="confirm-shipping-btn"
+              >
+                <Truck className="w-4 h-4 mr-1.5" />
+                Bekräfta leverans
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowShippingDialog(false)}
+                data-testid="cancel-shipping-btn"
+              >
+                Avbryt
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

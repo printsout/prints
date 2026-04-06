@@ -228,6 +228,8 @@ class AdminOrderUpdate(BaseModel):
     status: Optional[str] = None
     payment_status: Optional[str] = None
     notes: Optional[str] = None
+    tracking_number: Optional[str] = None
+    tracking_carrier: Optional[str] = None
 
 class SiteSettings(BaseModel):
     site_name: str = "Printsout"

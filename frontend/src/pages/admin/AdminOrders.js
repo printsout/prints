@@ -68,9 +68,12 @@ const AdminOrders = () => {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, trackingNumber, trackingCarrier) => {
     try {
-      await api.put(`/admin/orders/${orderId}`, { status: newStatus }, { headers: getAuthHeaders() });
+      const payload = { status: newStatus };
+      if (trackingNumber) payload.tracking_number = trackingNumber;
+      if (trackingCarrier) payload.tracking_carrier = trackingCarrier;
+      await api.put(`/admin/orders/${orderId}`, payload, { headers: getAuthHeaders() });
       if (newStatus === 'shipped') {
         toast.success('Orderstatus uppdaterad — leveransbekräftelse skickad till kund');
       } else {
@@ -78,7 +81,7 @@ const AdminOrders = () => {
       }
       fetchOrders();
       if (selectedOrder?.order_id === orderId) {
-        setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+        setSelectedOrder(prev => ({ ...prev, status: newStatus, tracking_number: trackingNumber, tracking_carrier: trackingCarrier }));
       }
     } catch {
       toast.error('Kunde inte uppdatera order');

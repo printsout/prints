@@ -175,6 +175,36 @@ def build_shipping_notification_html(order: dict) -> str:
 
     address_html = "<br>".join(address_lines) if address_lines else "Se din orderbekräftelse"
 
+    tracking_number = order.get("tracking_number", "")
+    tracking_carrier = order.get("tracking_carrier", "postnord")
+
+    carrier_urls = {
+        "postnord": f"https://tracking.postnord.com/tracking.html?id={tracking_number}",
+        "dhl": f"https://www.dhl.com/se-sv/home/tracking.html?tracking-id={tracking_number}",
+        "bring": f"https://tracking.bring.se/tracking/{tracking_number}",
+        "schenker": f"https://www.dbschenker.com/se-sv/spara/{tracking_number}",
+        "ups": f"https://www.ups.com/track?tracknum={tracking_number}",
+    }
+    tracking_url = carrier_urls.get(tracking_carrier, carrier_urls["postnord"])
+    carrier_names = {
+        "postnord": "PostNord",
+        "dhl": "DHL",
+        "bring": "Bring",
+        "schenker": "DB Schenker",
+        "ups": "UPS",
+    }
+    carrier_name = carrier_names.get(tracking_carrier, tracking_carrier or "PostNord")
+
+    tracking_html = ""
+    if tracking_number:
+        tracking_html = f"""
+        <div style="background:#eef6ff;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #3b82f6;text-align:center">
+          <p style="margin:0 0 4px 0;color:#555;font-size:13px;font-weight:600">SPÅRNINGSNUMMER ({carrier_name})</p>
+          <p style="font-size:20px;font-weight:700;color:#1a1a2e;margin:8px 0;letter-spacing:1px;font-family:monospace">{tracking_number}</p>
+          <a href="{tracking_url}" style="display:inline-block;background:#3b82f6;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;margin-top:8px">Spåra ditt paket</a>
+        </div>
+        """
+
     return f"""
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff">
       <div style="background:#1a1a2e;padding:30px;text-align:center">
@@ -188,6 +218,7 @@ def build_shipping_notification_html(order: dict) -> str:
         <div style="background:#f0fdf4;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #2a9d8f">
           <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Ordernummer:</strong> #{order_id}</p>
         </div>
+        {tracking_html}
         <p style="font-size:15px;color:#333;font-weight:600;margin-bottom:8px">Produkter i din leverans:</p>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <thead>
