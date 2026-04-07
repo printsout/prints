@@ -1,7 +1,8 @@
-"""Catalog order routes for B2B catalog print requests."""
+"""Catalog order routes for B2B catalog requests."""
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from database import db
+from pydantic import BaseModel, EmailStr
 from typing import Optional
+from database import db
 from datetime import datetime, timezone
 from config import UPLOADS_DIR
 import uuid
@@ -9,8 +10,38 @@ import uuid
 router = APIRouter(prefix="/catalog", tags=["Catalog"])
 
 
-@router.post("/order")
-async def create_catalog_order(
+class OurCatalogRequest(BaseModel):
+    company_name: str
+    contact_person: str
+    email: EmailStr
+    phone: str
+    address: Optional[str] = ""
+    postal_code: Optional[str] = ""
+    city: Optional[str] = ""
+    catalog_type: str  # "physical" or "digital"
+    quantity: int = 1
+    message: Optional[str] = ""
+
+
+@router.post("/order/our-catalog")
+async def order_our_catalog(order: OurCatalogRequest):
+    """Order our pre-made product catalog (physical or digital)."""
+    if order.catalog_type not in ("physical", "digital"):
+        raise HTTPException(status_code=400, detail="Ogiltig katalogtyp")
+
+    order_data = order.model_dump()
+    order_data["order_id"] = str(uuid.uuid4())
+    order_data["order_type"] = "our_catalog"
+    order_data["status"] = "pending"
+    order_data["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.catalog_orders.insert_one(order_data)
+    order_data.pop("_id", None)
+    return {"message": "Beställning mottagen", "order_id": order_data["order_id"]}
+
+
+@router.post("/order/print")
+async def order_print_catalog(
     company_name: str = Form(...),
     contact_person: str = Form(...),
     email: str = Form(...),
@@ -22,16 +53,15 @@ async def create_catalog_order(
     message: str = Form(""),
     pdf_file: UploadFile = File(...),
 ):
-    # Validate PDF
+    """Upload own PDF catalog for printing."""
     if pdf_file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Bara PDF-filer tillåtna")
 
     contents = await pdf_file.read()
-    max_size = 50 * 1024 * 1024  # 50MB
+    max_size = 50 * 1024 * 1024
     if len(contents) > max_size:
         raise HTTPException(status_code=400, detail="Max filstorlek: 50MB")
 
-    # Save file
     filename = f"catalog_{uuid.uuid4()}.pdf"
     filepath = UPLOADS_DIR / filename
     with open(filepath, "wb") as f:
@@ -39,6 +69,7 @@ async def create_catalog_order(
 
     order_data = {
         "order_id": str(uuid.uuid4()),
+        "order_type": "print",
         "company_name": company_name,
         "contact_person": contact_person,
         "email": email,
