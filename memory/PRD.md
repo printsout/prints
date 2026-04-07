@@ -43,13 +43,15 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Sparande uppdaterar befintlig artikel (ingen dubblett skapas)
 - [x] Stöd i alla tre editorer: NameTagEditor, CalendarEditor, PhotoAlbumEditor
 
-## B2B Katalogbeställning (2026-04-07) - Uppdaterad
-- [x] Ny sida `/foretag` med två flikar: "Vår produktkatalog" + "Skriv ut er katalog"
-- [x] Flik 1: Beställ vår produktkatalog (fysisk broschyr gratis max 5st, eller digital PDF gratis)
-- [x] Flik 2: Ladda upp egen PDF-katalog för utskrift och leverans (max 50MB)
-- [x] Backend: POST `/api/catalog/order/our-catalog` (JSON) + POST `/api/catalog/order/print` (multipart med PDF)
-- [x] Admin: "Kataloger" i admin-panelen med filter (Alla/Vår katalog/Utskrift) + PDF-nedladdning
-- [x] Navigation: "Företag"-länk i navbar, mobilmeny och footer
+## B2B Katalogtjänster (2026-04-07) - Uppdaterad
+- [x] Ny sida `/foretag` med två huvudflikar:
+  - Flik 1: "Vår produktkatalog" – beställ fysisk broschyr (gratis, max 5st) eller digital PDF
+  - Flik 2: "Utskriftstjänster" – två tjänster:
+    - **Katalog**: Ladda upp egen PDF-katalog för utskrift och leverans
+    - **Visitkort**: Designa själv (3 mallar, 8 färger, logouppladdning, live-förhandsvisning) ELLER ladda upp PDF
+- [x] Backend: 3 endpoints – `our-catalog` (JSON), `print` (multipart PDF), `businesscard` (multipart med editor/PDF-stöd + logga)
+- [x] Admin: "Kataloger" med filter (Alla/Vår katalog/Utskrift/Visitkort) + visitkortsdetaljer + PDF-nedladdning
+- [x] Visitkortseditor: Klassisk/Modern/Minimal mallar, 8 accentfärger, realtidsförhandsvisning
 
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
@@ -61,6 +63,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_21: 13/13 backend, 100% frontend (B2B catalog ordering)
 - iteration_22: 13/13 backend, 100% frontend (B2B catalog PDF upload)
 - iteration_23: 21/21 backend, 100% frontend (B2B two-tab catalog: vår katalog + utskrift)
+- iteration_24: 19/19 backend, 100% frontend (Visitkort: editor med mallar/färger + PDF-uppladdning)
 
 ## Arkitektur
 ```
