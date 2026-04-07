@@ -72,6 +72,10 @@ const Navbar = () => {
                 </div>
               )}
             </div>
+
+            <Link to="/foretag" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors" data-testid="nav-business">
+              Företag
+            </Link>
           </div>
 
           {/* Right: User + Cart + Mobile Toggle */}

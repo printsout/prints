@@ -45,6 +45,7 @@ from routers.payments import router as payments_router, handle_stripe_webhook, g
 from routers.admin import router as admin_router
 from routers.uploads import router as uploads_router
 from routers.public import router as public_router
+from routers.catalog import router as catalog_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth_router)
@@ -56,6 +57,7 @@ api_router.include_router(payments_router)
 api_router.include_router(admin_router)
 api_router.include_router(uploads_router)
 api_router.include_router(public_router)
+api_router.include_router(catalog_router)
 
 # Endpoints registered directly on api_router
 @api_router.get("/")

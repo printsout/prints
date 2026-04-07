@@ -122,6 +122,9 @@ const Footer = () => {
               <li>
                 <Link to="/sida/kopvillkor" className="text-slate-500 hover:text-primary text-sm transition-colors">Köpvillkor</Link>
               </li>
+              <li>
+                <Link to="/foretag" className="text-slate-500 hover:text-primary text-sm transition-colors">För företag</Link>
+              </li>
             </ul>
           </div>
         </div>

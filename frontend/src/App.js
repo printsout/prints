@@ -21,6 +21,7 @@ import CalendarEditor from "./pages/CalendarEditor";
 import NameTagEditor from "./pages/NameTagEditor";
 import PhotoAlbumEditor from "./pages/PhotoAlbumEditor";
 import ContentPage from "./pages/ContentPage";
+import BusinessCatalog from "./pages/BusinessCatalog";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -41,6 +42,7 @@ import AdminReviews from "./pages/admin/AdminReviews";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminSecurity from "./pages/admin/AdminSecurity";
+import AdminCatalogs from "./pages/admin/AdminCatalogs";
 
 function App() {
   return (
@@ -61,6 +63,7 @@ function App() {
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="tax" element={<AdminTax />} />
                 <Route path="reviews" element={<AdminReviews />} />
+                <Route path="catalogs" element={<AdminCatalogs />} />
                 <Route path="security" element={<AdminSecurity />} />
               </Route>
 
@@ -79,6 +82,7 @@ function App() {
                       <Route path="/namnskylt/:productId" element={<NameTagEditor />} />
                       <Route path="/fotoalbum/:productId" element={<PhotoAlbumEditor />} />
                       <Route path="/varukorg" element={<Cart />} />
+                      <Route path="/foretag" element={<BusinessCatalog />} />
                       <Route path="/kassa" element={<Checkout />} />
                       <Route path="/order-confirmation" element={<OrderConfirmation />} />
                       <Route path="/konto" element={<Account />} />

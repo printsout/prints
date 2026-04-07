@@ -28,6 +28,7 @@ export const MobileMenu = ({ isOpen, categories: cats, user, onClose, onLogout }
             </Link>
           ))}
         </div>
+        <Link to="/foretag" className="block text-base font-medium text-slate-700 hover:text-primary py-2.5 px-2" onClick={onClose}>Företag</Link>
         <div className="border-t border-slate-100 pt-3 mt-3 space-y-1">
           {user ? (
             <>
