@@ -67,6 +67,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_22: 13/13 backend, 100% frontend (B2B catalog PDF upload)
 - iteration_23: 21/21 backend, 100% frontend (B2B two-tab catalog: vår katalog + utskrift)
 - iteration_24: 19/19 backend, 100% frontend (Visitkort: editor med mallar/färger + PDF-uppladdning)
+- iteration_25: 11/11 backend, 100% frontend (B2B virtuella produkter i varukorgen - buggfix)
 
 ## Arkitektur
 ```
@@ -93,16 +94,23 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - Admin: info@printsout.se / PrintoutAdmin2024! (kräver 2FA)
 - Kunder: Registrera via /registrera
 
+## B2B Varukorg Buggfix (2026-04-07) - NYTT
+- [x] Virtuella produkt-ID:n (`print-businesscard`, `print-catalog`, `our-catalog-*`) hanteras korrekt i `useCartData.js` utan 404-API-anrop
+- [x] Fallback-ikoner i `CartItemCard.js` uppdaterade till lucide-react (CreditCard, BookOpen, FileText)
+- [x] B2B-artiklar exkluderade från "Redigera"-knappen (businesscard, print_catalog, our_catalog)
+
 ## Backlog
 ### P1
-- [ ] ~~B2B Katalogbeställning - skapa katalogfunktion för företagare~~ (2026-04-07: /foretag + admin /admin/catalogs)
-- [x] ~~Dela PhotoAlbumEditor (900 rader) → separata komponenter~~ (2026-04-06: 7 filer, max 245 rader)
-- [x] ~~Bryt ut server.py routers till separata filer~~ (2026-04-06: 1 fil 2035→16 filer, server.py=119 rader)
-- [x] ~~Minska Cart.js komplexitet med custom hook~~ (2026-04-06: 334→4 filer, Cart.js=92 rader, useCartData hook)
-- [x] ~~Redigera varukorgsartikel~~ (2026-04-07: PATCH-endpoint + editor hydration i alla 3 editorer)
+- [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
+- [x] ~~B2B virtuella produkter i varukorgen~~ (2026-04-07: useCartData.js + CartItemCard.js)
+- [x] ~~Dela PhotoAlbumEditor~~ (2026-04-06)
+- [x] ~~Bryt ut server.py routers~~ (2026-04-06)
+- [x] ~~Minska Cart.js komplexitet~~ (2026-04-06)
+- [x] ~~Redigera varukorgsartikel~~ (2026-04-07)
 
 ### P2
 - [ ] Implementera Klarna/Swish-betalningar
 - [ ] Dela ProductPreview3D (274 rader) → 3D-hooks
 - [ ] Förbättra e-postmallar med Jinja2
 - [ ] Fixa Unsplash ORB-bildproblem (ersätt med lokala bilder)
+- [ ] Molnlagring för uppladdade filer (bilder/PDF försvinner vid omstart)
