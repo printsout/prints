@@ -12,7 +12,7 @@ function getEditorUrl(product, cartItemId) {
 
 function isEditable(item) {
   if (!item.customization) return false;
-  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog'];
+  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog', 'catalog_design'];
   return !nonEditable.includes(item.customization.type);
 }
 
@@ -91,6 +91,11 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
             {item.customization.type === 'businesscard' && (
               <span className="inline-block text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded mr-1">
                 Visitkort — {item.customization.source === 'editor' ? item.customization.card_details?.template : 'PDF-design'}
+              </span>
+            )}
+            {item.customization.type === 'catalog_design' && (
+              <span className="inline-block text-xs bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded mr-1">
+                Egen design — {item.customization.page_count} sidor, {item.customization.template}
               </span>
             )}
           </div>

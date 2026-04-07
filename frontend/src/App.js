@@ -22,6 +22,7 @@ import NameTagEditor from "./pages/NameTagEditor";
 import PhotoAlbumEditor from "./pages/PhotoAlbumEditor";
 import ContentPage from "./pages/ContentPage";
 import BusinessCatalog from "./pages/BusinessCatalog";
+import CatalogDesigner from "./pages/CatalogDesigner";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -66,6 +67,9 @@ function App() {
                 <Route path="catalogs" element={<AdminCatalogs />} />
                 <Route path="security" element={<AdminSecurity />} />
               </Route>
+
+              {/* Standalone Routes - No Navbar/Footer */}
+              <Route path="/katalog-designer" element={<CatalogDesigner />} />
 
               {/* Public Routes - With Navbar/Footer */}
               <Route path="/*" element={

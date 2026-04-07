@@ -9,7 +9,7 @@ import BusinessCardEditor from './BusinessCardEditor';
 import {
   Building2, Check, Printer, X,
   FileText, Upload, Package, Clock, ShieldCheck, Minus, Plus,
-  BookOpen, FileDown, CreditCard, ShoppingCart
+  BookOpen, FileDown, CreditCard, ShoppingCart, Palette
 } from 'lucide-react';
 
 /* ───── Tab 1: "Vår produktkatalog" constants ───── */
@@ -30,7 +30,7 @@ const CATALOG_TYPES = [
 
 /* ───── Tab 2: Print service types ───── */
 const PRINT_SERVICES = [
-  { id: 'catalog', title: 'Katalog', desc: 'Ladda upp PDF-katalog för utskrift', Icon: BookOpen },
+  { id: 'catalog', title: 'Katalog', desc: 'Designa eller ladda upp PDF-katalog', Icon: BookOpen },
   { id: 'businesscard', title: 'Visitkort', desc: 'Designa eller ladda upp visitkort', Icon: CreditCard },
 ];
 
@@ -75,6 +75,7 @@ const BusinessCatalog = () => {
   // Tab 2 - print service type
   const [printService, setPrintService] = useState('catalog');
   // Tab 2 - catalog
+  const [catalogSource, setCatalogSource] = useState('upload'); // 'upload' | 'design'
   const [pdfFile, setPdfFile] = useState(null);
   const fileInputRef = useRef(null);
   // Tab 2 - businesscard
@@ -217,7 +218,7 @@ const BusinessCatalog = () => {
   const isSubmitDisabled = () => {
     if (submitting) return true;
     if (activeTab === 'our') return !selectedCatalogType;
-    if (printService === 'catalog') return !pdfFile;
+    if (printService === 'catalog') return catalogSource === 'design' || !pdfFile;
     if (printService === 'businesscard') {
       if (cardSource === 'pdf') return !cardPdfFile;
       return !card.name.trim();
@@ -355,34 +356,66 @@ const BusinessCatalog = () => {
                 </div>
               </div>
 
-              {/* Catalog: PDF upload */}
+              {/* Catalog: Design or PDF upload */}
               {printService === 'catalog' && (
                 <div>
                   <div className="flex items-center gap-3 mb-5">
                     <span className="w-8 h-8 rounded-full bg-[#2a9d8f] text-white text-sm font-bold flex items-center justify-center">2</span>
-                    <h2 className="text-xl font-bold text-slate-900">Ladda upp din katalog</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Skapa din katalog</h2>
                   </div>
-                  {!pdfFile ? (
-                    <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="w-full border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-2xl p-10 transition-colors bg-white group" data-testid="pdf-upload-area">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 rounded-2xl bg-[#2a9d8f]/10 group-hover:bg-[#2a9d8f]/20 flex items-center justify-center transition-colors"><Upload className="w-8 h-8 text-[#2a9d8f]" /></div>
-                        <p className="text-base font-semibold text-slate-700">Klicka för att välja PDF-fil</p>
-                        <p className="text-sm text-slate-400">Max 50MB, enbart PDF-format</p>
-                      </div>
+
+                  {/* Source toggle */}
+                  <div className="flex gap-1 bg-slate-100 rounded-lg p-1 mb-6" data-testid="catalog-source-toggle">
+                    <button type="button" onClick={() => setCatalogSource('design')}
+                      className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${catalogSource === 'design' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                      data-testid="catalog-source-design">
+                      Designa själv
                     </button>
-                  ) : (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4" data-testid="pdf-file-preview">
-                      <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center shrink-0"><FileText className="w-7 h-7 text-red-500" /></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">{pdfFile.name}</p>
-                        <p className="text-sm text-slate-400">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    <button type="button" onClick={() => setCatalogSource('upload')}
+                      className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${catalogSource === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                      data-testid="catalog-source-upload">
+                      Ladda upp PDF
+                    </button>
+                  </div>
+
+                  {catalogSource === 'design' ? (
+                    <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center" data-testid="catalog-design-cta">
+                      <div className="w-16 h-16 rounded-2xl bg-[#2a9d8f]/10 flex items-center justify-center mx-auto mb-4">
+                        <Palette className="w-8 h-8 text-[#2a9d8f]" />
                       </div>
-                      <button type="button" onClick={() => { setPdfFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                        className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" data-testid="remove-pdf"><X className="w-5 h-5" /></button>
+                      <h3 className="text-lg font-bold text-slate-900 mb-2">Katalogdesigner</h3>
+                      <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+                        Skapa en professionell produktkatalog med vårt enkla designverktyg. Välj mall, lägg till produkter, bilder och text — sida för sida.
+                      </p>
+                      <Button type="button" onClick={() => navigate('/katalog-designer')} className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold" data-testid="open-catalog-designer">
+                        <Palette className="w-4 h-4 mr-2" /> Öppna designverktyget
+                      </Button>
                     </div>
+                  ) : (
+                    <>
+                      {!pdfFile ? (
+                        <button type="button" onClick={() => fileInputRef.current?.click()}
+                          className="w-full border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-2xl p-10 transition-colors bg-white group" data-testid="pdf-upload-area">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-16 h-16 rounded-2xl bg-[#2a9d8f]/10 group-hover:bg-[#2a9d8f]/20 flex items-center justify-center transition-colors"><Upload className="w-8 h-8 text-[#2a9d8f]" /></div>
+                            <p className="text-base font-semibold text-slate-700">Klicka för att välja PDF-fil</p>
+                            <p className="text-sm text-slate-400">Max 50MB, enbart PDF-format</p>
+                          </div>
+                        </button>
+                      ) : (
+                        <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center gap-4" data-testid="pdf-file-preview">
+                          <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center shrink-0"><FileText className="w-7 h-7 text-red-500" /></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-slate-900 truncate">{pdfFile.name}</p>
+                            <p className="text-sm text-slate-400">{(pdfFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                          </div>
+                          <button type="button" onClick={() => { setPdfFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                            className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" data-testid="remove-pdf"><X className="w-5 h-5" /></button>
+                        </div>
+                      )}
+                      <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={handleFileSelect} data-testid="pdf-file-input" />
+                    </>
                   )}
-                  <input ref={fileInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={handleFileSelect} data-testid="pdf-file-input" />
                 </div>
               )}
 
@@ -446,7 +479,7 @@ const BusinessCatalog = () => {
           )}
 
           {/* ─── Antal & Pris ─── */}
-          {(activeTab === 'print' || (activeTab === 'our' && selectedCatalogType === 'physical')) && (
+          {((activeTab === 'print' && !(printService === 'catalog' && catalogSource === 'design')) || (activeTab === 'our' && selectedCatalogType === 'physical')) && (
             <div>
               <div className="flex items-center gap-3 mb-5">
                 <span className="w-8 h-8 rounded-full bg-[#2a9d8f] text-white text-sm font-bold flex items-center justify-center">{activeTab === 'our' ? '2' : '3'}</span>
@@ -532,14 +565,16 @@ const BusinessCatalog = () => {
             </div>
           )}
 
-          {/* Submit - Lägg i varukorgen */}
-          <div className="bg-white rounded-2xl border border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
-            <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
-              disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
-              {submitting ? 'Lägger till...' : <><ShoppingCart className="w-4 h-4 mr-2" />Lägg i varukorgen</>}
-            </Button>
-          </div>
+          {/* Submit - Lägg i varukorgen (hide for catalog design mode) */}
+          {!(activeTab === 'print' && printService === 'catalog' && catalogSource === 'design') && (
+            <div className="bg-white rounded-2xl border border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
+              <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
+                disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
+                {submitting ? 'Lägger till...' : <><ShoppingCart className="w-4 h-4 mr-2" />Lägg i varukorgen</>}
+              </Button>
+            </div>
+          )}
         </form>
 
         {/* Info cards */}
