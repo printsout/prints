@@ -54,7 +54,7 @@ function CardPreview({ card, logo, template, color }) {
     <div className="w-full h-full flex flex-col relative overflow-hidden bg-white">
       <div className="h-[38%] flex items-center justify-center" style={{ backgroundColor: color }}>
         {logo ? (
-          <img src={logo} alt="Logo" className="h-7 object-contain brightness-0 invert" />
+          <img src={logo} alt="Logo" className="h-8 object-contain" />
         ) : (
           card.company && <p className="text-sm font-bold text-white tracking-wide">{card.company}</p>
         )}
