@@ -4,7 +4,7 @@ from database import db
 from models import Order, OrderItem, PaymentTransaction, PaymentSettings, CheckoutRequest
 from auth import get_current_user
 from config import STRIPE_API_KEY
-from email_service import send_order_confirmation
+from email_service import send_order_confirmation, send_admin_order_notification
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 import logging
 from datetime import datetime, timezone
@@ -119,6 +119,7 @@ async def get_payment_status(session_id: str, request: Request):
                     {"$set": {"status": "confirmed", "payment_status": "paid"}}
                 )
                 await send_order_confirmation(order)
+                await send_admin_order_notification(order)
 
         return {"status": status.status, "payment_status": status.payment_status, "amount_total": status.amount_total, "currency": status.currency}
     except Exception as e:
@@ -147,6 +148,7 @@ async def handle_stripe_webhook(request: Request):
             order = await db.orders.find_one({"stripe_session_id": webhook_response.session_id}, {"_id": 0})
             if order:
                 await send_order_confirmation(order)
+                await send_admin_order_notification(order)
         return {"received": True}
     except Exception as e:
         logger.error(f"Webhook error: {str(e)}")

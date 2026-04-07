@@ -9,6 +9,7 @@ import resend
 logger = logging.getLogger(__name__)
 
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+ADMIN_EMAIL = os.environ.get('ADMIN_NOTIFICATION_EMAIL', 'info@printsout.se')
 
 # ─── Shared template parts ───────────────────────────
 
@@ -189,6 +190,56 @@ def build_password_reset_html(reset_url: str) -> str:
     return _wrap_email(body)
 
 
+# ─── Admin Order Notification ────────────────────────
+
+def build_admin_order_notification_html(order: dict) -> str:
+    order_id = order.get("order_id", "")[:8]
+    created = order.get("created_at", "")[:16].replace("T", " ")
+    total = order.get("total_amount", 0)
+    customer_email = order.get("email", "Okänd")
+    customer_name = order.get("name", order.get("shipping_address", {}).get("name", ""))
+
+    shipping = order.get("shipping_address", {}) or {}
+    address_lines = []
+    if shipping.get("name"):
+        address_lines.append(f"<strong>{shipping['name']}</strong>")
+    if shipping.get("street"):
+        address_lines.append(shipping["street"])
+    postal_city = f"{shipping.get('postal_code', '')} {shipping.get('city', '')}".strip()
+    if postal_city:
+        address_lines.append(postal_city)
+    if shipping.get("phone"):
+        address_lines.append(f"Tel: {shipping['phone']}")
+    address_html = "<br>".join(address_lines) if address_lines else "Ej angiven"
+
+    items_table = _build_items_table(order.get("items", []), show_price=True)
+    total_html = f'<div style="text-align:right;margin-top:16px;padding-top:12px;border-top:2px solid #1a1a2e"><p style="font-size:20px;font-weight:700;color:#2a9d8f;margin:0">Totalt: {total:.0f} kr</p></div>'
+
+    body = f"""
+    <h2 style="color:#1a1a2e;margin-top:0">Ny beställning!</h2>
+    <p style="font-size:16px;color:#333;line-height:1.6">En ny order har lagts och betalningen är bekräftad.</p>
+
+    <div style="background:#f0fdf4;border-radius:8px;padding:20px;margin:20px 0;border-left:4px solid #2a9d8f">
+      <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Ordernummer:</strong> #{order_id}</p>
+      <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Datum:</strong> {created}</p>
+      <p style="margin:0 0 6px 0;color:#555;font-size:14px"><strong>Kund:</strong> {customer_name or customer_email}</p>
+      <p style="margin:0;color:#555;font-size:14px"><strong>E-post:</strong> {customer_email}</p>
+    </div>
+
+    <p style="font-size:15px;color:#333;font-weight:600;margin-bottom:8px">Beställda produkter:</p>
+    {items_table}
+    {total_html}
+
+    <div style="background:#f8f9fa;border-radius:8px;padding:16px;margin:20px 0">
+      <p style="margin:0 0 4px 0;color:#555;font-size:13px;font-weight:600">LEVERANSADRESS:</p>
+      <p style="margin:0;color:#333;font-size:14px">{address_html}</p>
+    </div>
+
+    <p style="font-size:15px;color:#333;line-height:1.6;margin-top:24px">Logga in på admin-panelen för att hantera ordern.</p>
+    """
+    return _wrap_email(body)
+
+
 # ─── Send Functions ──────────────────────────────────
 
 async def send_order_confirmation(order: dict):
@@ -242,3 +293,20 @@ async def send_shipping_notification(order: dict):
         logger.info(f"Shipping notification sent to {order['email']}")
     except Exception as e:
         logger.warning(f"Failed to send shipping notification: {e}")
+
+
+async def send_admin_order_notification(order: dict):
+    try:
+        html = build_admin_order_notification_html(order)
+        order_id = order.get("order_id", "")[:8]
+        total = order.get("total_amount", 0)
+        params = {
+            "from": f"PrintsOut <{SENDER_EMAIL}>",
+            "to": [ADMIN_EMAIL],
+            "subject": f"Ny beställning #{order_id} — {total:.0f} kr",
+            "html": html,
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Admin order notification sent to {ADMIN_EMAIL}")
+    except Exception as e:
+        logger.warning(f"Failed to send admin order notification: {e}")
