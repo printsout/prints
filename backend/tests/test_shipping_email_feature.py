@@ -13,10 +13,10 @@ import pyotp
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Admin credentials
-ADMIN_EMAIL = "info@printsout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
-TOTP_SECRET = "RY5OWNLJOD7VLKBZEEGHI6MVA3I3M4UE"
+# Admin credentials from environment
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "info@printsout.se")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+TOTP_SECRET = os.environ.get("TOTP_SECRET", "")
 
 
 class TestProductsAPI:

@@ -91,6 +91,19 @@ async def order_print_catalog(
     return {"message": "Beställning mottagen", "order_id": order_data["order_id"]}
 
 
+async def _save_upload(file: UploadFile, prefix: str, max_mb: int) -> tuple:
+    """Save an uploaded file, return (url, original_filename). Raises HTTPException on error."""
+    contents = await file.read()
+    if len(contents) > max_mb * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"Max filstorlek: {max_mb}MB")
+    ext = file.filename.rsplit('.', 1)[-1] if '.' in (file.filename or '') else 'bin'
+    filename = f"{prefix}_{uuid.uuid4()}.{ext}"
+    filepath = UPLOADS_DIR / filename
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    return f"/api/uploads/{filename}", file.filename
+
+
 @router.post("/order/businesscard")
 async def order_businesscard(
     company_name: str = Form(...),
@@ -102,8 +115,7 @@ async def order_businesscard(
     city: str = Form(""),
     quantity: int = Form(1),
     message: str = Form(""),
-    source: str = Form("editor"),  # "editor" or "pdf"
-    # Editor fields
+    source: str = Form("editor"),
     card_name: str = Form(""),
     card_title: str = Form(""),
     card_company: str = Form(""),
@@ -113,40 +125,21 @@ async def order_businesscard(
     card_address: str = Form(""),
     card_template: str = Form("classic"),
     card_color: str = Form("#2a9d8f"),
-    # Files
     pdf_file: Optional[UploadFile] = File(None),
     logo_file: Optional[UploadFile] = File(None),
 ):
     """Order business cards - either from editor or PDF upload."""
-    pdf_url = None
-    original_filename = None
-    logo_url = None
+    pdf_url = original_filename = logo_url = None
 
     if source == "pdf":
         if not pdf_file:
             raise HTTPException(status_code=400, detail="PDF-fil krävs")
         if pdf_file.content_type != "application/pdf":
             raise HTTPException(status_code=400, detail="Bara PDF-filer tillåtna")
-        contents = await pdf_file.read()
-        if len(contents) > 50 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="Max filstorlek: 50MB")
-        filename = f"bizcard_{uuid.uuid4()}.pdf"
-        filepath = UPLOADS_DIR / filename
-        with open(filepath, "wb") as f:
-            f.write(contents)
-        pdf_url = f"/api/uploads/{filename}"
-        original_filename = pdf_file.filename
+        pdf_url, original_filename = await _save_upload(pdf_file, "bizcard", 50)
 
     if logo_file and logo_file.size > 0:
-        logo_contents = await logo_file.read()
-        if len(logo_contents) > 10 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="Max logostorlek: 10MB")
-        ext = logo_file.filename.rsplit('.', 1)[-1] if '.' in logo_file.filename else 'png'
-        logo_filename = f"logo_{uuid.uuid4()}.{ext}"
-        logo_filepath = UPLOADS_DIR / logo_filename
-        with open(logo_filepath, "wb") as f:
-            f.write(logo_contents)
-        logo_url = f"/api/uploads/{logo_filename}"
+        logo_url, _ = await _save_upload(logo_file, "logo", 10)
 
     order_data = {
         "order_id": str(uuid.uuid4()),

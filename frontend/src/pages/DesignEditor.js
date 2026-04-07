@@ -48,6 +48,7 @@ const DesignEditor = () => {
       }
     };
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const onDrop = useCallback((acceptedFiles) => {

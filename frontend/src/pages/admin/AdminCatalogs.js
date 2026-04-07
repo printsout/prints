@@ -17,7 +17,7 @@ const AdminCatalogs = () => {
         });
         setOrders(res.data);
       } catch {
-        console.error('Failed to fetch catalog orders');
+        toast.error('Kunde inte hämta katalogbeställningar');
       } finally {
         setLoading(false);
       }

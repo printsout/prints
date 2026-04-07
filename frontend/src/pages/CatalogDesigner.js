@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
@@ -7,9 +7,14 @@ import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import {
   Plus, Trash2, ChevronLeft, ChevronRight, Upload, X, Image as ImageIcon,
-  Type, ShoppingCart, BookOpen, Palette, Layers, GripVertical,
-  FileText, Package, Star, ArrowLeft, Eye, Settings2, LayoutGrid
+  Type, ShoppingCart, BookOpen, Palette, Layers,
+  FileText, Package, ArrowLeft, Settings2, LayoutGrid
 } from 'lucide-react';
+
+let _pageId = 0;
+const nextId = () => `pg-${++_pageId}-${Date.now()}`;
+let _itemId = 0;
+const nextItemId = () => `it-${++_itemId}-${Date.now()}`;
 
 /* ═══════════════════════════════════════════
    CONSTANTS
@@ -57,19 +62,19 @@ function getPrice(qty) {
 }
 
 function makeCover(companyName) {
-  return { type: 'cover', title: companyName || 'Företagsnamn', subtitle: 'Produktkatalog 2026', bgImage: null };
+  return { id: nextId(), type: 'cover', title: companyName || 'Företagsnamn', subtitle: 'Produktkatalog 2026', bgImage: null };
 }
 function makeProduct() {
-  return { type: 'product', items: [{ image: null, name: '', desc: '', price: '' }] };
+  return { id: nextId(), type: 'product', items: [{ id: nextItemId(), image: null, name: '', desc: '', price: '' }] };
 }
 function makeGallery() {
-  return { type: 'gallery', title: 'Galleri', images: [null, null, null, null], captions: ['', '', '', ''] };
+  return { id: nextId(), type: 'gallery', title: 'Galleri', images: [null, null, null, null], captions: ['', '', '', ''] };
 }
 function makeTextPage() {
-  return { type: 'text', title: 'Om oss', body: '' };
+  return { id: nextId(), type: 'text', title: 'Om oss', body: '' };
 }
 function makeBackCover(companyName) {
-  return { type: 'backcover', companyName: companyName || '', phone: '', email: '', website: '', address: '' };
+  return { id: nextId(), type: 'backcover', companyName: companyName || '', phone: '', email: '', website: '', address: '' };
 }
 
 function buildInitialPages(count, companyName) {
@@ -120,7 +125,7 @@ function PagePreview({ page, template, theme, companyLogo, scale = 1 }) {
         <div className="flex-1 p-2" style={{ padding: 8 * scale }}>
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6 * scale }}>
             {items.map((item, i) => (
-              <div key={i} style={{ border: '1px solid #f1f5f9', borderRadius: 4 * scale, overflow: 'hidden' }}>
+              <div key={item.id || `preview-item-${i}`} style={{ border: '1px solid #f1f5f9', borderRadius: 4 * scale, overflow: 'hidden' }}>
                 <div style={{ height: 50 * scale, backgroundColor: '#f8fafc' }} className="flex items-center justify-center">
                   {item.image ? (
                     <img src={item.image} alt="" className="w-full h-full object-cover" />
@@ -150,7 +155,7 @@ function PagePreview({ page, template, theme, companyLogo, scale = 1 }) {
           {page.title && <p style={{ fontSize: 12 * scale, fontWeight: 700, color, marginBottom: 6 * scale }}>{page.title}</p>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 * scale, flex: 1 }}>
             {imgs.map((img, i) => (
-              <div key={i} style={{ backgroundColor: '#f8fafc', borderRadius: 3 * scale, overflow: 'hidden', aspectRatio: '4/3' }} className="flex items-center justify-center">
+              <div key={`gallery-${i}`} style={{ backgroundColor: '#f8fafc', borderRadius: 3 * scale, overflow: 'hidden', aspectRatio: '4/3' }} className="flex items-center justify-center">
                 {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <ImageIcon style={{ width: 14 * scale, height: 14 * scale }} className="text-slate-300" />}
               </div>
             ))}
@@ -396,6 +401,7 @@ const CatalogDesigner = () => {
 
   const currentPage = pages[activePage];
   const totalPrice = quantity * getPrice(quantity);
+  const contentPageTypes = useMemo(() => PAGE_TYPES.filter(t => t.id !== 'cover' && t.id !== 'backcover'), []);
 
   /* ───── SETUP SCREEN ───── */
   if (step === 'setup') {
@@ -560,7 +566,7 @@ const CatalogDesigner = () => {
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-2" data-testid="page-thumbnails">
             {pages.map((page, i) => (
-              <button key={i} type="button" onClick={() => setActivePage(i)}
+              <button key={page.id} type="button" onClick={() => setActivePage(i)}
                 className={`w-full rounded-lg overflow-hidden border-2 transition-all group relative ${activePage === i ? 'border-[#2a9d8f] shadow-md' : 'border-transparent hover:border-slate-300'}`}
                 data-testid={`page-thumb-${i}`}>
                 <div className="pointer-events-none">
@@ -576,7 +582,7 @@ const CatalogDesigner = () => {
           <div className="p-2 border-t border-slate-100 space-y-1">
             <p className="text-[10px] text-slate-400 font-medium px-1">Lägg till sida:</p>
             <div className="grid grid-cols-2 gap-1">
-              {PAGE_TYPES.filter(t => t.id !== 'cover' && t.id !== 'backcover').map(t => (
+              {contentPageTypes.map(t => (
                 <button key={t.id} type="button" onClick={() => addPage(t.id)}
                   className="flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-medium text-slate-600 hover:bg-[#2a9d8f]/10 hover:text-[#2a9d8f] transition-colors"
                   data-testid={`add-page-${t.id}`}>
@@ -614,7 +620,7 @@ const CatalogDesigner = () => {
             {/* Page type changer (not for cover/backcover) */}
             {activePage > 0 && activePage < pages.length - 1 && (
               <div className="flex gap-1 mt-3">
-                {PAGE_TYPES.filter(t => t.id !== 'cover' && t.id !== 'backcover').map(t => (
+                {contentPageTypes.map(t => (
                   <button key={t.id} type="button"
                     onClick={() => {
                       const makers = { product: makeProduct, gallery: makeGallery, text: makeTextPage };
@@ -664,7 +670,7 @@ const CatalogDesigner = () => {
               <>
                 {(currentPage.items || []).map((item, i) => (
                   <ProductItemEditor
-                    key={i} item={item} index={i}
+                    key={item.id || `item-${i}`} item={item} index={i}
                     onChange={(updated) => {
                       const items = [...(currentPage.items || [])];
                       items[i] = updated;
@@ -679,7 +685,7 @@ const CatalogDesigner = () => {
                 ))}
                 {(currentPage.items || []).length < 6 && (
                   <button type="button"
-                    onClick={() => updatePage(activePage, { items: [...(currentPage.items || []), { image: null, name: '', desc: '', price: '' }] })}
+                    onClick={() => updatePage(activePage, { items: [...(currentPage.items || []), { id: nextItemId(), image: null, name: '', desc: '', price: '' }] })}
                     className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] text-sm font-medium text-slate-500 hover:text-[#2a9d8f] flex items-center justify-center gap-1.5 transition-colors"
                     data-testid="add-product-btn">
                     <Plus className="w-4 h-4" /> Lägg till produkt
@@ -697,7 +703,7 @@ const CatalogDesigner = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {(currentPage.images || []).map((img, i) => (
-                    <div key={i}>
+                    <div key={`gal-slot-${i}`}>
                       {img ? (
                         <div className="relative h-24 rounded-lg overflow-hidden">
                           <img src={img} alt="" className="w-full h-full object-cover" />

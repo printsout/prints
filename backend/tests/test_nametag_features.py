@@ -13,10 +13,10 @@ import os
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Test credentials from review request
-ADMIN_EMAIL = "info@printsout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
-TOTP_SECRET = "RY5OWNLJOD7VLKBZEEGHI6MVA3I3M4UE"
+# Test credentials from environment
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "info@printsout.se")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+TOTP_SECRET = os.environ.get("TOTP_SECRET", "")
 TEST_NAMETAG_ORDER_ID = "720d81c9-1ede-4414-9d6f-2d854dc94271"
 TEST_NAMETAG_PRODUCT_ID = "4e5641a2-80de-4f1c-bae7-eba700925192"
 

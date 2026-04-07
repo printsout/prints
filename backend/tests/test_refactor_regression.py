@@ -10,10 +10,11 @@ import pyotp
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Test credentials
-ADMIN_EMAIL = "info@printsout.se"
-ADMIN_PASSWORD = "PrintoutAdmin2024!"
-TOTP_SECRET = "RY5OWNLJOD7VLKBZEEGHI6MVA3I3M4UE"
+# Test credentials from environment
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "info@printsout.se")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+TOTP_SECRET = os.environ.get("TOTP_SECRET", "")
+TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "TestPassword123!")
 TEST_NAMETAG_ORDER_ID = "720d81c9-1ede-4414-9d6f-2d854dc94271"
 
 
@@ -84,7 +85,7 @@ class TestAuthEndpoints:
         unique_email = f"test_{uuid.uuid4().hex[:8]}@test.com"
         payload = {
             "email": unique_email,
-            "password": "TestPassword123!",
+            "password": TEST_USER_PASSWORD,
             "name": "Test User"
         }
         response = requests.post(f"{BASE_URL}/api/auth/register", json=payload)
@@ -99,7 +100,7 @@ class TestAuthEndpoints:
         unique_email = f"test_{uuid.uuid4().hex[:8]}@test.com"
         register_payload = {
             "email": unique_email,
-            "password": "TestPassword123!",
+            "password": TEST_USER_PASSWORD,
             "name": "Test User"
         }
         requests.post(f"{BASE_URL}/api/auth/register", json=register_payload)
@@ -107,7 +108,7 @@ class TestAuthEndpoints:
         # Then login
         login_payload = {
             "email": unique_email,
-            "password": "TestPassword123!"
+            "password": TEST_USER_PASSWORD
         }
         response = requests.post(f"{BASE_URL}/api/auth/login", json=login_payload)
         assert response.status_code == 200

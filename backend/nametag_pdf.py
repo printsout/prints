@@ -155,38 +155,31 @@ def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: flo
     c.setLineWidth(0.3)
     s = size * mm
 
-    if motif_id == "star":
-        _draw_star(c, cx, cy, s * 0.45, 5)
-    elif motif_id == "heart":
-        _draw_heart(c, cx, cy, s * 0.4)
-    elif motif_id == "flower":
-        _draw_flower(c, cx, cy, s * 0.4)
-    elif motif_id == "sun":
-        _draw_sun(c, cx, cy, s * 0.4)
-    elif motif_id == "moon":
-        _draw_moon(c, cx, cy, s * 0.4)
-    elif motif_id == "snowflake":
-        _draw_snowflake(c, cx, cy, s * 0.4)
-    elif motif_id in ("tree", "leaf"):
-        _draw_tree(c, cx, cy, s * 0.45)
-    elif motif_id == "crown":
-        _draw_crown(c, cx, cy, s * 0.4)
-    elif motif_id in ("football", "volleyball"):
-        c.circle(cx, cy, s * 0.35, fill=1, stroke=0)
-    elif motif_id in ("trophy", "medal"):
-        _draw_trophy(c, cx, cy, s * 0.4)
-    elif motif_id == "cloud":
-        _draw_cloud(c, cx, cy, s * 0.4)
-    elif motif_id in ("gem", "diamond"):
-        _draw_diamond(c, cx, cy, s * 0.4)
-    elif motif_id == "music":
-        _draw_music_note(c, cx, cy, s * 0.4)
-    elif motif_id == "zap":
-        _draw_zap(c, cx, cy, s * 0.45)
-    elif motif_id == "mountain":
-        _draw_triangle(c, cx, cy, s * 0.45)
-    elif motif_id == "flag":
-        _draw_flag(c, cx, cy, s * 0.4)
+    dispatch = {
+        "star": lambda: _draw_star(c, cx, cy, s * 0.45, 5),
+        "heart": lambda: _draw_heart(c, cx, cy, s * 0.4),
+        "flower": lambda: _draw_flower(c, cx, cy, s * 0.4),
+        "sun": lambda: _draw_sun(c, cx, cy, s * 0.4),
+        "moon": lambda: _draw_moon(c, cx, cy, s * 0.4),
+        "snowflake": lambda: _draw_snowflake(c, cx, cy, s * 0.4),
+        "tree": lambda: _draw_tree(c, cx, cy, s * 0.45),
+        "leaf": lambda: _draw_tree(c, cx, cy, s * 0.45),
+        "crown": lambda: _draw_crown(c, cx, cy, s * 0.4),
+        "football": lambda: c.circle(cx, cy, s * 0.35, fill=1, stroke=0),
+        "volleyball": lambda: c.circle(cx, cy, s * 0.35, fill=1, stroke=0),
+        "trophy": lambda: _draw_trophy(c, cx, cy, s * 0.4),
+        "medal": lambda: _draw_trophy(c, cx, cy, s * 0.4),
+        "cloud": lambda: _draw_cloud(c, cx, cy, s * 0.4),
+        "gem": lambda: _draw_diamond(c, cx, cy, s * 0.4),
+        "diamond": lambda: _draw_diamond(c, cx, cy, s * 0.4),
+        "music": lambda: _draw_music_note(c, cx, cy, s * 0.4),
+        "zap": lambda: _draw_zap(c, cx, cy, s * 0.45),
+        "mountain": lambda: _draw_triangle(c, cx, cy, s * 0.45),
+        "flag": lambda: _draw_flag(c, cx, cy, s * 0.4),
+    }
+    handler = dispatch.get(motif_id)
+    if handler:
+        handler()
     else:
         c.circle(cx, cy, s * 0.35, fill=1, stroke=0)
 
