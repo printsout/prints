@@ -122,6 +122,44 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
       {/* Live preview */}
       <CardPreview card={card} logo={logo} template={template} color={color} />
 
+      {/* Logo upload - prominently placed */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+          <Upload className="w-4 h-4 text-[#2a9d8f]" />Logotyp
+        </label>
+        {!logo ? (
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-xl p-5 transition-colors bg-white group"
+            data-testid="logo-upload-area"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-[#2a9d8f]/10 group-hover:bg-[#2a9d8f]/20 flex items-center justify-center shrink-0 transition-colors">
+                <Upload className="w-6 h-6 text-[#2a9d8f]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-slate-700">Ladda upp er logotyp</p>
+                <p className="text-xs text-slate-400 mt-0.5">PNG, JPG eller WebP — syns i live-förhandsvisningen</p>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <div className="flex items-center gap-4 bg-white rounded-xl border p-3" data-testid="logo-preview">
+            <img src={logo} alt="Logo" className="h-14 w-14 object-contain rounded-lg bg-slate-50 p-1" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-slate-700">Logotyp uppladdad</p>
+              <p className="text-xs text-slate-400">Visas i förhandsvisningen ovan</p>
+            </div>
+            <button type="button" onClick={() => { setLogo(null); if (logoInputRef.current) logoInputRef.current.value = ''; }}
+              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" data-testid="remove-logo">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+        <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoSelect} data-testid="logo-file-input" />
+      </div>
+
       {/* Template selection */}
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
@@ -200,34 +238,6 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
             <Input value={card.address} onChange={e => updateCard('address', e.target.value)} placeholder="Storgatan 1, 111 22 Stockholm" className="h-10" data-testid="card-address" />
           </div>
         </div>
-      </div>
-
-      {/* Logo upload */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">Logotyp (valfritt)</label>
-        {!logo ? (
-          <button
-            type="button"
-            onClick={() => logoInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-slate-200 hover:border-[#2a9d8f] rounded-xl p-5 transition-colors bg-white group"
-            data-testid="logo-upload-area"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <Upload className="w-6 h-6 text-slate-400 group-hover:text-[#2a9d8f] transition-colors" />
-              <p className="text-sm text-slate-500">Ladda upp logotyp (PNG, JPG)</p>
-            </div>
-          </button>
-        ) : (
-          <div className="flex items-center gap-4 bg-white rounded-xl border p-3" data-testid="logo-preview">
-            <img src={logo} alt="Logo" className="h-12 w-12 object-contain rounded-lg bg-slate-50 p-1" />
-            <span className="text-sm text-slate-700 flex-1">Logotyp uppladdad</span>
-            <button type="button" onClick={() => { setLogo(null); if (logoInputRef.current) logoInputRef.current.value = ''; }}
-              className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" data-testid="remove-logo">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-        <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoSelect} data-testid="logo-file-input" />
       </div>
     </div>
   );

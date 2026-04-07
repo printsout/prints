@@ -32,6 +32,33 @@ const PRINT_SERVICES = [
   { id: 'businesscard', title: 'Visitkort', desc: 'Designa eller ladda upp visitkort', Icon: CreditCard },
 ];
 
+/* ───── Business card pricing tiers ───── */
+const CARD_PRICE_TIERS = [
+  { min: 1, max: 49, pricePerCard: 5.90 },
+  { min: 50, max: 99, pricePerCard: 3.90 },
+  { min: 100, max: 249, pricePerCard: 2.50 },
+  { min: 250, max: 499, pricePerCard: 1.90 },
+  { min: 500, max: Infinity, pricePerCard: 1.20 },
+];
+
+function getCardPrice(quantity) {
+  const tier = CARD_PRICE_TIERS.find(t => quantity >= t.min && quantity <= t.max);
+  return tier ? tier.pricePerCard : CARD_PRICE_TIERS[0].pricePerCard;
+}
+
+/* ───── Catalog printing pricing ───── */
+const CATALOG_PRICE_TIERS = [
+  { min: 1, max: 9, pricePerUnit: 89 },
+  { min: 10, max: 24, pricePerUnit: 69 },
+  { min: 25, max: 49, pricePerUnit: 49 },
+  { min: 50, max: Infinity, pricePerUnit: 39 },
+]
+
+function getCatalogPrice(quantity) {
+  const tier = CATALOG_PRICE_TIERS.find(t => quantity >= t.min && quantity <= t.max);
+  return tier ? tier.pricePerUnit : CATALOG_PRICE_TIERS[0].pricePerUnit;
+}
+
 /* ───── Shared form fields ───── */
 function CompanyForm({ form, updateField, showAddress }) {
   return (
@@ -284,11 +311,19 @@ const BusinessCatalog = () => {
         : <span className="text-amber-600">Välj en katalogtyp ovan</span>;
     }
     if (printService === 'catalog') {
-      return pdfFile ? <>Katalog: <strong className="text-slate-700">{pdfFile.name}</strong> — {form.quantity} ex</> : <span className="text-amber-600">Ladda upp en PDF-katalog</span>;
+      const total = form.quantity * getCatalogPrice(form.quantity);
+      return pdfFile
+        ? <>Katalog: <strong className="text-slate-700">{pdfFile.name}</strong> — {form.quantity} ex — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        : <span className="text-amber-600">Ladda upp en PDF-katalog</span>;
     }
     if (printService === 'businesscard') {
-      if (cardSource === 'pdf') return cardPdfFile ? <>Visitkort (PDF): <strong className="text-slate-700">{cardPdfFile.name}</strong> — {form.quantity} st</> : <span className="text-amber-600">Ladda upp en PDF</span>;
-      return card.name ? <>Visitkort: <strong className="text-slate-700">{card.name}</strong> — {form.quantity} st</> : <span className="text-amber-600">Fyll i namn på visitkortet</span>;
+      const total = (form.quantity * getCardPrice(form.quantity)).toFixed(0);
+      if (cardSource === 'pdf') return cardPdfFile
+        ? <>Visitkort (PDF): <strong className="text-slate-700">{cardPdfFile.name}</strong> — {form.quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        : <span className="text-amber-600">Ladda upp en PDF</span>;
+      return card.name
+        ? <>Visitkort: <strong className="text-slate-700">{card.name}</strong> — {form.quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        : <span className="text-amber-600">Fyll i namn på visitkortet</span>;
     }
   };
 
@@ -501,16 +536,78 @@ const BusinessCatalog = () => {
               {needsAddress && (
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-2">
-                    {printService === 'businesscard' ? 'Antal visitkort' : activeTab === 'print' ? 'Antal exemplar att trycka' : 'Antal kataloger (max 5)'}
+                    {printService === 'businesscard' && activeTab === 'print' ? 'Antal visitkort' : activeTab === 'print' ? 'Antal exemplar att trycka' : 'Antal kataloger (max 5)'}
                   </label>
                   <div className="flex items-center gap-3">
                     <button type="button" onClick={() => updateField('quantity', Math.max(1, form.quantity - 1))}
                       className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors" data-testid="qty-decrease"><Minus className="w-4 h-4" /></button>
-                    <span className="w-12 text-center font-semibold text-lg" data-testid="qty-display">{form.quantity}</span>
-                    <button type="button" onClick={() => { const max = activeTab === 'our' ? 5 : 999; updateField('quantity', Math.min(max, form.quantity + 1)); }}
+                    <Input type="number" min="1" max={activeTab === 'our' ? 5 : 9999}
+                      value={form.quantity} onChange={e => updateField('quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-20 text-center font-semibold text-lg h-10" data-testid="qty-display" />
+                    <button type="button" onClick={() => { const max = activeTab === 'our' ? 5 : 9999; updateField('quantity', Math.min(max, form.quantity + 1)); }}
                       className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors" data-testid="qty-increase"><Plus className="w-4 h-4" /></button>
-                    <span className="text-sm text-slate-400 ml-2">{printService === 'businesscard' && activeTab === 'print' ? 'st' : 'exemplar'}</span>
+                    <span className="text-sm text-slate-400 ml-1">{printService === 'businesscard' && activeTab === 'print' ? 'st' : 'exemplar'}</span>
                   </div>
+
+                  {/* Quick quantity buttons for business cards */}
+                  {activeTab === 'print' && printService === 'businesscard' && (
+                    <div className="flex flex-wrap gap-2 mt-3" data-testid="quick-qty-buttons">
+                      {[50, 100, 250, 500].map(q => (
+                        <button key={q} type="button" onClick={() => updateField('quantity', q)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                            form.quantity === q ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                          data-testid={`quick-qty-${q}`}>
+                          {q} st
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Price calculation for print services */}
+                  {activeTab === 'print' && (
+                    <div className="mt-4 bg-slate-50 rounded-xl p-4" data-testid="price-calculation">
+                      {printService === 'businesscard' ? (
+                        <>
+                          <div className="flex justify-between items-baseline mb-1">
+                            <span className="text-sm text-slate-600">{form.quantity} st x {getCardPrice(form.quantity).toFixed(2)} kr/st</span>
+                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{(form.quantity * getCardPrice(form.quantity)).toFixed(0)} kr</span>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            {form.quantity < 50 && 'Beställ 50+ för bättre pris!'}
+                            {form.quantity >= 50 && form.quantity < 100 && 'Beställ 100+ för 2,50 kr/st'}
+                            {form.quantity >= 100 && form.quantity < 250 && 'Beställ 250+ för 1,90 kr/st'}
+                            {form.quantity >= 250 && form.quantity < 500 && 'Beställ 500+ för 1,20 kr/st'}
+                            {form.quantity >= 500 && 'Bästa priset!'}
+                          </p>
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <p className="text-xs font-medium text-slate-500 mb-2">Prisstege:</p>
+                            <div className="grid grid-cols-5 gap-1 text-center text-xs">
+                              {CARD_PRICE_TIERS.map(t => (
+                                <div key={t.min} className={`rounded-md py-1.5 ${form.quantity >= t.min && form.quantity <= t.max ? 'bg-[#2a9d8f]/15 text-[#2a9d8f] font-semibold' : 'text-slate-400'}`}>
+                                  <p className="font-medium">{t.min}{t.max === Infinity ? '+' : `-${t.max}`}</p>
+                                  <p>{t.pricePerCard.toFixed(2)} kr</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-baseline mb-1">
+                            <span className="text-sm text-slate-600">{form.quantity} ex x {getCatalogPrice(form.quantity)} kr/ex</span>
+                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{form.quantity * getCatalogPrice(form.quantity)} kr</span>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            {form.quantity < 10 && 'Beställ 10+ för 69 kr/ex'}
+                            {form.quantity >= 10 && form.quantity < 25 && 'Beställ 25+ för 49 kr/ex'}
+                            {form.quantity >= 25 && form.quantity < 50 && 'Beställ 50+ för 39 kr/ex'}
+                            {form.quantity >= 50 && 'Bästa priset!'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

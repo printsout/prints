@@ -52,6 +52,9 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Backend: 3 endpoints – `our-catalog` (JSON), `print` (multipart PDF), `businesscard` (multipart med editor/PDF-stöd + logga)
 - [x] Admin: "Kataloger" med filter (Alla/Vår katalog/Utskrift/Visitkort) + visitkortsdetaljer + PDF-nedladdning
 - [x] Visitkortseditor: Klassisk/Modern/Minimal mallar, 8 accentfärger, realtidsförhandsvisning
+- [x] Logouppladdning framträdande placerad direkt under förhandsvisningen
+- [x] Prisberäkning med prisstege (visitkort: 5,90→1,20 kr/st, katalog: 89→39 kr/ex)
+- [x] Snabbvalsknappar (50/100/250/500 st) och pris i submit-bar
 
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
