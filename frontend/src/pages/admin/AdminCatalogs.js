@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, FileDown, Building2, Mail, Phone, MapPin, Clock, Package } from 'lucide-react';
+import { BookOpen, FileDown, Building2, Mail, Phone, MapPin, Clock, Package, Download } from 'lucide-react';
 import api from '../../services/api';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -23,6 +23,8 @@ const AdminCatalogs = () => {
     };
     fetchOrders();
   }, [token]);
+
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
   if (loading) {
     return (
@@ -52,36 +54,39 @@ const AdminCatalogs = () => {
             <div key={order.order_id} className="bg-white rounded-xl border p-5" data-testid={`catalog-order-${order.order_id}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    order.catalog_type === 'physical' ? 'bg-[#2a9d8f]/10' : 'bg-[#e76f51]/10'
-                  }`}>
-                    {order.catalog_type === 'physical'
-                      ? <Package className="w-5 h-5 text-[#2a9d8f]" />
-                      : <FileDown className="w-5 h-5 text-[#e76f51]" />
-                    }
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#2a9d8f]/10">
+                    <Package className="w-5 h-5 text-[#2a9d8f]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-900">
-                      {order.catalog_type === 'physical' ? 'Fysisk katalog' : 'Digital katalog (PDF)'}
-                      {order.catalog_type === 'physical' && order.quantity > 1 && (
-                        <span className="text-sm font-normal text-slate-500 ml-2">x{order.quantity}</span>
-                      )}
+                      {order.company_name}
+                      <span className="text-sm font-normal text-slate-500 ml-2">x{order.quantity} exemplar</span>
                     </h3>
-                    <p className="text-sm text-slate-500">{order.company_name}</p>
+                    <p className="text-sm text-slate-500">{order.contact_person}</p>
                   </div>
                 </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  order.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
-                }`}>
-                  {order.status === 'pending' ? 'Väntar' : 'Skickad'}
-                </span>
+                <div className="flex items-center gap-3">
+                  {order.pdf_url && (
+                    <a
+                      href={`${backendUrl}${order.pdf_url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                      data-testid={`download-pdf-${order.order_id}`}
+                    >
+                      <Download className="w-4 h-4" />
+                      {order.original_filename || 'Ladda ner PDF'}
+                    </a>
+                  )}
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                    order.status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+                  }`}>
+                    {order.status === 'pending' ? 'Väntar' : 'Skickad'}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>{order.contact_person}</span>
-                </div>
                 <div className="flex items-center gap-2 text-slate-600">
                   <Mail className="w-4 h-4 text-slate-400 shrink-0" />
                   <span className="truncate">{order.email}</span>
@@ -91,17 +96,14 @@ const AdminCatalogs = () => {
                   <span>{order.phone}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600">
+                  <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="truncate">{order.address}, {order.postal_code} {order.city}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600">
                   <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>{new Date(order.created_at).toLocaleDateString('sv-SE')}</span>
                 </div>
               </div>
-
-              {order.catalog_type === 'physical' && order.address && (
-                <div className="mt-3 pt-3 border-t flex items-start gap-2 text-sm text-slate-600">
-                  <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                  <span>{order.address}, {order.postal_code} {order.city}</span>
-                </div>
-              )}
 
               {order.message && (
                 <div className="mt-3 pt-3 border-t">
