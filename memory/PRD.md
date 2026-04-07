@@ -99,12 +99,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ## Code Quality Fixes (2026-04-07) - NYTT
 - [x] XSS: Verifierat DOMPurify redan används i AdminContent.js och ContentPage.js
 - [x] Security: Flyttat hårdkodade secrets i 4 testfiler till .env.test + conftest.py fixtures
-- [x] React hooks: Fixat alla webpack dependency-varningar (DesignEditor.js, AdminTax.js)
+- [x] React hooks: Fixat alla webpack dependency-varningar (0 varningar nu)
 - [x] Console statements: Ersatt console.error med toast/silent i AdminSettings.js och AdminCatalogs.js
 - [x] Array keys: Ersatt index-keys med stabila ID:n i CatalogDesigner.js (5 ställen)
 - [x] Performance: Memoiserat PAGE_TYPES.filter() med useMemo i CatalogDesigner.js
 - [x] Backend complexity: Refaktorerat _draw_motif() till dispatch-tabell (nametag_pdf.py)
 - [x] Backend complexity: Extraherat _save_upload() helper i catalog.py (order_businesscard)
+- [x] Component splitting: CatalogDesigner.js 812→393 rader (+ catalogConstants.js, PagePreview.js, PageEditor.js)
 - [x] Virtuella produkt-ID:n (`print-businesscard`, `print-catalog`, `our-catalog-*`) hanteras korrekt i `useCartData.js` utan 404-API-anrop
 - [x] Fallback-ikoner i `CartItemCard.js` uppdaterade till lucide-react (CreditCard, BookOpen, FileText)
 - [x] B2B-artiklar exkluderade från "Redigera"-knappen (businesscard, print_catalog, our_catalog)
