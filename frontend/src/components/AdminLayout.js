@@ -3,7 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { 
   LayoutDashboard, Users, Package, ShoppingCart, 
-  Settings, LogOut, Menu, X, FileText, CreditCard, Receipt, MessageSquare, ShieldCheck, BookOpen
+  Settings, LogOut, Menu, X, FileText, CreditCard, Receipt, MessageSquare, ShieldCheck
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
@@ -35,7 +35,6 @@ const AdminLayout = () => {
     { path: '/admin/settings', label: 'Inställningar', icon: Settings },
     { path: '/admin/tax', label: 'Skatt', icon: Receipt },
     { path: '/admin/reviews', label: 'Recensioner', icon: MessageSquare },
-    { path: '/admin/catalogs', label: 'Kataloger', icon: BookOpen },
     { path: '/admin/security', label: 'Säkerhet', icon: ShieldCheck },
   ];
 

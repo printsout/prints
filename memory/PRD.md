@@ -118,7 +118,12 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
 
-## Buggfix: Virtuella produkter i ordrar (2026-04-07) - NYTT
+## Admin Konsolidering (2026-04-07) - NYTT
+- [x] Borttagen separat "Kataloger" admin-sida (`/admin/catalogs`)
+- [x] B2B-beställningar (visitkort, utskrift, katalog) integrerade i huvudordersidan `/admin/orders`
+- [x] Nytt typfilter: Alla typer / Webbshop / B2B
+- [x] B2B-badge (indigo) och typ-kolumn i ordertabellen
+- [x] Sökning stödjer nu även kundnamn
 - [x] Virtuella B2B-produkter (print-catalog-custom, print-businesscard, print-catalog) sparas nu korrekt i ordrar vid checkout
 - [x] Rotorsak: `_build_order_items()` hoppade över artiklar som inte fanns i products-databasen
 - [x] Fix: Använder varukorgsdata (namn, pris) för virtuella produkter som saknas i DB

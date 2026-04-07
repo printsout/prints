@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Trash2 } from 'lucide-react';
+import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Trash2, Briefcase, Download } from 'lucide-react';
 import OrderDetailPanel from './orders/OrderDetailPanel';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
@@ -46,19 +46,69 @@ const getStatusLabel = (status) => {
   }
 };
 
+const getB2bProductName = (o) => {
+  if (o.order_type === 'businesscard') return `Visitkort${o.card_details?.name ? ` — ${o.card_details.name}` : ''}`;
+  if (o.order_type === 'print') return `Katalogutskrift — ${o.company_name || ''}`;
+  return `Katalog — ${o.company_name || ''}`;
+};
+
+const getOrderTypeLabel = (order) => {
+  if (order._source === 'b2b') {
+    const labels = { businesscard: 'Visitkort', print: 'Katalogutskrift', our_catalog: 'Vår katalog', catalog_design: 'Katalogdesign' };
+    return labels[order.order_type] || 'B2B';
+  }
+  // Check regular order items for B2B types
+  const types = (order.items || []).map(i => i.customization?.type).filter(Boolean);
+  if (types.some(t => ['catalog_design', 'businesscard', 'print_catalog'].includes(t))) return 'B2B';
+  return 'Webbshop';
+};
+
 const AdminOrders = () => {
   const { getAuthHeaders } = useAdmin();
   const [orders, setOrders] = useState([]);
+  const [b2bOrders, setB2bOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const fetchOrders = useCallback(async () => {
     try {
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
-      const response = await api.get(`/admin/orders${params}`, { headers: getAuthHeaders() });
-      setOrders(response.data.orders || []);
+      const [shopRes, b2bRes] = await Promise.all([
+        api.get(`/admin/orders${params}`, { headers: getAuthHeaders() }),
+        api.get('/catalog/orders').catch(() => ({ data: [] })),
+      ]);
+      setOrders(shopRes.data.orders || []);
+
+      // Normalize B2B orders to same format
+      const normalized = (b2bRes.data || []).map(o => ({
+        ...o,
+        _source: 'b2b',
+        email: o.email || '',
+        total_amount: o.total_price || o.price || (o.quantity * (o.unit_price || 0)) || 0,
+        items: [{
+          product_name: getB2bProductName(o),
+          quantity: o.quantity || 1,
+          price: o.total_price || o.price || 0,
+          customization: {
+            type: o.order_type === 'businesscard' ? 'businesscard' : o.order_type === 'print' ? 'print_catalog' : 'our_catalog',
+            company_name: o.company_name,
+            contact_person: o.contact_person,
+            original_filename: o.original_filename,
+            pdf_url: o.pdf_url,
+            card_details: o.card_details,
+            logo_url: o.logo_url,
+          }
+        }],
+        shipping_address: { name: o.contact_person || o.company_name, street: o.address, zip: o.postal_code, city: o.city },
+      }));
+      if (statusFilter === 'all' || !statusFilter) {
+        setB2bOrders(normalized);
+      } else {
+        setB2bOrders(normalized.filter(o => o.status === statusFilter));
+      }
     } catch {
       toast.error('Kunde inte hämta beställningar');
     } finally {
@@ -189,10 +239,19 @@ const AdminOrders = () => {
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const filteredOrders = orders.filter(order =>
-    order.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const allOrders = [...orders, ...b2bOrders].sort((a, b) =>
+    new Date(b.created_at) - new Date(a.created_at)
   );
+
+  const filteredOrders = allOrders.filter(order => {
+    const matchesSearch = order.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.shipping_address?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSource = sourceFilter === 'all' ||
+      (sourceFilter === 'b2b' && (order._source === 'b2b' || getOrderTypeLabel(order) === 'B2B')) ||
+      (sourceFilter === 'shop' && order._source !== 'b2b' && getOrderTypeLabel(order) !== 'B2B');
+    return matchesSearch && matchesSource;
+  });
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="spinner" /></div>;
@@ -208,8 +267,18 @@ const AdminOrders = () => {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <Input placeholder="Sök på order-ID eller e-post..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <Input placeholder="Sök på order-ID, e-post eller namn..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-[160px]" data-testid="source-filter">
+            <SelectValue placeholder="Alla typer" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alla typer</SelectItem>
+            <SelectItem value="shop">Webbshop</SelectItem>
+            <SelectItem value="b2b">B2B</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrera status" />
@@ -232,6 +301,7 @@ const AdminOrders = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Datum</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Summa</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
@@ -250,6 +320,14 @@ const AdminOrders = () => {
                       <td className="px-6 py-4">
                         <p className="text-sm font-medium text-slate-900">{order.shipping_address?.name || order.email}</p>
                         <p className="text-xs text-slate-500">{order.email}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        {(() => {
+                          const label = getOrderTypeLabel(order);
+                          return label === 'B2B'
+                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700"><Briefcase className="w-3 h-3" />{order._source === 'b2b' ? (order.order_type === 'businesscard' ? 'Visitkort' : order.order_type === 'print' ? 'Utskrift' : 'Katalog') : 'B2B'}</span>
+                            : <span className="text-xs text-slate-500">Webbshop</span>;
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString('sv-SE')}</td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
@@ -275,7 +353,7 @@ const AdminOrders = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Inga beställningar hittades</td>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Inga beställningar hittades</td>
                   </tr>
                 )}
               </tbody>

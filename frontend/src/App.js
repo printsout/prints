@@ -43,7 +43,6 @@ import AdminReviews from "./pages/admin/AdminReviews";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminSecurity from "./pages/admin/AdminSecurity";
-import AdminCatalogs from "./pages/admin/AdminCatalogs";
 
 function App() {
   return (
@@ -64,7 +63,6 @@ function App() {
                 <Route path="settings" element={<AdminSettings />} />
                 <Route path="tax" element={<AdminTax />} />
                 <Route path="reviews" element={<AdminReviews />} />
-                <Route path="catalogs" element={<AdminCatalogs />} />
                 <Route path="security" element={<AdminSecurity />} />
               </Route>
 
