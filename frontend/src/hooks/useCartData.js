@@ -19,9 +19,27 @@ export function useCartData(cartItems) {
     if (!cartItems?.length) { setLoadingProducts(false); return; }
     const ids = [...new Set(cartItems.map(i => i.product_id))];
     const data = {};
-    Promise.all(ids.map(id =>
-      api.get(`/products/${id}`).then(r => { data[id] = r.data; }).catch(() => {})
-    )).then(() => setProducts(data)).finally(() => setLoadingProducts(false));
+
+    // Build lookup of cart items for fallback metadata
+    const itemsByPid = {};
+    cartItems.forEach(i => { itemsByPid[i.product_id] = i; });
+
+    const isVirtual = (id) => id?.startsWith('print-') || id?.startsWith('our-catalog');
+
+    Promise.all(ids.map(id => {
+      if (isVirtual(id)) {
+        const ci = itemsByPid[id];
+        data[id] = {
+          product_id: id,
+          name: ci?.name || id,
+          price: ci?.price || 0,
+          imageUrl: null,
+          virtual: true,
+        };
+        return Promise.resolve();
+      }
+      return api.get(`/products/${id}`).then(r => { data[id] = r.data; }).catch(() => {});
+    })).then(() => setProducts(data)).finally(() => setLoadingProducts(false));
   }, [cartItems]);
 
   useEffect(() => {

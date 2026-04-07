@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, Pencil } from 'lucide-react';
+import { Trash2, Plus, Minus, Pencil, CreditCard, BookOpen, FileText } from 'lucide-react';
 
 function getEditorUrl(product, cartItemId) {
   const pid = product.product_id;
@@ -11,7 +11,9 @@ function getEditorUrl(product, cartItemId) {
 }
 
 function isEditable(item) {
-  return !!item.customization;
+  if (!item.customization) return false;
+  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog'];
+  return !nonEditable.includes(item.customization.type);
 }
 
 export function CartItemCard({ item, product, loading, onQuantityChange, onRemove }) {
@@ -36,8 +38,8 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
         {thumbUrl ? (
           <img src={thumbUrl} alt={item.name || product.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="text-slate-300 text-3xl font-bold">
-            {item.customization?.type === 'businesscard' ? '&#9993;' : item.customization?.type === 'our_catalog' ? '&#128218;' : '&#128196;'}
+          <div className="text-slate-400 flex items-center justify-center w-full h-full">
+            {item.customization?.type === 'businesscard' ? <CreditCard className="w-8 h-8" /> : item.customization?.type === 'our_catalog' ? <BookOpen className="w-8 h-8" /> : <FileText className="w-8 h-8" />}
           </div>
         )}
       </div>
