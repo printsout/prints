@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
@@ -19,7 +19,9 @@ const MONTHS = [
 const CalendarEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get('edit');
+  const { addToCart, updateCartItem, cart } = useCart();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,29 @@ const CalendarEditor = () => {
     };
     fetchProduct();
   }, [productId]);
+
+  // Hydrate state from cart item when editing
+  useEffect(() => {
+    if (!editCartItemId || !cart.items?.length) return;
+    const cartItem = cart.items.find(i => i.cart_item_id === editCartItemId);
+    if (!cartItem?.customization || cartItem.customization.type !== 'calendar') return;
+
+    const c = cartItem.customization;
+    if (c.year) setSelectedYear(c.year);
+    if (c.size) setSelectedSize(c.size);
+    if (c.months?.length) {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      setMonthImages(c.months.map(m => {
+        if (m.image_url) {
+          const fullUrl = m.image_url.startsWith('/api')
+            ? `${backendUrl}${m.image_url}`
+            : m.image_url;
+          return { image: null, preview: fullUrl };
+        }
+        return { image: null, preview: null };
+      }));
+    }
+  }, [editCartItemId, cart.items]);
 
   const onDrop = (acceptedFiles) => {
     if (acceptedFiles.length > 0) {
@@ -104,8 +129,17 @@ const CalendarEditor = () => {
         const m = monthImages[i];
         let imageUrl = null;
         if (m.preview) {
-          const uploadRes = await api.post('/upload-base64', { image: m.preview });
-          imageUrl = uploadRes.data.url;
+          // Only re-upload if it's a new base64 image
+          if (m.preview.startsWith('data:')) {
+            const uploadRes = await api.post('/upload-base64', { image: m.preview });
+            imageUrl = uploadRes.data.url;
+          } else {
+            // Already an uploaded URL, extract path
+            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+            imageUrl = m.preview.startsWith(backendUrl)
+              ? m.preview.replace(backendUrl, '')
+              : m.preview;
+          }
         }
         uploadedMonths.push({
           month: MONTHS[i],
@@ -117,7 +151,7 @@ const CalendarEditor = () => {
       // Use the first uploaded image as the cart thumbnail
       const firstImage = uploadedMonths.find(m => m.image_url)?.image_url;
 
-      await addToCart({
+      const itemData = {
         product_id: product.product_id,
         name: product.name,
         price: product.price,
@@ -132,12 +166,18 @@ const CalendarEditor = () => {
           months: uploadedMonths,
           cover_image_url: firstImage,
         }
-      });
+      };
 
-      toast.success('Kalender tillagd i varukorgen!');
+      if (editCartItemId) {
+        await updateCartItem(editCartItemId, itemData);
+        toast.success('Kalender uppdaterad!');
+      } else {
+        await addToCart(itemData);
+        toast.success('Kalender tillagd i varukorgen!');
+      }
       navigate('/varukorg');
     } catch (error) {
-      toast.error('Kunde inte lägga till i varukorgen');
+      toast.error('Kunde inte spara ändringarna');
     }
   };
 
@@ -376,7 +416,7 @@ const CalendarEditor = () => {
                 data-testid="add-calendar-to-cart"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                Lägg i varukorg
+                {editCartItemId ? 'Spara ändringar' : 'Lägg i varukorg'}
               </Button>
 
               {getUploadedCount() === 0 && (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import { toast } from 'sonner';
@@ -16,7 +16,9 @@ import { AlbumSidebar } from './photoalbum/AlbumSidebar';
 const PhotoAlbumEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get('edit');
+  const { addToCart, updateCartItem, cart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,47 @@ const PhotoAlbumEditor = () => {
     };
     fetchProduct();
   }, [productId]);
+
+  // Hydrate state from cart item when editing
+  useEffect(() => {
+    if (!editCartItemId || !cart.items?.length) return;
+    const cartItem = cart.items.find(i => i.cart_item_id === editCartItemId);
+    if (!cartItem?.customization || cartItem.customization.type !== 'photoalbum') return;
+
+    const c = cartItem.customization;
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+    const resolveUrl = (url) => {
+      if (!url) return null;
+      return url.startsWith('/api') ? `${backendUrl}${url}` : url;
+    };
+
+    if (c.size) setSelectedSize(c.size);
+    if (c.cover_material) setCoverMaterial(c.cover_material);
+    if (c.cover_text) setCoverText(c.cover_text);
+    if (c.cover_image_url) setCoverImage(resolveUrl(c.cover_image_url));
+    if (cartItem.quantity) setQuantity(cartItem.quantity);
+
+    // Hydrate pages from uploaded data
+    if (c.pages?.length) {
+      const hydratedPages = c.pages.map((p, idx) => {
+        const layout = LAYOUTS.find(l => l.id === p.layout) || LAYOUTS[0];
+        const images = Array(layout.slots).fill(null);
+        const captions = Array(layout.slots).fill('');
+        if (p.image_urls) {
+          p.image_urls.forEach((url, i) => {
+            if (url && i < images.length) images[i] = resolveUrl(url);
+          });
+        }
+        if (p.captions) {
+          p.captions.forEach((cap, i) => {
+            if (cap && i < captions.length) captions[i] = cap;
+          });
+        }
+        return { id: idx, layout: p.layout || 'single', images, captions };
+      });
+      setPages(hydratedPages);
+    }
+  }, [editCartItemId, cart.items]);
 
   const handleCoverUpload = (e) => {
     const file = e.target.files?.[0];
@@ -134,9 +177,17 @@ const PhotoAlbumEditor = () => {
         const uploadedImages = [];
         for (let s = 0; s < page.images.length; s++) {
           if (page.images[s]) {
-            const finalImg = await burnCaptionOnImage(page.images[s], page.captions?.[s] || '');
-            const uploadRes = await api.post('/upload-base64', { image: finalImg });
-            uploadedImages.push(uploadRes.data.url);
+            const img = page.images[s];
+            if (img.startsWith('data:')) {
+              const finalImg = await burnCaptionOnImage(img, page.captions?.[s] || '');
+              const uploadRes = await api.post('/upload-base64', { image: finalImg });
+              uploadedImages.push(uploadRes.data.url);
+            } else {
+              // Already uploaded URL
+              const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+              const path = img.startsWith(backendUrl) ? img.replace(backendUrl, '') : img;
+              uploadedImages.push(path);
+            }
           } else {
             uploadedImages.push(null);
           }
@@ -150,11 +201,18 @@ const PhotoAlbumEditor = () => {
       }
       let coverImageUrl = null;
       if (coverImage) {
-        const finalCover = await burnCaptionOnImage(coverImage, coverText);
-        const coverRes = await api.post('/upload-base64', { image: finalCover });
-        coverImageUrl = coverRes.data.url;
+        if (coverImage.startsWith('data:')) {
+          const finalCover = await burnCaptionOnImage(coverImage, coverText);
+          const coverRes = await api.post('/upload-base64', { image: finalCover });
+          coverImageUrl = coverRes.data.url;
+        } else {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          coverImageUrl = coverImage.startsWith(backendUrl)
+            ? coverImage.replace(backendUrl, '')
+            : coverImage;
+        }
       }
-      await addToCart({
+      const itemData = {
         product_id: product.product_id, name: product.name,
         price: totalPerItem, quantity,
         image: coverImage || pages.flatMap(p => p.images).find(Boolean) || product.images?.[0],
@@ -164,11 +222,18 @@ const PhotoAlbumEditor = () => {
           cover_image_url: coverImageUrl, cover_text: coverText || null,
           cover_material: coverMaterial, pages: uploadedPages,
         },
-      });
-      toast.success('Fotoalbum tillagt i varukorgen!');
+      };
+
+      if (editCartItemId) {
+        await updateCartItem(editCartItemId, itemData);
+        toast.success('Fotoalbum uppdaterat!');
+      } else {
+        await addToCart(itemData);
+        toast.success('Fotoalbum tillagt i varukorgen!');
+      }
       navigate('/varukorg');
     } catch {
-      toast.error('Kunde inte lägga till i varukorgen');
+      toast.error('Kunde inte spara ändringarna');
     }
   };
 
@@ -235,6 +300,7 @@ const PhotoAlbumEditor = () => {
             totalPerItem={totalPerItem} getTotalImages={getTotalImages}
             handleAddToCart={handleAddToCart} addPages={addPages}
             removeLastPages={removeLastPages}
+            editMode={!!editCartItemId}
           />
         </div>
       </div>

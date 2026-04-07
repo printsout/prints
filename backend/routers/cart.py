@@ -57,6 +57,29 @@ async def remove_from_cart(session_id: str, cart_item_id: str):
     await db.carts.update_one({"session_id": session_id}, {"$set": cart})
     return cart
 
+@router.patch("/{session_id}/items/{cart_item_id}")
+async def update_cart_item_full(session_id: str, cart_item_id: str, item: CartItem):
+    """Replace a cart item's data while preserving the cart_item_id."""
+    cart = await db.carts.find_one({"session_id": session_id}, {"_id": 0})
+    if not cart:
+        raise HTTPException(status_code=404, detail="Varukorg hittades inte")
+
+    found = False
+    for i, existing in enumerate(cart["items"]):
+        if existing["cart_item_id"] == cart_item_id:
+            item_dict = item.model_dump()
+            item_dict["cart_item_id"] = cart_item_id
+            cart["items"][i] = item_dict
+            found = True
+            break
+
+    if not found:
+        raise HTTPException(status_code=404, detail="Artikel hittades inte i varukorgen")
+
+    cart["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.carts.update_one({"session_id": session_id}, {"$set": cart})
+    return cart
+
 @router.delete("/{session_id}")
 async def clear_cart(session_id: str):
     await db.carts.delete_one({"session_id": session_id})

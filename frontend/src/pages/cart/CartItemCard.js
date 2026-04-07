@@ -1,7 +1,21 @@
-import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Trash2, Plus, Minus, Pencil } from 'lucide-react';
+
+function getEditorUrl(product, cartItemId) {
+  const pid = product.product_id;
+  const editParam = `?edit=${cartItemId}`;
+  if (product.model_type === 'nametag' || product.category === 'namnskylt') return `/namnskylt/${pid}${editParam}`;
+  if (product.model_type === 'calendar' || product.category === 'kalender') return `/kalender/${pid}${editParam}`;
+  if (product.category === 'fotoalbum') return `/fotoalbum/${pid}${editParam}`;
+  return `/design/${pid}${editParam}`;
+}
+
+function isEditable(item) {
+  return !!item.customization;
+}
 
 export function CartItemCard({ item, product, loading, onQuantityChange, onRemove }) {
+  const navigate = useNavigate();
   const itemPrice = item.price || product.price;
 
   const getThumbUrl = () => {
@@ -59,9 +73,21 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
       </div>
 
       <div className="flex flex-col items-end justify-between">
-        <button onClick={() => onRemove(item.cart_item_id)} className="text-slate-400 hover:text-red-500 transition-colors" data-testid={`remove-item-${item.cart_item_id}`}>
-          <Trash2 className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {isEditable(item) && (
+            <button
+              onClick={() => navigate(getEditorUrl(product, item.cart_item_id))}
+              className="text-slate-400 hover:text-[#2a9d8f] transition-colors"
+              title="Redigera"
+              data-testid={`edit-item-${item.cart_item_id}`}
+            >
+              <Pencil className="w-4.5 h-4.5" />
+            </button>
+          )}
+          <button onClick={() => onRemove(item.cart_item_id)} className="text-slate-400 hover:text-red-500 transition-colors" data-testid={`remove-item-${item.cart_item_id}`}>
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => onQuantityChange(item.cart_item_id, (item.quantity || 1) - 1)}

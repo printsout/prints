@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
@@ -186,7 +186,9 @@ const ALL_BACKGROUNDS = [
 const NameTagEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get('edit');
+  const { addToCart, updateCartItem, cart } = useCart();
   const imageInputRef = useRef(null);
 
   const [product, setProduct] = useState(null);
@@ -219,6 +221,34 @@ const NameTagEditor = () => {
     fetchProduct();
   }, [productId]);
 
+  // Hydrate state from cart item when editing
+  useEffect(() => {
+    if (!editCartItemId || !cart.items?.length) return;
+    const cartItem = cart.items.find(i => i.cart_item_id === editCartItemId);
+    if (!cartItem?.customization || cartItem.customization.type !== 'nametag') return;
+
+    const c = cartItem.customization;
+    if (c.child_name) setChildName(c.child_name);
+    if (c.last_name) setLastName(c.last_name);
+    if (c.phone_number) setPhoneNumber(c.phone_number);
+    if (c.font) setSelectedFont(c.font);
+    if (c.font_color) setFontColor(c.font_color);
+    if (c.background) setSelectedBg(c.background);
+    if (c.motif) {
+      setSelectedMotif(c.motif);
+      setMotifEnabled(true);
+    } else {
+      setMotifEnabled(false);
+    }
+    if (c.uploaded_image_url) {
+      const imgUrl = c.uploaded_image_url.startsWith('/api')
+        ? `${process.env.REACT_APP_BACKEND_URL}${c.uploaded_image_url}`
+        : c.uploaded_image_url;
+      setUploadedImage(imgUrl);
+    }
+    if (cartItem.quantity) setQuantity(cartItem.quantity);
+  }, [editCartItemId, cart.items]);
+
   const currentFont = FONTS.find(f => f.id === selectedFont) || FONTS[0];
   const currentBg = ALL_BACKGROUNDS.find(b => b.id === selectedBg) || ALL_BACKGROUNDS[0];
   const bgStyle = currentBg.gradient ? { background: currentBg.gradient } : { backgroundColor: currentBg.color || '#FFF' };
@@ -246,10 +276,19 @@ const NameTagEditor = () => {
     try {
       let uploadedImageUrl = null;
       if (uploadedImage) {
-        const uploadRes = await api.post('/upload-base64', { image: uploadedImage });
-        uploadedImageUrl = uploadRes.data.url;
+        // Only re-upload if it's a new base64 image (not an existing URL)
+        if (uploadedImage.startsWith('data:')) {
+          const uploadRes = await api.post('/upload-base64', { image: uploadedImage });
+          uploadedImageUrl = uploadRes.data.url;
+        } else {
+          // Already an uploaded URL, extract the path
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          uploadedImageUrl = uploadedImage.startsWith(backendUrl)
+            ? uploadedImage.replace(backendUrl, '')
+            : uploadedImage;
+        }
       }
-      await addToCart({
+      const itemData = {
         product_id: product.product_id, name: product.name,
         price: product.price, quantity,
         image: product.imageUrl || product.images?.[0],
@@ -259,10 +298,17 @@ const NameTagEditor = () => {
           motif: motifEnabled ? selectedMotif : null,
           uploaded_image_url: uploadedImageUrl, background: selectedBg,
         }
-      });
-      toast.success('Namnlappar tillagda i varukorgen!');
+      };
+
+      if (editCartItemId) {
+        await updateCartItem(editCartItemId, itemData);
+        toast.success('Namnlappar uppdaterade!');
+      } else {
+        await addToCart(itemData);
+        toast.success('Namnlappar tillagda i varukorgen!');
+      }
       navigate('/varukorg');
-    } catch { toast.error('Kunde inte lägga till i varukorgen'); }
+    } catch { toast.error('Kunde inte spara ändringarna'); }
   };
 
   if (loading) return (
@@ -427,7 +473,7 @@ const NameTagEditor = () => {
                 <span className="text-xl font-bold text-slate-900" data-testid="total-price">{product.price * quantity} kr</span>
               </div>
               <Button className="w-full bg-[#2a9d8f] hover:bg-[#238b7e] h-12 text-base font-semibold" onClick={handleAddToCart} disabled={!childName.trim()} data-testid="add-nametag-to-cart">
-                <ShoppingCart className="w-5 h-5 mr-2" />Lägg i kundvagn
+                <ShoppingCart className="w-5 h-5 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i kundvagn'}
               </Button>
               {!childName.trim() && <p className="text-xs text-amber-500 text-center mt-2">Ange ett förnamn för att fortsätta</p>}
             </div>

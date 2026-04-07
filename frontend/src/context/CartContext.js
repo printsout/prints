@@ -63,6 +63,19 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const updateCartItem = async (cartItemId, item) => {
+    setLoading(true);
+    try {
+      const response = await api.patch(`/cart/${sessionId}/items/${cartItemId}`, item);
+      setCart(response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removeFromCart = async (cartItemId) => {
     setLoading(true);
     try {
@@ -95,6 +108,7 @@ export const CartProvider = ({ children }) => {
     sessionId,
     loading,
     addToCart,
+    updateCartItem,
     updateQuantity,
     removeFromCart,
     clearCart,
