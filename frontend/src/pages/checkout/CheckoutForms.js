@@ -75,19 +75,22 @@ export const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => (
         <span className="text-xs font-bold text-white bg-[#EB001B] rounded px-1.5 py-0.5">MC</span>
       </label>
 
+      <label
+        className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'klarna' ? 'border-[#FFB3C7] bg-[#FFB3C7]/5' : 'border-slate-200 hover:border-slate-300'}`}
+        data-testid="payment-klarna"
+      >
+        <input type="radio" name="payment" value="klarna" checked={paymentMethod === 'klarna'} onChange={(e) => setPaymentMethod(e.target.value)} className="text-[#FFB3C7]" />
+        <div className="flex-1">
+          <p className="font-medium">Klarna</p>
+          <p className="text-sm text-slate-500">Betala senare eller delbetala</p>
+        </div>
+        <span className="text-xs font-bold text-white bg-[#FFB3C7] rounded px-1.5 py-0.5">Klarna</span>
+      </label>
+
       <label className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all opacity-60 border-slate-200" data-testid="payment-swish">
         <input type="radio" name="payment" value="swish" disabled className="text-primary" />
         <div className="flex-1">
           <p className="font-medium">Swish</p>
-          <p className="text-sm text-slate-500">Kommer snart</p>
-        </div>
-        <span className="text-xs bg-slate-100 px-2 py-1 rounded">Snart</span>
-      </label>
-
-      <label className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all opacity-60 border-slate-200" data-testid="payment-klarna">
-        <input type="radio" name="payment" value="klarna" disabled className="text-primary" />
-        <div className="flex-1">
-          <p className="font-medium">Klarna</p>
           <p className="text-sm text-slate-500">Kommer snart</p>
         </div>
         <span className="text-xs bg-slate-100 px-2 py-1 rounded">Snart</span>

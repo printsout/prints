@@ -196,6 +196,7 @@ class CheckoutRequest(BaseModel):
     cart_session_id: str
     email: str
     shipping_address: Optional[Dict[str, str]] = None
+    payment_method: str = "card"
 
 class Review(BaseModel):
     review_id: str = Field(default_factory=lambda: str(uuid.uuid4()))

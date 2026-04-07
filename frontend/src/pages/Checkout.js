@@ -39,12 +39,18 @@ const Checkout = () => {
       try {
         const productIds = [...new Set(cart.items.map(item => item.product_id))];
         const productData = {};
+        const isVirtual = (id) => id?.startsWith('print-') || id?.startsWith('our-catalog');
         await Promise.all(productIds.map(async (id) => {
+          if (isVirtual(id)) {
+            const ci = cart.items.find(i => i.product_id === id);
+            productData[id] = { product_id: id, name: ci?.name || id, price: ci?.price || 0, imageUrl: null };
+            return;
+          }
           try {
             const response = await api.get(`/products/${id}`);
             productData[id] = response.data;
           } catch {
-            toast.error(`Kunde inte hämta produkt ${id}`);
+            // skip missing products
           }
         }));
         setProducts(productData);
@@ -95,6 +101,7 @@ const Checkout = () => {
       const response = await api.post('/payments/checkout', {
         cart_session_id: sessionId,
         email: formData.email,
+        payment_method: paymentMethod,
         shipping_address: {
           first_name: formData.firstName,
           last_name: formData.lastName,

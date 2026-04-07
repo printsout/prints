@@ -69,6 +69,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_24: 19/19 backend, 100% frontend (Visitkort: editor med mallar/färger + PDF-uppladdning)
 - iteration_25: 11/11 backend, 100% frontend (B2B virtuella produkter i varukorgen - buggfix)
 - iteration_26: 10/10 backend, 100% frontend (Katalogdesigner - ny funktion)
+- iteration_27: Klarna via Stripe integrerat (visuellt verifierat)
 
 ## Arkitektur
 ```
@@ -126,7 +127,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] ~~Redigera varukorgsartikel~~ (2026-04-07)
 
 ### P2
-- [ ] Implementera Klarna/Swish-betalningar
+- [ ] Implementera Swish-betalningar
 - [ ] Dela ProductPreview3D (274 rader) → 3D-hooks
 - [ ] Förbättra e-postmallar med Jinja2
 - [ ] Fixa Unsplash ORB-bildproblem (ersätt med lokala bilder)

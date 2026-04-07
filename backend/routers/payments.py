@@ -41,11 +41,19 @@ async def _create_stripe_session(request: Request, order: Order, checkout_data: 
     host_url = str(request.base_url).rstrip("/")
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{host_url}/api/webhook/stripe")
 
+    # Map frontend payment method to Stripe payment method types
+    method = checkout_data.payment_method
+    if method == "klarna":
+        payment_methods = ["klarna"]
+    else:
+        payment_methods = ["card"]
+
     checkout_request = CheckoutSessionRequest(
         amount=float(total_amount),
         currency="sek",
         success_url=f"{origin_url}/order-confirmation?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{origin_url}/kassa",
+        payment_methods=payment_methods,
         metadata={
             "order_id": order.order_id,
             "email": checkout_data.email,
