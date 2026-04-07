@@ -34,12 +34,22 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ## Admin 2FA-fix (2026-04-06)
 - [x] Utökad valid_window från 1 till 2 (±60 sekunders tolerans) för TOTP-verifiering
 
+## Redigera i varukorgen (2026-04-07) - NYTT
+- [x] PATCH-endpoint `/api/cart/{session_id}/items/{cart_item_id}` - uppdaterar en varukorgsartikel helt (anpassning, antal, etc) med bevarat cart_item_id
+- [x] "Redigera"-knapp (pennikon) visas på alla varukorgsartiklar med anpassningsdata
+- [x] Klick navigerar till rätt editor (Namnskylt/Kalender/Fotoalbum) med `?edit={cartItemId}`
+- [x] Editor hydrierar alla val (namn, typsnitt, färg, motiv, bakgrund, bilder) från varukorgsdata
+- [x] Knappen visar "Spara ändringar" istället för "Lägg i kundvagn" i redigeringsläge
+- [x] Sparande uppdaterar befintlig artikel (ingen dubblett skapas)
+- [x] Stöd i alla tre editorer: NameTagEditor, CalendarEditor, PhotoAlbumEditor
+
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
 - iteration_15: 15/15 backend, 100% frontend
 - iteration_16: 9/9 backend, 100% frontend (shipping email)
 - iteration_17: 7/7 backend, 100% frontend (tracking number)
 - iteration_18: 7/7 backend, 100% frontend (nametag PDF + editor)
+- iteration_20: 10/10 backend, 100% frontend (cart edit feature)
 
 ## Arkitektur
 ```
@@ -68,9 +78,11 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Backlog
 ### P1
+- [ ] B2B Katalogbeställning - skapa katalogfunktion för företagare
 - [x] ~~Dela PhotoAlbumEditor (900 rader) → separata komponenter~~ (2026-04-06: 7 filer, max 245 rader)
 - [x] ~~Bryt ut server.py routers till separata filer~~ (2026-04-06: 1 fil 2035→16 filer, server.py=119 rader)
 - [x] ~~Minska Cart.js komplexitet med custom hook~~ (2026-04-06: 334→4 filer, Cart.js=92 rader, useCartData hook)
+- [x] ~~Redigera varukorgsartikel~~ (2026-04-07: PATCH-endpoint + editor hydration i alla 3 editorer)
 
 ### P2
 - [ ] Implementera Klarna/Swish-betalningar
