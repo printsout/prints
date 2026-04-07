@@ -43,6 +43,14 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Sparande uppdaterar befintlig artikel (ingen dubblett skapas)
 - [x] Stöd i alla tre editorer: NameTagEditor, CalendarEditor, PhotoAlbumEditor
 
+## B2B Katalogbeställning (2026-04-07) - NYTT
+- [x] Ny sida `/foretag` för företag att beställa produktkatalog
+- [x] Två katalogtyper: Fysisk broschyr (A4, 24 sidor, gratis max 5 st) och Digital PDF (gratis, skickas inom 24h)
+- [x] Beställningsformulär med företagsinfo, kontaktuppgifter, leveransadress (för fysisk), meddelande
+- [x] Backend: POST/GET `/api/catalog/order` + `/api/catalog/orders`
+- [x] Admin: Ny meny "Kataloger" i admin-panelen (`/admin/catalogs`) för att se inkomna beställningar
+- [x] Navigation: "Företag"-länk i navbar, mobilmeny och footer
+
 ## Testresultat
 - iteration_14: 15/15 backend, 100% frontend
 - iteration_15: 15/15 backend, 100% frontend
@@ -50,6 +58,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_17: 7/7 backend, 100% frontend (tracking number)
 - iteration_18: 7/7 backend, 100% frontend (nametag PDF + editor)
 - iteration_20: 10/10 backend, 100% frontend (cart edit feature)
+- iteration_21: 13/13 backend, 100% frontend (B2B catalog ordering)
 
 ## Arkitektur
 ```
@@ -78,7 +87,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Backlog
 ### P1
-- [ ] B2B Katalogbeställning - skapa katalogfunktion för företagare
+- [ ] ~~B2B Katalogbeställning - skapa katalogfunktion för företagare~~ (2026-04-07: /foretag + admin /admin/catalogs)
 - [x] ~~Dela PhotoAlbumEditor (900 rader) → separata komponenter~~ (2026-04-06: 7 filer, max 245 rader)
 - [x] ~~Bryt ut server.py routers till separata filer~~ (2026-04-06: 1 fil 2035→16 filer, server.py=119 rader)
 - [x] ~~Minska Cart.js komplexitet med custom hook~~ (2026-04-06: 334→4 filer, Cart.js=92 rader, useCartData hook)
