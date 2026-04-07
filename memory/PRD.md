@@ -44,11 +44,11 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Stöd i alla tre editorer: NameTagEditor, CalendarEditor, PhotoAlbumEditor
 
 ## B2B Katalogbeställning (2026-04-07) - Uppdaterad
-- [x] Ny sida `/foretag` – "Skriv ut er katalog hos oss"
-- [x] Företag laddar upp sin egen PDF-katalog (max 50MB)
-- [x] Anger företagsinfo, leveransadress, antal exemplar, meddelande
-- [x] Backend: POST `/api/catalog/order` (multipart form med PDF) + GET `/api/catalog/orders`
-- [x] Admin: "Kataloger" i admin-panelen (`/admin/catalogs`) – se beställningar + ladda ner PDF
+- [x] Ny sida `/foretag` med två flikar: "Vår produktkatalog" + "Skriv ut er katalog"
+- [x] Flik 1: Beställ vår produktkatalog (fysisk broschyr gratis max 5st, eller digital PDF gratis)
+- [x] Flik 2: Ladda upp egen PDF-katalog för utskrift och leverans (max 50MB)
+- [x] Backend: POST `/api/catalog/order/our-catalog` (JSON) + POST `/api/catalog/order/print` (multipart med PDF)
+- [x] Admin: "Kataloger" i admin-panelen med filter (Alla/Vår katalog/Utskrift) + PDF-nedladdning
 - [x] Navigation: "Företag"-länk i navbar, mobilmeny och footer
 
 ## Testresultat
@@ -60,6 +60,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_20: 10/10 backend, 100% frontend (cart edit feature)
 - iteration_21: 13/13 backend, 100% frontend (B2B catalog ordering)
 - iteration_22: 13/13 backend, 100% frontend (B2B catalog PDF upload)
+- iteration_23: 21/21 backend, 100% frontend (B2B two-tab catalog: vår katalog + utskrift)
 
 ## Arkitektur
 ```
