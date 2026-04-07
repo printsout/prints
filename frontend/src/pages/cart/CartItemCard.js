@@ -5,6 +5,7 @@ function getEditorUrl(product, item, cartItemId) {
   const pid = product.product_id;
   const editParam = `?edit=${cartItemId}`;
   if (item.customization?.type === 'catalog_design') return `/katalog-designer${editParam}`;
+  if (item.customization?.type === 'businesscard') return `/foretag${editParam}`;
   if (product.model_type === 'nametag' || product.category === 'namnskylt') return `/namnskylt/${pid}${editParam}`;
   if (product.model_type === 'calendar' || product.category === 'kalender') return `/kalender/${pid}${editParam}`;
   if (product.category === 'fotoalbum') return `/fotoalbum/${pid}${editParam}`;
@@ -13,7 +14,7 @@ function getEditorUrl(product, item, cartItemId) {
 
 function isEditable(item) {
   if (!item.customization) return false;
-  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog'];
+  const nonEditable = ['print_catalog', 'our_catalog'];
   return !nonEditable.includes(item.customization.type);
 }
 

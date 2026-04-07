@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -65,7 +65,9 @@ function getCatalogPrice(quantity) {
 /* ───── Main page ───── */
 const BusinessCatalog = () => {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get('edit');
+  const { addToCart, updateCartItem, cart } = useCart();
   const [activeTab, setActiveTab] = useState('our');
   const [submitting, setSubmitting] = useState(false);
 
@@ -89,6 +91,23 @@ const BusinessCatalog = () => {
 
   // Shared
   const [quantity, setQuantity] = useState(1);
+
+  // Hydrate from cart item in edit mode
+  useEffect(() => {
+    if (!editCartItemId || !cart.items?.length) return;
+    const cartItem = cart.items.find(i => i.cart_item_id === editCartItemId);
+    if (!cartItem?.customization || cartItem.customization.type !== 'businesscard') return;
+
+    const c = cartItem.customization;
+    setActiveTab('print');
+    setPrintService('businesscard');
+    setCardSource(c.source || 'editor');
+    if (c.card_details) setCard(c.card_details);
+    if (c.template) setCardTemplate(c.template);
+    if (c.color) setCardColor(c.color);
+    if (c.logo_url) setLogo(c.logo_url);
+    setQuantity(cartItem.quantity || 1);
+  }, [editCartItemId, cart.items]);
 
   /* Helper: upload a file (PDF/image) and get server URL */
   const uploadFile = async (file) => {
@@ -172,7 +191,7 @@ const BusinessCatalog = () => {
       }
 
       const unitPrice = getCardPrice(quantity);
-      await addToCart({
+      const itemData = {
         product_id: 'print-businesscard',
         name: cardSource === 'editor' ? `Visitkort: ${card.name}` : `Visitkort (PDF): ${cardPdfFile?.name || 'design'}`,
         price: unitPrice,
@@ -188,8 +207,15 @@ const BusinessCatalog = () => {
           pdf_url: pdfUrl,
           original_filename: cardPdfFile?.name || null,
         },
-      });
-      toast.success('Visitkort tillagda i varukorgen!');
+      };
+
+      if (editCartItemId) {
+        await updateCartItem(editCartItemId, itemData);
+        toast.success('Visitkort uppdaterade!');
+      } else {
+        await addToCart(itemData);
+        toast.success('Visitkort tillagda i varukorgen!');
+      }
       navigate('/varukorg');
     } catch { toast.error('Kunde inte lägga till i varukorgen'); }
     finally { setSubmitting(false); }
@@ -571,7 +597,7 @@ const BusinessCatalog = () => {
               <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
               <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
                 disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
-                {submitting ? 'Lägger till...' : <><ShoppingCart className="w-4 h-4 mr-2" />Lägg i varukorgen</>}
+                {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>}
               </Button>
             </div>
           )}

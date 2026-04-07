@@ -118,6 +118,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
 
+## Visitkort Redigera i varukorg (2026-04-07) - NYTT
+- [x] Redigeringsknapp visas nu på visitkortsartiklar i varukorgen
+- [x] Klick navigerar till `/foretag?edit={cartItemId}`
+- [x] Editor hydrerar alla fält (namn, titel, företag, telefon, e-post, mall, färg, logotyp) från varukorgsdata
+- [x] Automatiskt öppnar Utskrift-tab + Visitkort-tjänst
+- [x] Knappen visar "Spara ändringar" i redigeringsläge
+
 ## Admin Konsolidering (2026-04-07) - NYTT
 - [x] Borttagen separat "Kataloger" admin-sida (`/admin/catalogs`)
 - [x] B2B-beställningar (visitkort, utskrift, katalog) integrerade i huvudordersidan `/admin/orders`
