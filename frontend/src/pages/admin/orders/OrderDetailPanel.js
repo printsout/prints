@@ -248,7 +248,11 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
-          {!['nametag', 'photoalbum', 'calendar', 'design'].includes(item.customization.type) && (
+          {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} />}
+          {item.customization.type === 'businesscard' && <BusinesscardCustomization item={item} />}
+          {item.customization.type === 'print_catalog' && <PrintCatalogCustomization item={item} />}
+          {item.customization.type === 'our_catalog' && <OurCatalogCustomization item={item} />}
+          {!['nametag', 'photoalbum', 'calendar', 'design', 'catalog_design', 'businesscard', 'print_catalog', 'our_catalog'].includes(item.customization.type) && (
             <p>Typ: {item.customization.type}</p>
           )}
         </div>
@@ -425,6 +429,94 @@ const DesignCustomization = ({ item }) => {
       {c.uploaded_image_url && (
         <ImagePreview url={c.uploaded_image_url} alt="Kunddesign" />
       )}
+    </>
+  );
+};
+
+const CatalogDesignCustomization = ({ item }) => {
+  const c = item.customization;
+  return (
+    <>
+      <p>Företag: <strong>{c.company_name}</strong></p>
+      {c.template && <p>Mall: {c.template}</p>}
+      {c.page_count && <p>Sidor: {c.page_count}</p>}
+      {c.theme?.primaryColor && <p>Primärfärg: <span style={{ color: c.theme.primaryColor }}>{c.theme.primaryColor}</span></p>}
+      {c.theme?.font && <p>Typsnitt: {c.theme.font}</p>}
+      {c.logo_url && <ImagePreview url={c.logo_url} alt="Logotyp" />}
+      {c.pages?.length > 0 && (
+        <div className="mt-2">
+          <p className="font-medium mb-1">Sidor:</p>
+          <div className="space-y-1 max-h-[300px] overflow-y-auto">
+            {c.pages.map((pg, idx) => (
+              <div key={pg.id || `page-${idx}`} className="border rounded p-2 bg-white text-xs">
+                <span className="font-medium">Sida {idx + 1}: {pg.type}</span>
+                {pg.title && <span className="text-slate-500 ml-1">— {pg.title}</span>}
+                {pg.items?.length > 0 && (
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    {pg.items.filter(it => it.image).map((it, i) => {
+                      const imgUrl = it.image?.startsWith('http') ? it.image : `${API_BASE}${it.image}`;
+                      return (
+                        <div key={`prod-${i}`} className="relative group">
+                          <img src={imgUrl} alt={it.name || ''} className="w-10 h-10 object-cover rounded border" />
+                          <a href={imgUrl} download target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded">
+                            <Download className="w-3 h-3 text-white" />
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+const BusinesscardCustomization = ({ item }) => {
+  const c = item.customization;
+  return (
+    <>
+      <p>Källa: <strong>{c.source === 'editor' ? 'Editor' : 'PDF-uppladdning'}</strong></p>
+      {c.card_details?.template && <p>Mall: {c.card_details.template}</p>}
+      {c.card_details?.name && <p>Namn: {c.card_details.name}</p>}
+      {c.card_details?.company && <p>Företag: {c.card_details.company}</p>}
+      {c.card_details?.email && <p>E-post: {c.card_details.email}</p>}
+      {c.card_details?.phone && <p>Telefon: {c.card_details.phone}</p>}
+      {c.original_filename && <p>Fil: {c.original_filename}</p>}
+      {c.pdf_url && (
+        <a href={c.pdf_url.startsWith('http') ? c.pdf_url : `${API_BASE}${c.pdf_url}`} download target="_blank" rel="noreferrer" className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline text-xs">
+          <Download className="w-3 h-3" /> Ladda ner PDF
+        </a>
+      )}
+    </>
+  );
+};
+
+const PrintCatalogCustomization = ({ item }) => {
+  const c = item.customization;
+  return (
+    <>
+      <p>Typ: <strong>Katalogutskrift</strong></p>
+      {c.original_filename && <p>Fil: {c.original_filename}</p>}
+      {c.pdf_url && (
+        <a href={c.pdf_url.startsWith('http') ? c.pdf_url : `${API_BASE}${c.pdf_url}`} download target="_blank" rel="noreferrer" className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline text-xs">
+          <Download className="w-3 h-3" /> Ladda ner PDF
+        </a>
+      )}
+    </>
+  );
+};
+
+const OurCatalogCustomization = ({ item }) => {
+  const c = item.customization;
+  return (
+    <>
+      <p>Typ: <strong>{c.catalog_type === 'physical' ? 'Fysisk katalog' : 'Digital PDF'}</strong></p>
+      {c.company_name && <p>Företag: {c.company_name}</p>}
+      {c.contact_email && <p>E-post: {c.contact_email}</p>}
     </>
   );
 };

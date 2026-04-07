@@ -18,21 +18,25 @@ async def _build_order_items(cart: dict):
     total_amount = 0.0
     order_items = []
     for cart_item in cart["items"]:
-        product = await db.products.find_one({"product_id": cart_item["product_id"]}, {"_id": 0})
-        if product:
-            item_price = cart_item.get("price") or product["price"]
-            total_amount += item_price * cart_item["quantity"]
-            order_items.append(OrderItem(
-                product_id=product["product_id"],
-                product_name=cart_item.get("name") or product["name"],
-                quantity=cart_item["quantity"],
-                price=item_price,
-                color=cart_item.get("color"),
-                size=cart_item.get("size"),
-                image=cart_item.get("image"),
-                design_preview=cart_item.get("design_preview"),
-                customization=cart_item.get("customization"),
-            ))
+        pid = cart_item["product_id"]
+        product = await db.products.find_one({"product_id": pid}, {"_id": 0})
+        # Virtual/B2B products (print-*, our-catalog-*) don't exist in DB
+        item_price = cart_item.get("price") or (product["price"] if product else 0)
+        item_name = cart_item.get("name") or (product["name"] if product else pid)
+        if item_price <= 0 and not product:
+            continue
+        total_amount += item_price * cart_item["quantity"]
+        order_items.append(OrderItem(
+            product_id=pid,
+            product_name=item_name,
+            quantity=cart_item["quantity"],
+            price=item_price,
+            color=cart_item.get("color"),
+            size=cart_item.get("size"),
+            image=cart_item.get("image"),
+            design_preview=cart_item.get("design_preview"),
+            customization=cart_item.get("customization"),
+        ))
     return total_amount, order_items
 
 
