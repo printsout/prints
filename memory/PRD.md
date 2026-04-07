@@ -70,6 +70,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_25: 11/11 backend, 100% frontend (B2B virtuella produkter i varukorgen - buggfix)
 - iteration_26: 10/10 backend, 100% frontend (Katalogdesigner - ny funktion)
 - iteration_27: Klarna via Stripe integrerat (visuellt verifierat)
+- iteration_28: 11/11 backend, 100% frontend (Katalogdesign redigera i varukorg + virtuella produkter i ordrar)
 
 ## Arkitektur
 ```
@@ -116,6 +117,12 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Editor hydrerar alla inställningar (företagsnamn, logotyp, mall, tema, sidor) från varukorgsdata
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
+
+## Buggfix: Virtuella produkter i ordrar (2026-04-07) - NYTT
+- [x] Virtuella B2B-produkter (print-catalog-custom, print-businesscard, print-catalog) sparas nu korrekt i ordrar vid checkout
+- [x] Rotorsak: `_build_order_items()` hoppade över artiklar som inte fanns i products-databasen
+- [x] Fix: Använder varukorgsdata (namn, pris) för virtuella produkter som saknas i DB
+- [x] Admin OrderDetailPanel visar nu detaljerad information för: catalog_design, businesscard, print_catalog, our_catalog
 
 ## Katalogdesigner (2026-04-07) - NYTT
 - [x] Ny fristående sida `/katalog-designer` utan navbar/footer
