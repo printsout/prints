@@ -110,6 +110,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Fallback-ikoner i `CartItemCard.js` uppdaterade till lucide-react (CreditCard, BookOpen, FileText)
 - [x] B2B-artiklar exkluderade från "Redigera"-knappen (businesscard, print_catalog, our_catalog)
 
+## Katalogdesigner Redigera i varukorg (2026-04-07) - NYTT
+- [x] Redigeringsknapp (pennikon) visas nu på katalogdesign-artiklar i varukorgen
+- [x] Klick navigerar till `/katalog-designer?edit={cartItemId}` 
+- [x] Editor hydrerar alla inställningar (företagsnamn, logotyp, mall, tema, sidor) från varukorgsdata
+- [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
+- [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
+
 ## Katalogdesigner (2026-04-07) - NYTT
 - [x] Ny fristående sida `/katalog-designer` utan navbar/footer
 - [x] Setup-steg: Företagsnamn, logotyp, mallval (Klassisk/Modern/Minimal), sidantal (4/8/12), färg/typsnitt

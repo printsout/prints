@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -177,7 +177,9 @@ const ThemeCard = ({ theme, setTheme }) => (
 
 const CatalogDesigner = () => {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const editCartItemId = searchParams.get('edit');
+  const { addToCart, updateCartItem, cart } = useCart();
   const fileInputRef = useRef(null);
   const logoInputRef = useRef(null);
 
@@ -193,6 +195,27 @@ const CatalogDesigner = () => {
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [uploadTarget, setUploadTarget] = useState(null);
+
+  // Hydrate state from cart item when editing
+  useEffect(() => {
+    if (!editCartItemId || !cart.items?.length) return;
+    const cartItem = cart.items.find(i => i.cart_item_id === editCartItemId);
+    if (!cartItem?.customization || cartItem.customization.type !== 'catalog_design') return;
+
+    const c = cartItem.customization;
+    setCompanyName(c.company_name || '');
+    setCompanyLogo(c.logo_url || null);
+    setTemplate(c.template || 'classic');
+    setTheme(c.theme || { primaryColor: '#2a9d8f', font: 'Inter' });
+    setQuantity(cartItem.quantity || 1);
+
+    if (c.pages?.length) {
+      setPages(c.pages);
+      setPageCount(c.pages.length);
+      setActivePage(0);
+      setStep('editor');
+    }
+  }, [editCartItemId, cart.items]);
 
   const contentPageTypes = useMemo(() => PAGE_TYPES.filter(t => t.id !== 'cover' && t.id !== 'backcover'), []);
 
@@ -275,18 +298,25 @@ const CatalogDesigner = () => {
       }));
 
       const unitPrice = getPrice(quantity);
-      await addToCart({
+      const itemData = {
         product_id: 'print-catalog-custom',
         name: `Katalogdesign: ${companyName}`,
         price: unitPrice,
         quantity,
         image: null,
         customization: { type: 'catalog_design', company_name: companyName, logo_url: logoUrl, template, theme, pages: uploadedPages, page_count: uploadedPages.length },
-      });
-      toast.success('Katalog tillagd i varukorgen!');
+      };
+
+      if (editCartItemId) {
+        await updateCartItem(editCartItemId, itemData);
+        toast.success('Katalogdesignen uppdaterad!');
+      } else {
+        await addToCart(itemData);
+        toast.success('Katalog tillagd i varukorgen!');
+      }
       navigate('/varukorg');
     } catch {
-      toast.error('Kunde inte lägga till i varukorgen');
+      toast.error('Kunde inte spara katalogdesignen');
     } finally {
       setSubmitting(false);
     }
@@ -319,7 +349,7 @@ const CatalogDesigner = () => {
           <span className="text-sm text-slate-500">{quantity} ex &times; {getPrice(quantity)} kr</span>
           <span className="text-lg font-bold text-[#2a9d8f]">{totalPrice} kr</span>
           <Button onClick={handleAddToCart} disabled={submitting} className="bg-[#2a9d8f] hover:bg-[#238b7e] h-10 px-5" data-testid="add-to-cart-btn">
-            {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-1.5" />Lägg i varukorgen</>}
+            {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-1.5" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>}
           </Button>
         </div>
       </div>

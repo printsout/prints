@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, Pencil, CreditCard, BookOpen, FileText } from 'lucide-react';
 
-function getEditorUrl(product, cartItemId) {
+function getEditorUrl(product, item, cartItemId) {
   const pid = product.product_id;
   const editParam = `?edit=${cartItemId}`;
+  if (item.customization?.type === 'catalog_design') return `/katalog-designer${editParam}`;
   if (product.model_type === 'nametag' || product.category === 'namnskylt') return `/namnskylt/${pid}${editParam}`;
   if (product.model_type === 'calendar' || product.category === 'kalender') return `/kalender/${pid}${editParam}`;
   if (product.category === 'fotoalbum') return `/fotoalbum/${pid}${editParam}`;
@@ -12,7 +13,7 @@ function getEditorUrl(product, cartItemId) {
 
 function isEditable(item) {
   if (!item.customization) return false;
-  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog', 'catalog_design'];
+  const nonEditable = ['businesscard', 'print_catalog', 'our_catalog'];
   return !nonEditable.includes(item.customization.type);
 }
 
@@ -110,7 +111,7 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
         <div className="flex items-center gap-2">
           {isEditable(item) && (
             <button
-              onClick={() => navigate(getEditorUrl(product, item.cart_item_id))}
+              onClick={() => navigate(getEditorUrl(product, item, item.cart_item_id))}
               className="text-slate-400 hover:text-[#2a9d8f] transition-colors"
               title="Redigera"
               data-testid={`edit-item-${item.cart_item_id}`}
