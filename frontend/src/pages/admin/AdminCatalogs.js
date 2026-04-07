@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Building2, Mail, Phone, MapPin, Clock, Package, Download, FileDown, Printer } from 'lucide-react';
+import { BookOpen, Building2, Mail, Phone, MapPin, Clock, Package, Download, FileDown, Printer, CreditCard } from 'lucide-react';
 import api from '../../services/api';
 import { useAdmin } from '../../context/AdminContext';
 
@@ -28,19 +28,22 @@ const AdminCatalogs = () => {
   const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
   const filtered = filter === 'all' ? orders : orders.filter(o => {
-    if (filter === 'our') return o.order_type === 'our_catalog' || o.catalog_type;
-    if (filter === 'print') return o.order_type === 'print' || o.pdf_url;
+    if (filter === 'our') return o.order_type === 'our_catalog' || (!o.order_type && o.catalog_type);
+    if (filter === 'print') return o.order_type === 'print' || (!o.order_type && o.pdf_url);
+    if (filter === 'businesscard') return o.order_type === 'businesscard';
     return true;
   });
 
   const getTypeLabel = (order) => {
-    if (order.order_type === 'print' || order.pdf_url) return 'Utskrift';
+    if (order.order_type === 'businesscard') return 'Visitkort';
+    if (order.order_type === 'print' || (!order.order_type && order.pdf_url)) return 'Utskrift';
     if (order.catalog_type === 'digital') return 'Digital';
     return 'Fysisk';
   };
 
   const getTypeIcon = (order) => {
-    if (order.order_type === 'print' || order.pdf_url) return Printer;
+    if (order.order_type === 'businesscard') return CreditCard;
+    if (order.order_type === 'print' || (!order.order_type && order.pdf_url)) return Printer;
     if (order.catalog_type === 'digital') return FileDown;
     return BookOpen;
   };
@@ -65,6 +68,7 @@ const AdminCatalogs = () => {
             { id: 'all', label: 'Alla' },
             { id: 'our', label: 'Vår katalog' },
             { id: 'print', label: 'Utskrift' },
+            { id: 'businesscard', label: 'Visitkort' },
           ].map(f => (
             <button key={f.id} onClick={() => setFilter(f.id)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === f.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -139,6 +143,24 @@ const AdminCatalogs = () => {
                 {order.message && (
                   <div className="mt-3 pt-3 border-t">
                     <p className="text-sm text-slate-500 italic">"{order.message}"</p>
+                  </div>
+                )}
+
+                {order.order_type === 'businesscard' && order.card_details && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Visitkortsinfo</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-slate-600">
+                      {order.card_details.name && <span><strong>Namn:</strong> {order.card_details.name}</span>}
+                      {order.card_details.title && <span><strong>Titel:</strong> {order.card_details.title}</span>}
+                      {order.card_details.company && <span><strong>Företag:</strong> {order.card_details.company}</span>}
+                      {order.card_details.template && <span><strong>Mall:</strong> {order.card_details.template}</span>}
+                    </div>
+                    {order.logo_url && (
+                      <a href={`${backendUrl}${order.logo_url}`} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-2 text-sm text-[#2a9d8f] hover:underline">
+                        <Download className="w-3.5 h-3.5" />Ladda ner logotyp
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
