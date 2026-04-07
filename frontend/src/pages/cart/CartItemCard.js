@@ -28,16 +28,28 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
   };
   const thumbUrl = getThumbUrl();
 
+  const isVirtualProduct = product.product_id?.startsWith('our-catalog') || product.product_id?.startsWith('print-');
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-soft flex gap-6" data-testid={`cart-item-${item.cart_item_id}`}>
-      <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-100">
-        <img src={thumbUrl} alt={item.name || product.name} className="w-full h-full object-cover" />
+      <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
+        {thumbUrl ? (
+          <img src={thumbUrl} alt={item.name || product.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-slate-300 text-3xl font-bold">
+            {item.customization?.type === 'businesscard' ? '&#9993;' : item.customization?.type === 'our_catalog' ? '&#128218;' : '&#128196;'}
+          </div>
+        )}
       </div>
 
       <div className="flex-1">
-        <Link to={`/produkt/${product.product_id}`} className="font-semibold text-slate-900 hover:text-primary">
-          {item.name || product.name}
-        </Link>
+        {isVirtualProduct ? (
+          <span className="font-semibold text-slate-900">{item.name || product.name}</span>
+        ) : (
+          <Link to={`/produkt/${product.product_id}`} className="font-semibold text-slate-900 hover:text-primary">
+            {item.name || product.name}
+          </Link>
+        )}
         <div className="text-sm text-slate-500 mt-1 space-x-3">
           {item.color && <span>Färg: {item.color}</span>}
           {item.size && <span>Storlek: {item.size}</span>}
@@ -62,6 +74,21 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
             {item.customization.type === 'design' && (
               <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mr-1">
                 Med egen design
+              </span>
+            )}
+            {item.customization.type === 'our_catalog' && (
+              <span className="inline-block text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded mr-1">
+                {item.customization.catalog_type === 'physical' ? 'Fysisk katalog' : 'Digital PDF'}
+              </span>
+            )}
+            {item.customization.type === 'print_catalog' && (
+              <span className="inline-block text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded mr-1">
+                Katalogutskrift: {item.customization.original_filename}
+              </span>
+            )}
+            {item.customization.type === 'businesscard' && (
+              <span className="inline-block text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded mr-1">
+                Visitkort — {item.customization.source === 'editor' ? item.customization.card_details?.template : 'PDF-design'}
               </span>
             )}
           </div>

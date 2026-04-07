@@ -9,14 +9,14 @@ router = APIRouter(tags=["Uploads"])
 
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    allowed = {'image/jpeg', 'image/png', 'image/webp'}
+    allowed = {'image/jpeg', 'image/png', 'image/webp', 'application/pdf'}
     if file.content_type not in allowed:
-        raise HTTPException(status_code=400, detail="Bara JPG, PNG och WebP tillåtet")
+        raise HTTPException(status_code=400, detail="Bara JPG, PNG, WebP och PDF tillåtet")
 
-    max_size = 10 * 1024 * 1024
+    max_size = 50 * 1024 * 1024
     contents = await file.read()
     if len(contents) > max_size:
-        raise HTTPException(status_code=400, detail="Max filstorlek: 10MB")
+        raise HTTPException(status_code=400, detail="Max filstorlek: 50MB")
 
     ext = file.filename.rsplit('.', 1)[-1] if '.' in file.filename else 'jpg'
     filename = f"{uuid.uuid4()}.{ext}"

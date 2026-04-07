@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import BusinessCardEditor from './BusinessCardEditor';
 import {
-  Building2, Send, Check, Printer, Phone, MapPin, X,
+  Building2, Check, Printer, X,
   FileText, Upload, Package, Clock, ShieldCheck, Minus, Plus,
-  BookOpen, FileDown, CreditCard
+  BookOpen, FileDown, CreditCard, ShoppingCart
 } from 'lucide-react';
 
 /* ───── Tab 1: "Vår produktkatalog" constants ───── */
@@ -60,89 +62,11 @@ function getCatalogPrice(quantity) {
 }
 
 /* ───── Shared form fields ───── */
-function CompanyForm({ form, updateField, showAddress }) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-[#2a9d8f]" />Företagsinformation
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">Företagsnamn *</label>
-            <Input value={form.company_name} onChange={e => updateField('company_name', e.target.value)} placeholder="AB Företaget" className="h-11" data-testid="input-company" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">Kontaktperson *</label>
-            <Input value={form.contact_person} onChange={e => updateField('contact_person', e.target.value)} placeholder="Anna Andersson" className="h-11" data-testid="input-contact" />
-          </div>
-        </div>
-      </div>
-      <div>
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-          <Phone className="w-4 h-4 text-[#2a9d8f]" />Kontaktuppgifter
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">E-post *</label>
-            <Input type="email" value={form.email} onChange={e => updateField('email', e.target.value)} placeholder="info@foretaget.se" className="h-11" data-testid="input-email" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1.5">Telefon *</label>
-            <Input value={form.phone} onChange={e => updateField('phone', e.target.value)} placeholder="070-123 45 67" className="h-11" data-testid="input-phone" />
-          </div>
-        </div>
-      </div>
-      {showAddress && (
-        <div>
-          <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#2a9d8f]" />Leveransadress
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">Gatuadress *</label>
-              <Input value={form.address} onChange={e => updateField('address', e.target.value)} placeholder="Storgatan 1" className="h-11" data-testid="input-address" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Postnummer *</label>
-                <Input value={form.postal_code} onChange={e => updateField('postal_code', e.target.value)} placeholder="123 45" className="h-11" data-testid="input-postal" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Ort *</label>
-                <Input value={form.city} onChange={e => updateField('city', e.target.value)} placeholder="Stockholm" className="h-11" data-testid="input-city" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ───── Success screen ───── */
-function SuccessScreen({ message, onReset }) {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4" data-testid="catalog-success">
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-10 max-w-lg w-full text-center">
-        <div className="w-16 h-16 rounded-full bg-[#2a9d8f]/10 flex items-center justify-center mx-auto mb-5">
-          <Check className="w-8 h-8 text-[#2a9d8f]" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-3">Tack för din beställning!</h2>
-        <p className="text-slate-500 leading-relaxed mb-6">{message}</p>
-        <Button className="bg-[#2a9d8f] hover:bg-[#238b7e]" onClick={onReset} data-testid="order-another-btn">
-          Beställ en till
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 /* ───── Main page ───── */
 const BusinessCatalog = () => {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [activeTab, setActiveTab] = useState('our');
-  const [submitted, setSubmitted] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Tab 1
@@ -154,7 +78,7 @@ const BusinessCatalog = () => {
   const [pdfFile, setPdfFile] = useState(null);
   const fileInputRef = useRef(null);
   // Tab 2 - businesscard
-  const [cardSource, setCardSource] = useState('editor'); // 'editor' or 'pdf'
+  const [cardSource, setCardSource] = useState('editor');
   const [cardPdfFile, setCardPdfFile] = useState(null);
   const cardPdfInputRef = useRef(null);
   const [card, setCard] = useState({ name: '', title: '', company: '', phone: '', email: '', website: '', address: '' });
@@ -162,104 +86,111 @@ const BusinessCatalog = () => {
   const [cardTemplate, setCardTemplate] = useState('classic');
   const [cardColor, setCardColor] = useState('#2a9d8f');
 
-  // Shared form
-  const emptyForm = { company_name: '', contact_person: '', email: '', phone: '', address: '', postal_code: '', city: '', quantity: 1, message: '' };
-  const [form, setForm] = useState(emptyForm);
-  const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  // Shared
+  const [quantity, setQuantity] = useState(1);
 
-  const resetAll = () => {
-    setSubmitted(false); setSuccessMsg(''); setSelectedCatalogType(null);
-    setPdfFile(null); setCardPdfFile(null); setCardSource('editor');
-    setCard({ name: '', title: '', company: '', phone: '', email: '', website: '', address: '' });
-    setLogo(null); setCardTemplate('classic'); setCardColor('#2a9d8f');
-    setForm(emptyForm);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cardPdfInputRef.current) cardPdfInputRef.current.value = '';
+  /* Helper: upload a file (PDF/image) and get server URL */
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return res.data.url;
   };
 
-  const validateBase = () => {
-    if (!form.company_name.trim() || !form.contact_person.trim() || !form.email.trim() || !form.phone.trim()) {
-      toast.error('Fyll i alla obligatoriska fält'); return false;
-    }
-    return true;
-  };
-  const validateAddress = () => {
-    if (!form.address.trim() || !form.postal_code.trim() || !form.city.trim()) {
-      toast.error('Fyll i leveransadress'); return false;
-    }
-    return true;
+  const uploadBase64 = async (dataUrl) => {
+    const res = await api.post('/upload-base64', { image: dataUrl });
+    return res.data.url;
   };
 
-  /* Tab 1: Order our catalog */
+  /* Tab 1: Add our catalog to cart */
   const handleOurCatalog = async (e) => {
     e.preventDefault();
     if (!selectedCatalogType) { toast.error('Välj en katalogtyp'); return; }
-    if (!validateBase()) return;
-    if (selectedCatalogType === 'physical' && !validateAddress()) return;
     setSubmitting(true);
     try {
-      await api.post('/catalog/order/our-catalog', { ...form, catalog_type: selectedCatalogType });
-      setSuccessMsg(selectedCatalogType === 'physical'
-        ? 'Din fysiska katalog skickas inom 5-7 arbetsdagar till angiven adress.'
-        : 'Din digitala katalog skickas till din e-post inom 24 timmar.');
-      setSubmitted(true);
-    } catch { toast.error('Kunde inte skicka beställningen'); }
+      await addToCart({
+        product_id: `our-catalog-${selectedCatalogType}`,
+        name: selectedCatalogType === 'physical' ? 'Produktkatalog (Fysisk)' : 'Produktkatalog (Digital PDF)',
+        price: 0,
+        quantity: selectedCatalogType === 'physical' ? quantity : 1,
+        image: null,
+        customization: {
+          type: 'our_catalog',
+          catalog_type: selectedCatalogType,
+        },
+      });
+      toast.success('Katalog tillagd i varukorgen!');
+      navigate('/varukorg');
+    } catch { toast.error('Kunde inte lägga till i varukorgen'); }
     finally { setSubmitting(false); }
   };
 
-  /* Tab 2: Print catalog */
+  /* Tab 2: Add print catalog to cart */
   const handlePrintCatalog = async (e) => {
     e.preventDefault();
     if (!pdfFile) { toast.error('Ladda upp din PDF-katalog'); return; }
-    if (!validateBase() || !validateAddress()) return;
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('pdf_file', pdfFile);
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v.toString()));
-      await api.post('/catalog/order/print', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSuccessMsg('Vi har mottagit din katalog och börjar trycka den så snart som möjligt. Leverans inom 5-7 arbetsdagar.');
-      setSubmitted(true);
-    } catch (err) { toast.error(err.response?.data?.detail || 'Kunde inte skicka beställningen'); }
+      toast.info('Laddar upp PDF...');
+      const pdfUrl = await uploadFile(pdfFile);
+      const unitPrice = getCatalogPrice(quantity);
+      await addToCart({
+        product_id: 'print-catalog',
+        name: `Katalogutskrift: ${pdfFile.name}`,
+        price: unitPrice,
+        quantity,
+        image: null,
+        customization: {
+          type: 'print_catalog',
+          pdf_url: pdfUrl,
+          original_filename: pdfFile.name,
+        },
+      });
+      toast.success('Katalog tillagd i varukorgen!');
+      navigate('/varukorg');
+    } catch { toast.error('Kunde inte lägga till i varukorgen'); }
     finally { setSubmitting(false); }
   };
 
-  /* Tab 2: Business cards */
+  /* Tab 2: Add business cards to cart */
   const handleBusinessCard = async (e) => {
     e.preventDefault();
     if (cardSource === 'pdf' && !cardPdfFile) { toast.error('Ladda upp en PDF med din visitkortsdesign'); return; }
     if (cardSource === 'editor' && !card.name.trim()) { toast.error('Fyll i namn på visitkortet'); return; }
-    if (!validateBase() || !validateAddress()) return;
-
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v.toString()));
-      formData.append('source', cardSource);
-      formData.append('card_name', card.name);
-      formData.append('card_title', card.title);
-      formData.append('card_company', card.company);
-      formData.append('card_phone', card.phone);
-      formData.append('card_email', card.email);
-      formData.append('card_website', card.website);
-      formData.append('card_address', card.address);
-      formData.append('card_template', cardTemplate);
-      formData.append('card_color', cardColor);
+      let pdfUrl = null;
+      let logoUrl = null;
 
       if (cardSource === 'pdf' && cardPdfFile) {
-        formData.append('pdf_file', cardPdfFile);
+        toast.info('Laddar upp PDF...');
+        pdfUrl = await uploadFile(cardPdfFile);
       }
       if (logo) {
-        // Convert base64 to blob
-        const res = await fetch(logo);
-        const blob = await res.blob();
-        formData.append('logo_file', blob, 'logo.png');
+        logoUrl = await uploadBase64(logo);
       }
 
-      await api.post('/catalog/order/businesscard', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSuccessMsg('Dina visitkort börjar tryckas så snart som möjligt. Leverans inom 5-7 arbetsdagar.');
-      setSubmitted(true);
-    } catch (err) { toast.error(err.response?.data?.detail || 'Kunde inte skicka beställningen'); }
+      const unitPrice = getCardPrice(quantity);
+      await addToCart({
+        product_id: 'print-businesscard',
+        name: cardSource === 'editor' ? `Visitkort: ${card.name}` : `Visitkort (PDF): ${cardPdfFile?.name || 'design'}`,
+        price: unitPrice,
+        quantity,
+        image: null,
+        customization: {
+          type: 'businesscard',
+          source: cardSource,
+          card_details: { ...card },
+          template: cardTemplate,
+          color: cardColor,
+          logo_url: logoUrl,
+          pdf_url: pdfUrl,
+          original_filename: cardPdfFile?.name || null,
+        },
+      });
+      toast.success('Visitkort tillagda i varukorgen!');
+      navigate('/varukorg');
+    } catch { toast.error('Kunde inte lägga till i varukorgen'); }
     finally { setSubmitting(false); }
   };
 
@@ -279,19 +210,9 @@ const BusinessCatalog = () => {
     setCardPdfFile(file);
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-[#faf9f6]">
-        <SuccessScreen message={successMsg} onReset={resetAll} />
-      </div>
-    );
-  }
-
   const handleSubmit = activeTab === 'our'
     ? handleOurCatalog
     : printService === 'catalog' ? handlePrintCatalog : handleBusinessCard;
-
-  const needsAddress = activeTab === 'print' || selectedCatalogType === 'physical';
 
   const isSubmitDisabled = () => {
     if (submitting) return true;
@@ -307,22 +228,22 @@ const BusinessCatalog = () => {
   const getSubmitLabel = () => {
     if (activeTab === 'our') {
       return selectedCatalogType
-        ? <>Typ: <strong className="text-slate-700">{selectedCatalogType === 'physical' ? 'Fysisk broschyr' : 'Digital PDF'}</strong>{selectedCatalogType === 'physical' && ` — ${form.quantity} st`}</>
+        ? <>Typ: <strong className="text-slate-700">{selectedCatalogType === 'physical' ? 'Fysisk broschyr' : 'Digital PDF'}</strong>{selectedCatalogType === 'physical' && ` — ${quantity} st`}</>
         : <span className="text-amber-600">Välj en katalogtyp ovan</span>;
     }
     if (printService === 'catalog') {
-      const total = form.quantity * getCatalogPrice(form.quantity);
+      const total = quantity * getCatalogPrice(quantity);
       return pdfFile
-        ? <>Katalog: <strong className="text-slate-700">{pdfFile.name}</strong> — {form.quantity} ex — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        ? <>Katalog: <strong className="text-slate-700">{pdfFile.name}</strong> — {quantity} ex — <strong className="text-[#2a9d8f]">{total} kr</strong></>
         : <span className="text-amber-600">Ladda upp en PDF-katalog</span>;
     }
     if (printService === 'businesscard') {
-      const total = (form.quantity * getCardPrice(form.quantity)).toFixed(0);
+      const total = (quantity * getCardPrice(quantity)).toFixed(0);
       if (cardSource === 'pdf') return cardPdfFile
-        ? <>Visitkort (PDF): <strong className="text-slate-700">{cardPdfFile.name}</strong> — {form.quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        ? <>Visitkort (PDF): <strong className="text-slate-700">{cardPdfFile.name}</strong> — {quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
         : <span className="text-amber-600">Ladda upp en PDF</span>;
       return card.name
-        ? <>Visitkort: <strong className="text-slate-700">{card.name}</strong> — {form.quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
+        ? <>Visitkort: <strong className="text-slate-700">{card.name}</strong> — {quantity} st — <strong className="text-[#2a9d8f]">{total} kr</strong></>
         : <span className="text-amber-600">Fyll i namn på visitkortet</span>;
     }
   };
@@ -524,38 +445,36 @@ const BusinessCatalog = () => {
             </>
           )}
 
-          {/* ─── Shared: Company & delivery ─── */}
-          <div>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="w-8 h-8 rounded-full bg-[#2a9d8f] text-white text-sm font-bold flex items-center justify-center">{activeTab === 'our' ? '2' : '3'}</span>
-              <h2 className="text-xl font-bold text-slate-900">Företags- och leveransuppgifter</h2>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-6">
-              <CompanyForm form={form} updateField={updateField} showAddress={needsAddress} />
-
-              {needsAddress && (
+          {/* ─── Antal & Pris ─── */}
+          {(activeTab === 'print' || (activeTab === 'our' && selectedCatalogType === 'physical')) && (
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <span className="w-8 h-8 rounded-full bg-[#2a9d8f] text-white text-sm font-bold flex items-center justify-center">{activeTab === 'our' ? '2' : '3'}</span>
+                <h2 className="text-xl font-bold text-slate-900">Antal</h2>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-2">
-                    {printService === 'businesscard' && activeTab === 'print' ? 'Antal visitkort' : activeTab === 'print' ? 'Antal exemplar att trycka' : 'Antal kataloger (max 5)'}
+                    {activeTab === 'print' && printService === 'businesscard' ? 'Antal visitkort' : activeTab === 'print' ? 'Antal exemplar att trycka' : 'Antal kataloger (max 5)'}
                   </label>
                   <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => updateField('quantity', Math.max(1, form.quantity - 1))}
+                    <button type="button" onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors" data-testid="qty-decrease"><Minus className="w-4 h-4" /></button>
                     <Input type="number" min="1" max={activeTab === 'our' ? 5 : 9999}
-                      value={form.quantity} onChange={e => updateField('quantity', Math.max(1, parseInt(e.target.value) || 1))}
+                      value={quantity} onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                       className="w-20 text-center font-semibold text-lg h-10" data-testid="qty-display" />
-                    <button type="button" onClick={() => { const max = activeTab === 'our' ? 5 : 9999; updateField('quantity', Math.min(max, form.quantity + 1)); }}
+                    <button type="button" onClick={() => { const max = activeTab === 'our' ? 5 : 9999; setQuantity(q => Math.min(max, q + 1)); }}
                       className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors" data-testid="qty-increase"><Plus className="w-4 h-4" /></button>
-                    <span className="text-sm text-slate-400 ml-1">{printService === 'businesscard' && activeTab === 'print' ? 'st' : 'exemplar'}</span>
+                    <span className="text-sm text-slate-400 ml-1">{activeTab === 'print' && printService === 'businesscard' ? 'st' : 'exemplar'}</span>
                   </div>
 
                   {/* Quick quantity buttons for business cards */}
                   {activeTab === 'print' && printService === 'businesscard' && (
                     <div className="flex flex-wrap gap-2 mt-3" data-testid="quick-qty-buttons">
                       {[50, 100, 250, 500].map(q => (
-                        <button key={q} type="button" onClick={() => updateField('quantity', q)}
+                        <button key={q} type="button" onClick={() => setQuantity(q)}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                            form.quantity === q ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                            quantity === q ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                           }`}
                           data-testid={`quick-qty-${q}`}>
                           {q} st
@@ -570,21 +489,21 @@ const BusinessCatalog = () => {
                       {printService === 'businesscard' ? (
                         <>
                           <div className="flex justify-between items-baseline mb-1">
-                            <span className="text-sm text-slate-600">{form.quantity} st x {getCardPrice(form.quantity).toFixed(2)} kr/st</span>
-                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{(form.quantity * getCardPrice(form.quantity)).toFixed(0)} kr</span>
+                            <span className="text-sm text-slate-600">{quantity} st x {getCardPrice(quantity).toFixed(2)} kr/st</span>
+                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{(quantity * getCardPrice(quantity)).toFixed(0)} kr</span>
                           </div>
                           <p className="text-xs text-slate-400">
-                            {form.quantity < 50 && 'Beställ 50+ för bättre pris!'}
-                            {form.quantity >= 50 && form.quantity < 100 && 'Beställ 100+ för 2,50 kr/st'}
-                            {form.quantity >= 100 && form.quantity < 250 && 'Beställ 250+ för 1,90 kr/st'}
-                            {form.quantity >= 250 && form.quantity < 500 && 'Beställ 500+ för 1,20 kr/st'}
-                            {form.quantity >= 500 && 'Bästa priset!'}
+                            {quantity < 50 && 'Beställ 50+ för bättre pris!'}
+                            {quantity >= 50 && quantity < 100 && 'Beställ 100+ för 2,50 kr/st'}
+                            {quantity >= 100 && quantity < 250 && 'Beställ 250+ för 1,90 kr/st'}
+                            {quantity >= 250 && quantity < 500 && 'Beställ 500+ för 1,20 kr/st'}
+                            {quantity >= 500 && 'Bästa priset!'}
                           </p>
                           <div className="mt-3 pt-3 border-t border-slate-200">
                             <p className="text-xs font-medium text-slate-500 mb-2">Prisstege:</p>
                             <div className="grid grid-cols-5 gap-1 text-center text-xs">
                               {CARD_PRICE_TIERS.map(t => (
-                                <div key={t.min} className={`rounded-md py-1.5 ${form.quantity >= t.min && form.quantity <= t.max ? 'bg-[#2a9d8f]/15 text-[#2a9d8f] font-semibold' : 'text-slate-400'}`}>
+                                <div key={t.min} className={`rounded-md py-1.5 ${quantity >= t.min && quantity <= t.max ? 'bg-[#2a9d8f]/15 text-[#2a9d8f] font-semibold' : 'text-slate-400'}`}>
                                   <p className="font-medium">{t.min}{t.max === Infinity ? '+' : `-${t.max}`}</p>
                                   <p>{t.pricePerCard.toFixed(2)} kr</p>
                                 </div>
@@ -595,38 +514,30 @@ const BusinessCatalog = () => {
                       ) : (
                         <>
                           <div className="flex justify-between items-baseline mb-1">
-                            <span className="text-sm text-slate-600">{form.quantity} ex x {getCatalogPrice(form.quantity)} kr/ex</span>
-                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{form.quantity * getCatalogPrice(form.quantity)} kr</span>
+                            <span className="text-sm text-slate-600">{quantity} ex x {getCatalogPrice(quantity)} kr/ex</span>
+                            <span className="text-lg font-bold text-slate-900" data-testid="total-price">{quantity * getCatalogPrice(quantity)} kr</span>
                           </div>
                           <p className="text-xs text-slate-400">
-                            {form.quantity < 10 && 'Beställ 10+ för 69 kr/ex'}
-                            {form.quantity >= 10 && form.quantity < 25 && 'Beställ 25+ för 49 kr/ex'}
-                            {form.quantity >= 25 && form.quantity < 50 && 'Beställ 50+ för 39 kr/ex'}
-                            {form.quantity >= 50 && 'Bästa priset!'}
+                            {quantity < 10 && 'Beställ 10+ för 69 kr/ex'}
+                            {quantity >= 10 && quantity < 25 && 'Beställ 25+ för 49 kr/ex'}
+                            {quantity >= 25 && quantity < 50 && 'Beställ 50+ för 39 kr/ex'}
+                            {quantity >= 50 && 'Bästa priset!'}
                           </p>
                         </>
                       )}
                     </div>
                   )}
                 </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Meddelande (valfritt)</label>
-                <textarea value={form.message} onChange={e => updateField('message', e.target.value)}
-                  placeholder="Speciella önskemål..." rows={3}
-                  className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d8f]/30 focus:border-[#2a9d8f] resize-none"
-                  data-testid="input-message" />
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Submit */}
+          {/* Submit - Lägg i varukorgen */}
           <div className="bg-white rounded-2xl border border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
             <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
               disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
-              {submitting ? 'Skickar...' : <><Send className="w-4 h-4 mr-2" />Skicka beställning</>}
+              {submitting ? 'Lägger till...' : <><ShoppingCart className="w-4 h-4 mr-2" />Lägg i varukorgen</>}
             </Button>
           </div>
         </form>

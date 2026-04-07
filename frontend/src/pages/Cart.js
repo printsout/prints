@@ -55,8 +55,12 @@ const Cart = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
               {cart.items.map((item) => {
-                const product = products[item.product_id];
-                if (!product) return null;
+                const product = products[item.product_id] || {
+                  product_id: item.product_id,
+                  name: item.name,
+                  price: item.price,
+                  imageUrl: item.image,
+                };
                 return (
                   <CartItemCard
                     key={item.cart_item_id}
