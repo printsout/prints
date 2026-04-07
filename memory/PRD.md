@@ -68,6 +68,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - iteration_23: 21/21 backend, 100% frontend (B2B two-tab catalog: vår katalog + utskrift)
 - iteration_24: 19/19 backend, 100% frontend (Visitkort: editor med mallar/färger + PDF-uppladdning)
 - iteration_25: 11/11 backend, 100% frontend (B2B virtuella produkter i varukorgen - buggfix)
+- iteration_26: 10/10 backend, 100% frontend (Katalogdesigner - ny funktion)
 
 ## Arkitektur
 ```
@@ -99,10 +100,26 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Fallback-ikoner i `CartItemCard.js` uppdaterade till lucide-react (CreditCard, BookOpen, FileText)
 - [x] B2B-artiklar exkluderade från "Redigera"-knappen (businesscard, print_catalog, our_catalog)
 
+## Katalogdesigner (2026-04-07) - NYTT
+- [x] Ny fristående sida `/katalog-designer` utan navbar/footer
+- [x] Setup-steg: Företagsnamn, logotyp, mallval (Klassisk/Modern/Minimal), sidantal (4/8/12), färg/typsnitt
+- [x] Editor med 3-panelslayout: sidminiatyrer (vänster), A4-förhandsvisning (center), redigeringskontroller (höger)
+- [x] 5 sidtyper: Omslag, Produktsida, Galleri, Textsida, Baksida
+- [x] Produktsida: bilduppladdning, produktnamn, beskrivning, pris — max 6 produkter per sida
+- [x] Gallerisida: 4 bildplatser med bildtexter
+- [x] Textsida: rubrik + brödtext
+- [x] Baksida: företagsnamn, telefon, e-post, webbplats, adress
+- [x] Sidhantering: lägg till/ta bort sidor, byt sidtyp (Produktsida/Galleri/Textsida)
+- [x] Prisberäkning med prisstege (89/69/49/39 kr baserat på antal)
+- [x] Varukorgintegration via virtuellt produkt-ID `print-catalog-custom` med anpassningstyp `catalog_design`
+- [x] "Designa själv" / "Ladda upp PDF" toggle på B2B-sidan under Katalog-tjänsten
+- [x] "Öppna designverktyget"-knapp navigerar till `/katalog-designer`
+
 ## Backlog
 ### P1
 - [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
 - [x] ~~B2B virtuella produkter i varukorgen~~ (2026-04-07: useCartData.js + CartItemCard.js)
+- [x] ~~Katalogdesigner~~ (2026-04-07: /katalog-designer med 5 sidtyper + varukorg)
 - [x] ~~Dela PhotoAlbumEditor~~ (2026-04-06)
 - [x] ~~Bryt ut server.py routers~~ (2026-04-06)
 - [x] ~~Minska Cart.js komplexitet~~ (2026-04-06)
