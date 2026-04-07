@@ -17,6 +17,7 @@ const AdminSettings = () => {
     site_name: 'Printsout',
     site_logo: '',
     contact_email: 'info@printout.se',
+    notification_email: 'info@printsout.se',
     phone: '',
     address: '',
     social_links: { facebook: '', instagram: '', twitter: '' }
@@ -231,6 +232,21 @@ const AdminSettings = () => {
                   onChange={(e) => setSettings(prev => ({ ...prev, contact_email: e.target.value }))}
                   placeholder="info@printout.se"
                   className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Notifikationsmail (orderbekräftelser)</label>
+              <p className="text-xs text-slate-400 mb-1.5">Hit skickas ett mail varje gång en kund beställer</p>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="email"
+                  value={settings.notification_email}
+                  onChange={(e) => setSettings(prev => ({ ...prev, notification_email: e.target.value }))}
+                  placeholder="info@printsout.se"
+                  className="pl-10"
+                  data-testid="notification-email-input"
                 />
               </div>
             </div>

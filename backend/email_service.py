@@ -11,6 +11,17 @@ logger = logging.getLogger(__name__)
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 ADMIN_EMAIL = os.environ.get('ADMIN_NOTIFICATION_EMAIL', 'info@printsout.se')
 
+
+async def get_notification_email() -> str:
+    """Get admin notification email from DB settings, fallback to env var."""
+    try:
+        settings = await db.settings.find_one({"type": "site_settings"}, {"_id": 0})
+        if settings and settings.get("notification_email"):
+            return settings["notification_email"]
+    except Exception:
+        pass
+    return ADMIN_EMAIL
+
 # ─── Shared template parts ───────────────────────────
 
 _HEADER = """
@@ -297,16 +308,17 @@ async def send_shipping_notification(order: dict):
 
 async def send_admin_order_notification(order: dict):
     try:
+        recipient = await get_notification_email()
         html = build_admin_order_notification_html(order)
         order_id = order.get("order_id", "")[:8]
         total = order.get("total_amount", 0)
         params = {
             "from": f"PrintsOut <{SENDER_EMAIL}>",
-            "to": [ADMIN_EMAIL],
+            "to": [recipient],
             "subject": f"Ny beställning #{order_id} — {total:.0f} kr",
             "html": html,
         }
         await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Admin order notification sent to {ADMIN_EMAIL}")
+        logger.info(f"Admin order notification sent to {recipient}")
     except Exception as e:
         logger.warning(f"Failed to send admin order notification: {e}")

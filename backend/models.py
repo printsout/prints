@@ -125,6 +125,7 @@ class SiteSettings(BaseModel):
     site_name: str = "Printsout"
     site_logo: Optional[str] = None
     contact_email: str = "info@printsout.se"
+    notification_email: str = "info@printsout.se"
     phone: Optional[str] = None
     address: Optional[str] = None
     social_links: Dict[str, str] = {}
