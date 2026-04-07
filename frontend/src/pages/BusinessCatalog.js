@@ -581,8 +581,8 @@ const BusinessCatalog = () => {
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { Icon: ShieldCheck, title: 'Högkvalitativt tryck', desc: 'Professionell tryckutrustning för skarpa färger och hållbart resultat.' },
-            { Icon: Clock, title: 'Snabb leverans', desc: 'Din beställning trycks och skickas inom 5-7 arbetsdagar.' },
-            { Icon: Package, title: 'Fri frakt', desc: 'Kostnadsfri leverans till hela Sverige.' },
+            { Icon: Clock, title: 'Snabb leverans', desc: 'Din beställning trycks och skickas inom 2-5 arbetsdagar.' },
+            { Icon: Package, title: 'Fri frakt', desc: 'Kostnadsfri leverans på beställningar över 499 kr.' },
           ].map(item => (
             <div key={item.title} className="bg-white rounded-xl border border-slate-200 p-6 text-center">
               <div className="w-12 h-12 rounded-xl bg-[#2a9d8f]/10 flex items-center justify-center mx-auto mb-4"><item.Icon className="w-6 h-6 text-[#2a9d8f]" /></div>
