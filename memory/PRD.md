@@ -118,6 +118,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
 
+## PDF-nedladdning för kataloger i admin (2026-04-07) - NYTT
+- [x] Ny backend `catalog_pdf.py` — genererar PDF från katalogdesign-data (omslag, produktsidor, text, kontakt)
+- [x] Ny endpoint `GET /api/admin/orders/{id}/catalog-pdf` — genererar och laddar ner PDF för katalogdesign-ordrar
+- [x] Ny endpoint `GET /api/admin/b2b-orders/{id}/pdf` — laddar ner uppladdad PDF från B2B-katalogbeställningar
+- [x] Admin OrderDetailPanel visar "Ladda ner katalog (PDF)"-knapp för catalog_design-ordrar
+- [x] Admin OrderDetailPanel visar "Ladda ner PDF"-knapp för print_catalog B2B-ordrar (med stöd för både direktlänk och B2B-endpoint)
+
 ## Visitkort Redigera i varukorg (2026-04-07) - NYTT
 - [x] Redigeringsknapp visas nu på visitkortsartiklar i varukorgen
 - [x] Klick navigerar till `/foretag?edit={cartItemId}`

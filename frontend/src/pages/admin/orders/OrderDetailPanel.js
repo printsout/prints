@@ -248,9 +248,9 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
-          {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} />}
+          {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'businesscard' && <BusinesscardCustomization item={item} />}
-          {item.customization.type === 'print_catalog' && <PrintCatalogCustomization item={item} />}
+          {item.customization.type === 'print_catalog' && <PrintCatalogCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'our_catalog' && <OurCatalogCustomization item={item} />}
           {!['nametag', 'photoalbum', 'calendar', 'design', 'catalog_design', 'businesscard', 'print_catalog', 'our_catalog'].includes(item.customization.type) && (
             <p>Typ: {item.customization.type}</p>
@@ -433,8 +433,27 @@ const DesignCustomization = ({ item }) => {
   );
 };
 
-const CatalogDesignCustomization = ({ item }) => {
+const CatalogDesignCustomization = ({ item, orderId }) => {
   const c = item.customization;
+
+  const handleDownloadPdf = () => {
+    const url = `${API_BASE}/api/admin/orders/${orderId}/catalog-pdf`;
+    const token = localStorage.getItem('admin_token');
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error('Kunde inte generera PDF');
+        return res.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `katalog_${c.company_name || 'design'}_${orderId?.slice(0, 8)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       <p>Företag: <strong>{c.company_name}</strong></p>
@@ -471,6 +490,14 @@ const CatalogDesignCustomization = ({ item }) => {
           </div>
         </div>
       )}
+      <button
+        onClick={handleDownloadPdf}
+        className="flex items-center gap-1.5 mt-3 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
+        data-testid="download-catalog-pdf"
+      >
+        <Download className="w-3.5 h-3.5" />
+        Ladda ner katalog (PDF)
+      </button>
     </>
   );
 };
@@ -495,16 +522,48 @@ const BusinesscardCustomization = ({ item }) => {
   );
 };
 
-const PrintCatalogCustomization = ({ item }) => {
+const PrintCatalogCustomization = ({ item, orderId }) => {
   const c = item.customization;
+  const pdfLink = c.pdf_url
+    ? (c.pdf_url.startsWith('http') ? c.pdf_url : `${API_BASE}${c.pdf_url}`)
+    : null;
+
+  const handleB2bDownload = () => {
+    if (!orderId) return;
+    const url = `${API_BASE}/api/admin/b2b-orders/${orderId}/pdf`;
+    const token = localStorage.getItem('admin_token');
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = c.original_filename || `katalog_${orderId?.slice(0, 8)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       <p>Typ: <strong>Katalogutskrift</strong></p>
+      {c.company_name && <p>Företag: {c.company_name}</p>}
       {c.original_filename && <p>Fil: {c.original_filename}</p>}
-      {c.pdf_url && (
-        <a href={c.pdf_url.startsWith('http') ? c.pdf_url : `${API_BASE}${c.pdf_url}`} download target="_blank" rel="noreferrer" className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline text-xs">
-          <Download className="w-3 h-3" /> Ladda ner PDF
+      {pdfLink ? (
+        <a href={pdfLink} download target="_blank" rel="noreferrer"
+          className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors w-fit"
+          data-testid="download-print-catalog-pdf">
+          <Download className="w-3.5 h-3.5" /> Ladda ner PDF
         </a>
+      ) : orderId && (
+        <button onClick={handleB2bDownload}
+          className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
+          data-testid="download-b2b-pdf">
+          <Download className="w-3.5 h-3.5" /> Ladda ner PDF
+        </button>
       )}
     </>
   );

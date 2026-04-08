@@ -338,6 +338,50 @@ async def download_calendar_images(order_id: str, admin=Depends(verify_admin_tok
     )
 
 
+@router.get("/orders/{order_id}/catalog-pdf")
+async def download_catalog_pdf(order_id: str, admin=Depends(verify_admin_token)):
+    """Generate and download a PDF from a catalog design order."""
+    from catalog_pdf import generate_catalog_pdf
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    catalog_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "catalog_design":
+            catalog_item = item
+            break
+    if not catalog_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller ingen katalogdesign")
+    customization = catalog_item["customization"]
+    output_dir = Path("/tmp/catalog_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    company = customization.get("company_name", "katalog")
+    output_path = str(output_dir / f"katalog_{order_id[:8]}.pdf")
+    generate_catalog_pdf(customization, output_path)
+    filename = f"katalog_{company}_{order_id[:8]}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename,
+                        headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/b2b-orders/{order_id}/pdf")
+async def download_b2b_catalog_pdf(order_id: str, admin=Depends(verify_admin_token)):
+    """Download the uploaded PDF from a B2B catalog order."""
+    order = await db.catalog_orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="B2B-order hittades inte")
+    pdf_url = order.get("pdf_url")
+    if not pdf_url:
+        raise HTTPException(status_code=404, detail="Ingen PDF kopplad till denna beställning")
+    filename = pdf_url.split("/")[-1]
+    filepath = Path(os.path.dirname(__file__)).parent / "uploads" / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="PDF-filen hittades inte på servern")
+    original = order.get("original_filename", filename)
+    return FileResponse(str(filepath), media_type="application/pdf", filename=original,
+                        headers={"Content-Disposition": f'attachment; filename="{original}"'})
+
+
+
 # ─── Products ───────────────────────────────────────
 
 @router.get("/products")
