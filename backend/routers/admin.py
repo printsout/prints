@@ -382,6 +382,38 @@ async def download_b2b_catalog_pdf(order_id: str, admin=Depends(verify_admin_tok
 
 
 
+@router.get("/orders/{order_id}/catalog-design")
+async def get_catalog_design(order_id: str, admin=Depends(verify_admin_token)):
+    """Get catalog design data from an order for admin editing."""
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "catalog_design":
+            return item["customization"]
+    raise HTTPException(status_code=404, detail="Ingen katalogdesign i denna order")
+
+
+@router.put("/orders/{order_id}/catalog-design")
+async def update_catalog_design(order_id: str, body: dict, admin=Depends(verify_admin_token)):
+    """Update catalog design data in an order."""
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    items = order.get("items", [])
+    updated = False
+    for i, item in enumerate(items):
+        if item.get("customization", {}).get("type") == "catalog_design":
+            items[i]["customization"] = {**item["customization"], **body}
+            updated = True
+            break
+    if not updated:
+        raise HTTPException(status_code=404, detail="Ingen katalogdesign i denna order")
+    await db.orders.update_one({"order_id": order_id}, {"$set": {"items": items}})
+    return {"message": "Katalogdesign uppdaterad"}
+
+
+
 # ─── Products ───────────────────────────────────────
 
 @router.get("/products")

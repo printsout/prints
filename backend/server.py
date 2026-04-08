@@ -111,6 +111,14 @@ async def startup_init():
         for review in get_seed_reviews():
             await db.reviews.insert_one(review.model_dump())
         logger.info("Seed data initialized")
+    # Ensure B2B products exist (idempotent upsert)
+    for product in get_seed_products():
+        if product.category == "foretag":
+            await db.products.update_one(
+                {"product_id": product.product_id},
+                {"$setOnInsert": product.model_dump()},
+                upsert=True,
+            )
     # Load DB-stored admin password if exists
     admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
     if admin_2fa and admin_2fa.get("password_hash"):

@@ -179,6 +179,7 @@ const CatalogDesigner = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
+  const adminEditOrderId = searchParams.get('admin_edit');
   const { addToCart, updateCartItem, cart } = useCart();
   const fileInputRef = useRef(null);
   const logoInputRef = useRef(null);
@@ -195,6 +196,30 @@ const CatalogDesigner = () => {
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [uploadTarget, setUploadTarget] = useState(null);
+
+  const isAdminMode = !!adminEditOrderId;
+
+  // Hydrate from admin order
+  useEffect(() => {
+    if (!adminEditOrderId) return;
+    const token = localStorage.getItem('admin_token');
+    if (!token) { toast.error('Admin-inloggning krävs'); return; }
+    api.get(`/admin/orders/${adminEditOrderId}/catalog-design`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => {
+      const c = res.data;
+      setCompanyName(c.company_name || '');
+      setCompanyLogo(c.logo_url || null);
+      setTemplate(c.template || 'classic');
+      setTheme(c.theme || { primaryColor: '#2a9d8f', font: 'Inter' });
+      if (c.pages?.length) {
+        setPages(c.pages);
+        setPageCount(c.pages.length);
+        setActivePage(0);
+        setStep('editor');
+      }
+    }).catch(() => toast.error('Kunde inte hämta katalogdesign'));
+  }, [adminEditOrderId]);
 
   // Hydrate state from cart item when editing
   useEffect(() => {
@@ -297,6 +322,17 @@ const CatalogDesigner = () => {
         return p;
       }));
 
+      if (isAdminMode) {
+        const token = localStorage.getItem('admin_token');
+        await api.put(`/admin/orders/${adminEditOrderId}/catalog-design`, {
+          company_name: companyName, logo_url: logoUrl, template, theme,
+          pages: uploadedPages, page_count: uploadedPages.length,
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        toast.success('Katalogdesignen sparad!');
+        window.close();
+        return;
+      }
+
       const unitPrice = getPrice(quantity);
       const itemData = {
         product_id: 'print-catalog-custom',
@@ -346,10 +382,11 @@ const CatalogDesigner = () => {
           <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{pages.length} sidor</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-slate-500">{quantity} ex &times; {getPrice(quantity)} kr</span>
-          <span className="text-lg font-bold text-[#2a9d8f]">{totalPrice} kr</span>
-          <Button onClick={handleAddToCart} disabled={submitting} className="bg-[#2a9d8f] hover:bg-[#238b7e] h-10 px-5" data-testid="add-to-cart-btn">
-            {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-1.5" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>}
+          {!isAdminMode && <span className="text-sm text-slate-500">{quantity} ex &times; {getPrice(quantity)} kr</span>}
+          {!isAdminMode && <span className="text-lg font-bold text-[#2a9d8f]">{totalPrice} kr</span>}
+          {isAdminMode && <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-semibold">Admin-redigering</span>}
+          <Button onClick={handleAddToCart} disabled={submitting} className={`h-10 px-5 ${isAdminMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-[#2a9d8f] hover:bg-[#238b7e]'}`} data-testid="add-to-cart-btn">
+            {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-1.5" />{isAdminMode ? 'Spara design' : editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>}
           </Button>
         </div>
       </div>

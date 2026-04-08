@@ -20,6 +20,10 @@ def get_seed_products():
         Product(name="Symärken med Namn", category="namnskylt", description="Sybara namnlappar i mjukt tyg. Perfekt för ömtåliga plagg. 25 st i paketet.", price=129.0, images=["https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600"], colors=["Vit", "Beige", "Rosa", "Ljusblå"], sizes=["Standard (2x6cm)"], model_type="nametag"),
         Product(name="Namnstämpel för Kläder", category="namnskylt", description="Självfärgande stämpel för att märka kläder, väskor och lunchboxar. Tål tvätt upp till 90°C!", price=199.0, images=["https://images.unsplash.com/photo-1584727638096-042c45049ebe?w=600"], model_type="nametag"),
         Product(name="Namnlappar med Figur", category="namnskylt", description="Strykmärken med söta figurer (djur, fordon, blommor) + barnets namn. 30 st i paketet.", price=179.0, images=["https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600"], colors=["Vit bakgrund", "Färgglad bakgrund"], sizes=["Liten (2x5cm)", "Mellan (2.5x6cm)"], model_type="nametag"),
+        # B2B Products
+        Product(product_id="print-businesscard", name="Visitkort", category="foretag", description="Designa eller ladda upp egna visitkort. Professionell tryckkvalitet.", price=89.0, images=["https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600"], model_type="businesscard"),
+        Product(product_id="print-catalog", name="Katalogutskrift", category="foretag", description="Ladda upp din PDF-katalog och vi trycker den i professionell kvalitet.", price=149.0, images=["https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=600"], model_type="catalog_print"),
+        Product(product_id="print-catalog-custom", name="Egen Katalogdesign", category="foretag", description="Designa din egen produktkatalog med vår editor. Välj mall, lägg till produkter och vi trycker.", price=199.0, images=["https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600"], model_type="catalog_design"),
     ]
 
 

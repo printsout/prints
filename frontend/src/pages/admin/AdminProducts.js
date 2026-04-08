@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase } from 'lucide-react';
 
 // ─── Tag Input Component ──────────────────────────
 function TagInput({ tags, onChange, placeholder, testId }) {
@@ -73,6 +73,7 @@ const AdminProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -182,10 +183,14 @@ const AdminProducts = () => {
     setFormData(prev => ({ ...prev, images: newImages.length > 0 ? newImages : [''] }));
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' ||
+      (categoryFilter === 'b2b' && product.category === 'foretag') ||
+      (categoryFilter === 'shop' && product.category !== 'foretag');
+    return matchesSearch && matchesCategory;
+  });
 
   if (loading) {
     return (
@@ -209,15 +214,34 @@ const AdminProducts = () => {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <Input
-          placeholder="Sök produkter..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Input
+            placeholder="Sök produkter..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+          {[
+            { value: 'all', label: 'Alla' },
+            { value: 'shop', label: 'Webbshop' },
+            { value: 'b2b', label: 'Företag' },
+          ].map(f => (
+            <button
+              key={f.value}
+              onClick={() => setCategoryFilter(f.value)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${categoryFilter === f.value ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+              data-testid={`filter-${f.value}`}
+            >
+              {f.value === 'b2b' && <Briefcase className="w-3.5 h-3.5 inline mr-1" />}
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Products Grid */}
@@ -257,7 +281,14 @@ const AdminProducts = () => {
               </div>
             </div>
             <div className="p-4">
-              <h3 className="font-medium text-slate-900 truncate">{product.name}</h3>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-medium text-slate-900 truncate flex-1">{product.name}</h3>
+                {product.category === 'foretag' && (
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-indigo-100 text-indigo-700 shrink-0">
+                    <Briefcase className="w-2.5 h-2.5" />B2B
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-500">{product.category}</p>
               {product.colors?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
@@ -361,6 +392,9 @@ const AdminProducts = () => {
                       <SelectItem value="totebag">Tygkasse</SelectItem>
                       <SelectItem value="calendar">Kalender</SelectItem>
                       <SelectItem value="nametag">Namnskylt</SelectItem>
+                      <SelectItem value="businesscard">Visitkort</SelectItem>
+                      <SelectItem value="catalog_print">Katalogutskrift</SelectItem>
+                      <SelectItem value="catalog_design">Katalogdesign</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

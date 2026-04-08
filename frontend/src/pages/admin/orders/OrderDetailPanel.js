@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, Package, Printer, Trash2, Truck, ExternalLink } from 'lucide-react';
+import { Download, Package, Printer, Trash2, Truck, ExternalLink, Edit } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Input } from '../../../components/ui/input';
@@ -498,6 +498,16 @@ const CatalogDesignCustomization = ({ item, orderId }) => {
         <Download className="w-3.5 h-3.5" />
         Ladda ner katalog (PDF)
       </button>
+      <a
+        href={`/katalog-designer?admin_edit=${orderId}`}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition-colors w-fit"
+        data-testid="admin-edit-catalog-design"
+      >
+        <Edit className="w-3.5 h-3.5" />
+        Redigera design
+      </a>
     </>
   );
 };

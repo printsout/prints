@@ -118,6 +118,15 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
 
+## B2B-produkter i admin + Katalogdesign-redigeringsverktyg (2026-04-08) - NYTT
+- [x] 3 B2B-produkter seedade i databasen: Visitkort, Katalogutskrift, Egen Katalogdesign
+- [x] AdminProducts visar B2B-produkter med kategorifilter (Alla/Webbshop/Företag) och B2B-badge
+- [x] B2B-produkttyper (businesscard, catalog_print, catalog_design) tillagda i produkttyp-dropdown
+- [x] B2B-produkter dolda från den publika produktsidan (filtreras bort i Products.js)
+- [x] Admin redigeringsverktyg för katalogdesign: `GET/PUT /api/admin/orders/{id}/catalog-design`
+- [x] CatalogDesigner stödjer `?admin_edit={orderId}` — öppnar designern med orderdata, sparar tillbaka via PUT
+- [x] OrderDetailPanel visar "Redigera design"-knapp (indigo) som öppnar CatalogDesigner i admin-läge
+
 ## PDF-nedladdning för kataloger i admin (2026-04-07) - NYTT
 - [x] Ny backend `catalog_pdf.py` — genererar PDF från katalogdesign-data (omslag, produktsidor, text, kontakt)
 - [x] Ny endpoint `GET /api/admin/orders/{id}/catalog-pdf` — genererar och laddar ner PDF för katalogdesign-ordrar

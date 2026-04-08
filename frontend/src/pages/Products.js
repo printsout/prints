@@ -22,7 +22,7 @@ const Products = () => {
           api.get(`/products/${category ? `?category=${category}` : ''}`),
           api.get('/products/categories')
         ]);
-        setProducts(productsRes.data);
+        setProducts(productsRes.data.filter(p => p.category !== 'foretag'));
         setCategories(categoriesRes.data);
       } catch (error) {
         toast.error('Kunde inte hämta produkter');
