@@ -496,91 +496,172 @@ def _draw_medal(c, cx, cy, r):
 
 
 def _draw_cat(c, cx, cy, r):
-    """Cat silhouette - simple bold shape with prominent ears."""
-    # Head - large circle
-    c.circle(cx, cy, r * 0.55, fill=1, stroke=0)
-    # Left ear - big triangle
-    path = c.beginPath()
-    path.moveTo(cx - r * 0.5, cy + r * 0.25)
-    path.lineTo(cx - r * 0.35, cy + r * 0.9)
-    path.lineTo(cx - r * 0.05, cy + r * 0.4)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
-    # Right ear - big triangle
-    path = c.beginPath()
-    path.moveTo(cx + r * 0.5, cy + r * 0.25)
-    path.lineTo(cx + r * 0.35, cy + r * 0.9)
-    path.lineTo(cx + r * 0.05, cy + r * 0.4)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
+    """Cat outline - matching lucide-react style."""
+    color_hex = MOTIF_COLORS.get("cat", "#FF8C00")
+    c.setStrokeColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
+    # Head - circle
+    c.circle(cx, cy, r * 0.4, fill=0, stroke=1)
+    # Left ear - triangle
+    ear_l = c.beginPath()
+    ear_l.moveTo(cx - r * 0.35, cy + r * 0.25)
+    ear_l.lineTo(cx - r * 0.3, cy + r * 0.7)
+    ear_l.lineTo(cx - r * 0.05, cy + r * 0.35)
+    c.drawPath(ear_l, fill=0, stroke=1)
+    # Right ear - triangle
+    ear_r = c.beginPath()
+    ear_r.moveTo(cx + r * 0.35, cy + r * 0.25)
+    ear_r.lineTo(cx + r * 0.3, cy + r * 0.7)
+    ear_r.lineTo(cx + r * 0.05, cy + r * 0.35)
+    c.drawPath(ear_r, fill=0, stroke=1)
+    # Eyes - small filled dots
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.15, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
+    # Whiskers
+    c.line(cx - r * 0.15, cy - r * 0.05, cx - r * 0.45, cy + r * 0.0)
+    c.line(cx - r * 0.15, cy - r * 0.05, cx - r * 0.45, cy - r * 0.1)
+    c.line(cx + r * 0.15, cy - r * 0.05, cx + r * 0.45, cy + r * 0.0)
+    c.line(cx + r * 0.15, cy - r * 0.05, cx + r * 0.45, cy - r * 0.1)
 
 
 def _draw_dog(c, cx, cy, r):
-    """Dog silhouette - round head with big floppy ears."""
-    # Floppy ears (drawn first, behind head)
-    c.ellipse(cx - r * 0.7, cy - r * 0.4, cx - r * 0.15, cy + r * 0.45, fill=1, stroke=0)
-    c.ellipse(cx + r * 0.15, cy - r * 0.4, cx + r * 0.7, cy + r * 0.45, fill=1, stroke=0)
+    """Dog outline - matching lucide-react style."""
+    color_hex = MOTIF_COLORS.get("dog", "#8D6E63")
+    c.setStrokeColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
     # Head
-    c.circle(cx, cy + r * 0.1, r * 0.5, fill=1, stroke=0)
-    # Snout
-    c.ellipse(cx - r * 0.2, cy - r * 0.25, cx + r * 0.2, cy + r * 0.05, fill=1, stroke=0)
+    c.circle(cx, cy + r * 0.05, r * 0.4, fill=0, stroke=1)
+    # Left floppy ear
+    ear_l = c.beginPath()
+    ear_l.moveTo(cx - r * 0.35, cy + r * 0.2)
+    ear_l.curveTo(cx - r * 0.65, cy + r * 0.3, cx - r * 0.65, cy - r * 0.2, cx - r * 0.4, cy - r * 0.35)
+    c.drawPath(ear_l, fill=0, stroke=1)
+    # Right floppy ear
+    ear_r = c.beginPath()
+    ear_r.moveTo(cx + r * 0.35, cy + r * 0.2)
+    ear_r.curveTo(cx + r * 0.65, cy + r * 0.3, cx + r * 0.65, cy - r * 0.2, cx + r * 0.4, cy - r * 0.35)
+    c.drawPath(ear_r, fill=0, stroke=1)
+    # Eyes
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.15, cy + r * 0.1, r * 0.04, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.1, r * 0.04, fill=1, stroke=0)
+    # Nose
+    c.circle(cx, cy - r * 0.05, r * 0.06, fill=1, stroke=0)
 
 
 def _draw_rabbit(c, cx, cy, r):
-    """Rabbit silhouette - round head with very long ears."""
-    # Head
-    c.circle(cx, cy - r * 0.2, r * 0.45, fill=1, stroke=0)
-    # Long ears
-    c.ellipse(cx - r * 0.3, cy + r * 0.05, cx - r * 0.05, cy + r * 0.95, fill=1, stroke=0)
-    c.ellipse(cx + r * 0.05, cy + r * 0.05, cx + r * 0.3, cy + r * 0.95, fill=1, stroke=0)
+    """Rabbit outline - matching lucide-react Rabbit icon style."""
+    color_hex = MOTIF_COLORS.get("rabbit", "#F48FB1")
+    c.setStrokeColor(HexColor(color_hex))
+    c.setFillColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
+    # Body - round oval
+    body_cy = cy - r * 0.2
+    c.ellipse(cx - r * 0.4, body_cy - r * 0.35, cx + r * 0.4, body_cy + r * 0.3, fill=0, stroke=1)
+    # Head - smaller circle on top-left of body
+    head_cx = cx - r * 0.15
+    head_cy = body_cy + r * 0.35
+    c.circle(head_cx, head_cy, r * 0.25, fill=0, stroke=1)
+    # Left ear - long curved
+    ear_path = c.beginPath()
+    ear_path.moveTo(head_cx - r * 0.15, head_cy + r * 0.2)
+    ear_path.curveTo(head_cx - r * 0.35, head_cy + r * 0.55, head_cx - r * 0.3, head_cy + r * 0.85, head_cx - r * 0.12, head_cy + r * 0.9)
+    ear_path.curveTo(head_cx - r * 0.0, head_cy + r * 0.85, head_cx - r * 0.05, head_cy + r * 0.5, head_cx - r * 0.05, head_cy + r * 0.25)
+    c.drawPath(ear_path, fill=0, stroke=1)
+    # Right ear - long curved
+    ear_path2 = c.beginPath()
+    ear_path2.moveTo(head_cx + r * 0.05, head_cy + r * 0.22)
+    ear_path2.curveTo(head_cx + r * 0.1, head_cy + r * 0.6, head_cx + r * 0.15, head_cy + r * 0.88, head_cx + r * 0.25, head_cy + r * 0.92)
+    ear_path2.curveTo(head_cx + r * 0.35, head_cy + r * 0.85, head_cx + r * 0.3, head_cy + r * 0.55, head_cx + r * 0.2, head_cy + r * 0.25)
+    c.drawPath(ear_path2, fill=0, stroke=1)
+    # Hind legs - two short curves at bottom
+    leg1 = c.beginPath()
+    leg1.moveTo(cx - r * 0.15, body_cy - r * 0.32)
+    leg1.curveTo(cx - r * 0.2, body_cy - r * 0.55, cx - r * 0.05, body_cy - r * 0.55, cx - r * 0.05, body_cy - r * 0.35)
+    c.drawPath(leg1, fill=0, stroke=1)
+    leg2 = c.beginPath()
+    leg2.moveTo(cx + r * 0.1, body_cy - r * 0.32)
+    leg2.curveTo(cx + r * 0.05, body_cy - r * 0.55, cx + r * 0.2, body_cy - r * 0.55, cx + r * 0.2, body_cy - r * 0.35)
+    c.drawPath(leg2, fill=0, stroke=1)
+    # Tail - small spiral at back
+    tail = c.beginPath()
+    tail_x = cx + r * 0.38
+    tail_y = body_cy
+    tail.moveTo(tail_x, tail_y)
+    tail.curveTo(tail_x + r * 0.15, tail_y + r * 0.15, tail_x + r * 0.2, tail_y - r * 0.1, tail_x + r * 0.08, tail_y - r * 0.15)
+    c.drawPath(tail, fill=0, stroke=1)
 
 
 def _draw_fish(c, cx, cy, r):
-    """Fish silhouette - body with tail fin."""
+    """Fish outline - matching lucide-react style."""
+    color_hex = MOTIF_COLORS.get("fish", "#29B6F6")
+    c.setStrokeColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
     # Body
-    c.ellipse(cx - r * 0.55, cy - r * 0.3, cx + r * 0.25, cy + r * 0.3, fill=1, stroke=0)
+    c.ellipse(cx - r * 0.5, cy - r * 0.3, cx + r * 0.25, cy + r * 0.3, fill=0, stroke=1)
     # Tail fin
     path = c.beginPath()
-    path.moveTo(cx + r * 0.15, cy)
-    path.lineTo(cx + r * 0.65, cy + r * 0.4)
-    path.lineTo(cx + r * 0.65, cy - r * 0.4)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
+    path.moveTo(cx + r * 0.2, cy + r * 0.05)
+    path.lineTo(cx + r * 0.6, cy + r * 0.35)
+    path.moveTo(cx + r * 0.2, cy - r * 0.05)
+    path.lineTo(cx + r * 0.6, cy - r * 0.35)
+    c.drawPath(path, fill=0, stroke=1)
+    # Eye
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.2, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
 
 
 def _draw_bird(c, cx, cy, r):
-    """Bird silhouette - body with wing and beak."""
+    """Bird outline - matching lucide-react style."""
+    color_hex = MOTIF_COLORS.get("bird", "#66BB6A")
+    c.setStrokeColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
     # Body
-    c.ellipse(cx - r * 0.4, cy - r * 0.25, cx + r * 0.3, cy + r * 0.25, fill=1, stroke=0)
+    c.ellipse(cx - r * 0.35, cy - r * 0.2, cx + r * 0.3, cy + r * 0.2, fill=0, stroke=1)
     # Head
-    c.circle(cx - r * 0.35, cy + r * 0.15, r * 0.25, fill=1, stroke=0)
+    c.circle(cx - r * 0.35, cy + r * 0.15, r * 0.2, fill=0, stroke=1)
     # Beak
     path = c.beginPath()
-    path.moveTo(cx - r * 0.55, cy + r * 0.2)
-    path.lineTo(cx - r * 0.8, cy + r * 0.1)
-    path.lineTo(cx - r * 0.55, cy + r * 0.05)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
+    path.moveTo(cx - r * 0.52, cy + r * 0.2)
+    path.lineTo(cx - r * 0.75, cy + r * 0.12)
+    path.lineTo(cx - r * 0.52, cy + r * 0.08)
+    c.drawPath(path, fill=0, stroke=1)
     # Tail
     path = c.beginPath()
     path.moveTo(cx + r * 0.25, cy + r * 0.05)
-    path.lineTo(cx + r * 0.6, cy + r * 0.25)
-    path.lineTo(cx + r * 0.55, cy - r * 0.1)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
+    path.lineTo(cx + r * 0.55, cy + r * 0.2)
+    path.moveTo(cx + r * 0.25, cy - r * 0.05)
+    path.lineTo(cx + r * 0.5, cy - r * 0.1)
+    c.drawPath(path, fill=0, stroke=1)
+    # Eye
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.35, cy + r * 0.2, r * 0.04, fill=1, stroke=0)
 
 
 def _draw_bug(c, cx, cy, r):
-    """Ladybug silhouette - oval with dots."""
+    """Ladybug outline - matching lucide-react style."""
+    color_hex = MOTIF_COLORS.get("bug", "#EF5350")
+    c.setStrokeColor(HexColor(color_hex))
+    lw = max(0.5, r * 0.07)
+    c.setLineWidth(lw)
     # Body
-    c.circle(cx, cy, r * 0.55, fill=1, stroke=0)
+    c.circle(cx, cy - r * 0.05, r * 0.45, fill=0, stroke=1)
     # Center line
-    c.setStrokeColor(black)
-    c.setLineWidth(max(0.3, r * 0.04))
-    c.line(cx, cy + r * 0.55, cx, cy - r * 0.55)
+    c.line(cx, cy + r * 0.4, cx, cy - r * 0.5)
     # Head
-    c.setFillColor(black)
-    c.circle(cx, cy + r * 0.65, r * 0.2, fill=1, stroke=0)
+    c.circle(cx, cy + r * 0.55, r * 0.15, fill=0, stroke=1)
+    # Spots
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.15, cy + r * 0.1, r * 0.07, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.1, r * 0.07, fill=1, stroke=0)
+    c.circle(cx - r * 0.12, cy - r * 0.15, r * 0.06, fill=1, stroke=0)
+    c.circle(cx + r * 0.12, cy - r * 0.15, r * 0.06, fill=1, stroke=0)
 
 
 def _draw_baby(c, cx, cy, r):
