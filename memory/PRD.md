@@ -175,6 +175,11 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] "Designa själv" / "Ladda upp PDF" toggle på B2B-sidan under Katalog-tjänsten
 - [x] "Öppna designverktyget"-knapp navigerar till `/katalog-designer`
 
+## Namnlapps-PDF Motiv Buggfix (2026-04-09) - NYTT
+- [x] Lagt till 33+ vektorritningar för alla saknade motiv (cat, dog, rabbit, fish, bird, bug, car, plane, rocket, ship, bike, train, gamepad, sparkles, etc.)
+- [x] Tidigare ritades saknade motiv som en enkel cirkel (prick) — nu har varje motiv en unik igenkännbar form
+- [x] Fallback ändrad från cirkel till stjärna för eventuella okända motiv
+
 ## Backlog
 ### P1
 - [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
@@ -184,6 +189,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] ~~Bryt ut server.py routers~~ (2026-04-06)
 - [x] ~~Minska Cart.js komplexitet~~ (2026-04-06)
 - [x] ~~Redigera varukorgsartikel~~ (2026-04-07)
+- [ ] Admin Produktredigerare: Feature Parity (villkorliga konfigurationsfält per produkttyp)
 
 ### P2
 - [ ] Implementera Swish-betalningar

@@ -163,12 +163,12 @@ def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: flo
         "moon": lambda: _draw_moon(c, cx, cy, s * 0.4),
         "snowflake": lambda: _draw_snowflake(c, cx, cy, s * 0.4),
         "tree": lambda: _draw_tree(c, cx, cy, s * 0.45),
-        "leaf": lambda: _draw_tree(c, cx, cy, s * 0.45),
+        "leaf": lambda: _draw_leaf(c, cx, cy, s * 0.4),
         "crown": lambda: _draw_crown(c, cx, cy, s * 0.4),
-        "football": lambda: c.circle(cx, cy, s * 0.35, fill=1, stroke=0),
-        "volleyball": lambda: c.circle(cx, cy, s * 0.35, fill=1, stroke=0),
+        "football": lambda: _draw_football(c, cx, cy, s * 0.35),
+        "volleyball": lambda: _draw_volleyball(c, cx, cy, s * 0.35),
         "trophy": lambda: _draw_trophy(c, cx, cy, s * 0.4),
-        "medal": lambda: _draw_trophy(c, cx, cy, s * 0.4),
+        "medal": lambda: _draw_medal(c, cx, cy, s * 0.4),
         "cloud": lambda: _draw_cloud(c, cx, cy, s * 0.4),
         "gem": lambda: _draw_diamond(c, cx, cy, s * 0.4),
         "diamond": lambda: _draw_diamond(c, cx, cy, s * 0.4),
@@ -176,12 +176,52 @@ def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: flo
         "zap": lambda: _draw_zap(c, cx, cy, s * 0.45),
         "mountain": lambda: _draw_triangle(c, cx, cy, s * 0.45),
         "flag": lambda: _draw_flag(c, cx, cy, s * 0.4),
+        # Animals
+        "cat": lambda: _draw_cat(c, cx, cy, s * 0.4),
+        "dog": lambda: _draw_dog(c, cx, cy, s * 0.4),
+        "rabbit": lambda: _draw_rabbit(c, cx, cy, s * 0.4),
+        "fish": lambda: _draw_fish(c, cx, cy, s * 0.4),
+        "bird": lambda: _draw_bird(c, cx, cy, s * 0.4),
+        "bug": lambda: _draw_bug(c, cx, cy, s * 0.4),
+        "baby": lambda: _draw_baby(c, cx, cy, s * 0.4),
+        "horse": lambda: _draw_horse(c, cx, cy, s * 0.4),
+        "footprints": lambda: _draw_footprints(c, cx, cy, s * 0.4),
+        # Vehicles
+        "car": lambda: _draw_car(c, cx, cy, s * 0.4),
+        "plane": lambda: _draw_plane(c, cx, cy, s * 0.4),
+        "rocket": lambda: _draw_rocket(c, cx, cy, s * 0.45),
+        "ship": lambda: _draw_ship(c, cx, cy, s * 0.4),
+        "bike": lambda: _draw_bike(c, cx, cy, s * 0.4),
+        "train": lambda: _draw_train(c, cx, cy, s * 0.4),
+        # Sports & activities
+        "gamepad": lambda: _draw_gamepad(c, cx, cy, s * 0.4),
+        "sparkles": lambda: _draw_sparkles(c, cx, cy, s * 0.4),
+        "swimming": lambda: _draw_waves(c, cx, cy, s * 0.4),
+        "dumbbell": lambda: _draw_dumbbell(c, cx, cy, s * 0.4),
+        "target": lambda: _draw_target(c, cx, cy, s * 0.4),
+        "swords": lambda: _draw_swords(c, cx, cy, s * 0.4),
+        "shield": lambda: _draw_shield(c, cx, cy, s * 0.4),
+        "weight": lambda: _draw_dumbbell(c, cx, cy, s * 0.4),
+        "running": lambda: _draw_running(c, cx, cy, s * 0.4),
+        # Fun
+        "rainbow": lambda: _draw_rainbow(c, cx, cy, s * 0.4),
+        "anchor": lambda: _draw_anchor(c, cx, cy, s * 0.4),
+        "skull": lambda: _draw_skull(c, cx, cy, s * 0.4),
+        "ghost": lambda: _draw_ghost(c, cx, cy, s * 0.4),
+        "flame": lambda: _draw_flame(c, cx, cy, s * 0.4),
+        # Food
+        "icecream": lambda: _draw_icecream(c, cx, cy, s * 0.4),
+        "cherry": lambda: _draw_cherry(c, cx, cy, s * 0.4),
+        "apple": lambda: _draw_apple(c, cx, cy, s * 0.4),
+        "pizza": lambda: _draw_pizza(c, cx, cy, s * 0.4),
+        "cake": lambda: _draw_cake(c, cx, cy, s * 0.4),
     }
     handler = dispatch.get(motif_id)
     if handler:
         handler()
     else:
-        c.circle(cx, cy, s * 0.35, fill=1, stroke=0)
+        # Fallback: draw a small filled shape instead of plain circle
+        _draw_star(c, cx, cy, s * 0.35, 5)
 
 
 def _draw_star(c, cx, cy, r, points=5):
@@ -329,6 +369,649 @@ def _draw_flag(c, cx, cy, r):
     path.lineTo(cx - r * 0.3, cy)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_leaf(c, cx, cy, r):
+    """Leaf shape - pointed oval with stem."""
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.curveTo(cx + r * 0.6, cy + r * 0.3, cx + r * 0.5, cy - r * 0.5, cx, cy - r * 0.7)
+    path.curveTo(cx - r * 0.5, cy - r * 0.5, cx - r * 0.6, cy + r * 0.3, cx, cy + r * 0.7)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_football(c, cx, cy, r):
+    """Football/soccer ball - circle with pentagon pattern."""
+    c.circle(cx, cy, r, fill=1, stroke=0)
+    c.setFillColor(white)
+    _draw_star(c, cx, cy, r * 0.4, 5)
+
+
+def _draw_volleyball(c, cx, cy, r):
+    """Volleyball - circle with cross lines."""
+    c.circle(cx, cy, r, fill=1, stroke=0)
+    c.setStrokeColor(white)
+    c.setLineWidth(0.4)
+    c.line(cx - r, cy, cx + r, cy)
+    c.line(cx, cy - r, cx, cy + r)
+
+
+def _draw_medal(c, cx, cy, r):
+    """Medal - circle with ribbon."""
+    # Ribbon
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.3, cy + r * 0.3)
+    path.lineTo(cx - r * 0.5, cy + r * 0.9)
+    path.lineTo(cx, cy + r * 0.5)
+    path.lineTo(cx + r * 0.5, cy + r * 0.9)
+    path.lineTo(cx + r * 0.3, cy + r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Circle
+    c.circle(cx, cy, r * 0.4, fill=1, stroke=0)
+    c.setFillColor(HexColor("#FFFFFF"))
+    _draw_star(c, cx, cy, r * 0.2, 5)
+
+
+def _draw_cat(c, cx, cy, r):
+    """Cat face with ears."""
+    c.circle(cx, cy - r * 0.1, r * 0.45, fill=1, stroke=0)
+    # Left ear
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.45, cy + r * 0.15)
+    path.lineTo(cx - r * 0.3, cy + r * 0.7)
+    path.lineTo(cx - r * 0.05, cy + r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Right ear
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.45, cy + r * 0.15)
+    path.lineTo(cx + r * 0.3, cy + r * 0.7)
+    path.lineTo(cx + r * 0.05, cy + r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Eyes
+    c.setFillColor(white)
+    c.circle(cx - r * 0.15, cy, r * 0.08, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy, r * 0.08, fill=1, stroke=0)
+
+
+def _draw_dog(c, cx, cy, r):
+    """Dog face with floppy ears."""
+    c.circle(cx, cy, r * 0.4, fill=1, stroke=0)
+    # Floppy ears
+    c.ellipse(cx - r * 0.55, cy - r * 0.15, cx - r * 0.2, cy + r * 0.55, fill=1, stroke=0)
+    c.ellipse(cx + r * 0.2, cy - r * 0.15, cx + r * 0.55, cy + r * 0.55, fill=1, stroke=0)
+    # Snout
+    c.setFillColor(HexColor("#D7CCC8"))
+    c.ellipse(cx - r * 0.2, cy - r * 0.35, cx + r * 0.2, cy - r * 0.05, fill=1, stroke=0)
+    # Nose
+    c.setFillColor(black)
+    c.circle(cx, cy - r * 0.1, r * 0.08, fill=1, stroke=0)
+    # Eyes
+    c.circle(cx - r * 0.15, cy + r * 0.1, r * 0.05, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.1, r * 0.05, fill=1, stroke=0)
+
+
+def _draw_rabbit(c, cx, cy, r):
+    """Rabbit face with long ears."""
+    c.circle(cx, cy - r * 0.2, r * 0.4, fill=1, stroke=0)
+    # Long ears
+    c.ellipse(cx - r * 0.25, cy + r * 0.1, cx - r * 0.05, cy + r * 0.85, fill=1, stroke=0)
+    c.ellipse(cx + r * 0.05, cy + r * 0.1, cx + r * 0.25, cy + r * 0.85, fill=1, stroke=0)
+    # Inner ear (pink tint)
+    c.setFillColor(HexColor("#FFB6C1"))
+    c.ellipse(cx - r * 0.2, cy + r * 0.2, cx - r * 0.1, cy + r * 0.7, fill=1, stroke=0)
+    c.ellipse(cx + r * 0.1, cy + r * 0.2, cx + r * 0.2, cy + r * 0.7, fill=1, stroke=0)
+    # Eyes
+    c.setFillColor(black)
+    c.circle(cx - r * 0.12, cy - r * 0.1, r * 0.05, fill=1, stroke=0)
+    c.circle(cx + r * 0.12, cy - r * 0.1, r * 0.05, fill=1, stroke=0)
+
+
+def _draw_fish(c, cx, cy, r):
+    """Simple fish shape."""
+    # Body (ellipse-like)
+    c.ellipse(cx - r * 0.5, cy - r * 0.3, cx + r * 0.3, cy + r * 0.3, fill=1, stroke=0)
+    # Tail
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.2, cy)
+    path.lineTo(cx + r * 0.6, cy + r * 0.35)
+    path.lineTo(cx + r * 0.6, cy - r * 0.35)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Eye
+    c.setFillColor(white)
+    c.circle(cx - r * 0.2, cy + r * 0.05, r * 0.08, fill=1, stroke=0)
+    c.setFillColor(black)
+    c.circle(cx - r * 0.2, cy + r * 0.05, r * 0.04, fill=1, stroke=0)
+
+
+def _draw_bird(c, cx, cy, r):
+    """Simple bird silhouette."""
+    # Body
+    c.ellipse(cx - r * 0.35, cy - r * 0.2, cx + r * 0.25, cy + r * 0.2, fill=1, stroke=0)
+    # Head
+    c.circle(cx - r * 0.35, cy + r * 0.15, r * 0.2, fill=1, stroke=0)
+    # Beak
+    c.setFillColor(HexColor("#FF9800"))
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.55, cy + r * 0.15)
+    path.lineTo(cx - r * 0.75, cy + r * 0.1)
+    path.lineTo(cx - r * 0.55, cy + r * 0.05)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Wing
+    color_hex = MOTIF_COLORS.get("bird", "#66BB6A")
+    c.setFillColor(HexColor(color_hex))
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.1, cy + r * 0.1)
+    path.curveTo(cx + r * 0.2, cy + r * 0.5, cx + r * 0.5, cy + r * 0.3, cx + r * 0.3, cy)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Tail
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.2, cy)
+    path.lineTo(cx + r * 0.55, cy + r * 0.2)
+    path.lineTo(cx + r * 0.5, cy - r * 0.1)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_bug(c, cx, cy, r):
+    """Ladybug - circle with line and dots."""
+    c.circle(cx, cy, r * 0.45, fill=1, stroke=0)
+    # Center line
+    c.setStrokeColor(black)
+    c.setLineWidth(0.3)
+    c.line(cx, cy + r * 0.45, cx, cy - r * 0.45)
+    # Spots
+    c.setFillColor(black)
+    c.circle(cx - r * 0.15, cy + r * 0.15, r * 0.08, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.15, r * 0.08, fill=1, stroke=0)
+    c.circle(cx - r * 0.12, cy - r * 0.15, r * 0.07, fill=1, stroke=0)
+    c.circle(cx + r * 0.12, cy - r * 0.15, r * 0.07, fill=1, stroke=0)
+    # Head
+    c.circle(cx, cy + r * 0.55, r * 0.15, fill=1, stroke=0)
+
+
+def _draw_baby(c, cx, cy, r):
+    """Baby face - simple circle with features."""
+    c.circle(cx, cy, r * 0.45, fill=1, stroke=0)
+    # Eyes
+    c.setFillColor(black)
+    c.circle(cx - r * 0.12, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
+    c.circle(cx + r * 0.12, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
+    # Smile
+    c.setStrokeColor(black)
+    c.setLineWidth(0.3)
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.1, cy - r * 0.1)
+    path.curveTo(cx - r * 0.05, cy - r * 0.2, cx + r * 0.05, cy - r * 0.2, cx + r * 0.1, cy - r * 0.1)
+    c.drawPath(path, fill=0, stroke=1)
+
+
+def _draw_horse(c, cx, cy, r):
+    """Horse head silhouette."""
+    # Head
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.15, cy - r * 0.5)
+    path.curveTo(cx - r * 0.4, cy - r * 0.3, cx - r * 0.35, cy + r * 0.2, cx - r * 0.15, cy + r * 0.4)
+    path.lineTo(cx + r * 0.1, cy + r * 0.6)
+    path.curveTo(cx + r * 0.35, cy + r * 0.4, cx + r * 0.35, cy + r * 0.1, cx + r * 0.2, cy - r * 0.2)
+    path.lineTo(cx + r * 0.15, cy - r * 0.5)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Ear
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.5)
+    path.lineTo(cx - r * 0.1, cy + r * 0.75)
+    path.lineTo(cx + r * 0.1, cy + r * 0.6)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_footprints(c, cx, cy, r):
+    """Paw print - central pad + toe pads."""
+    # Central pad
+    c.ellipse(cx - r * 0.2, cy - r * 0.35, cx + r * 0.2, cy + r * 0.05, fill=1, stroke=0)
+    # Toe pads
+    c.circle(cx - r * 0.25, cy + r * 0.25, r * 0.12, fill=1, stroke=0)
+    c.circle(cx - r * 0.05, cy + r * 0.4, r * 0.12, fill=1, stroke=0)
+    c.circle(cx + r * 0.15, cy + r * 0.35, r * 0.12, fill=1, stroke=0)
+    c.circle(cx + r * 0.3, cy + r * 0.2, r * 0.1, fill=1, stroke=0)
+
+
+def _draw_car(c, cx, cy, r):
+    """Simple side-view car."""
+    # Body
+    c.rect(cx - r * 0.5, cy - r * 0.15, r, r * 0.35, fill=1, stroke=0)
+    # Roof
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.2, cy + r * 0.2)
+    path.lineTo(cx - r * 0.1, cy + r * 0.5)
+    path.lineTo(cx + r * 0.25, cy + r * 0.5)
+    path.lineTo(cx + r * 0.35, cy + r * 0.2)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Wheels
+    c.setFillColor(black)
+    c.circle(cx - r * 0.25, cy - r * 0.2, r * 0.12, fill=1, stroke=0)
+    c.circle(cx + r * 0.25, cy - r * 0.2, r * 0.12, fill=1, stroke=0)
+
+
+def _draw_plane(c, cx, cy, r):
+    """Simple airplane from the side."""
+    # Fuselage
+    c.ellipse(cx - r * 0.6, cy - r * 0.1, cx + r * 0.4, cy + r * 0.1, fill=1, stroke=0)
+    # Wing
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.1, cy + r * 0.05)
+    path.lineTo(cx, cy + r * 0.5)
+    path.lineTo(cx + r * 0.3, cy + r * 0.5)
+    path.lineTo(cx + r * 0.1, cy + r * 0.05)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Tail fin
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.3, cy + r * 0.05)
+    path.lineTo(cx + r * 0.35, cy + r * 0.35)
+    path.lineTo(cx + r * 0.5, cy + r * 0.05)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_rocket(c, cx, cy, r):
+    """Rocket pointing up."""
+    # Body
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.curveTo(cx + r * 0.2, cy + r * 0.5, cx + r * 0.2, cy - r * 0.2, cx + r * 0.15, cy - r * 0.4)
+    path.lineTo(cx - r * 0.15, cy - r * 0.4)
+    path.curveTo(cx - r * 0.2, cy - r * 0.2, cx - r * 0.2, cy + r * 0.5, cx, cy + r * 0.7)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Fins
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.15, cy - r * 0.3)
+    path.lineTo(cx - r * 0.35, cy - r * 0.5)
+    path.lineTo(cx - r * 0.15, cy - r * 0.1)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.15, cy - r * 0.3)
+    path.lineTo(cx + r * 0.35, cy - r * 0.5)
+    path.lineTo(cx + r * 0.15, cy - r * 0.1)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Window
+    c.setFillColor(white)
+    c.circle(cx, cy + r * 0.2, r * 0.08, fill=1, stroke=0)
+    # Flame
+    c.setFillColor(HexColor("#FF9800"))
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.1, cy - r * 0.4)
+    path.lineTo(cx, cy - r * 0.65)
+    path.lineTo(cx + r * 0.1, cy - r * 0.4)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_ship(c, cx, cy, r):
+    """Simple boat/ship."""
+    # Hull
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.5, cy)
+    path.lineTo(cx - r * 0.35, cy - r * 0.3)
+    path.lineTo(cx + r * 0.35, cy - r * 0.3)
+    path.lineTo(cx + r * 0.5, cy)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Mast
+    c.setLineWidth(0.4)
+    c.line(cx, cy, cx, cy + r * 0.6)
+    # Sail
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.55)
+    path.lineTo(cx + r * 0.35, cy + r * 0.1)
+    path.lineTo(cx, cy + r * 0.1)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_bike(c, cx, cy, r):
+    """Simple bicycle."""
+    # Wheels
+    c.setFillColor(HexColor(MOTIF_COLORS.get("bike", "#43A047")))
+    c.setStrokeColor(HexColor(MOTIF_COLORS.get("bike", "#43A047")))
+    c.setLineWidth(0.4)
+    c.circle(cx - r * 0.3, cy - r * 0.15, r * 0.22, fill=0, stroke=1)
+    c.circle(cx + r * 0.3, cy - r * 0.15, r * 0.22, fill=0, stroke=1)
+    # Frame
+    c.line(cx - r * 0.3, cy - r * 0.15, cx, cy + r * 0.2)
+    c.line(cx, cy + r * 0.2, cx + r * 0.3, cy - r * 0.15)
+    c.line(cx, cy + r * 0.2, cx - r * 0.15, cy + r * 0.2)
+    # Handlebars
+    c.line(cx + r * 0.3, cy - r * 0.15, cx + r * 0.2, cy + r * 0.2)
+    # Seat
+    c.line(cx - r * 0.05, cy + r * 0.25, cx + r * 0.05, cy + r * 0.25)
+
+
+def _draw_train(c, cx, cy, r):
+    """Simple train engine."""
+    # Body
+    c.rect(cx - r * 0.35, cy - r * 0.15, r * 0.6, r * 0.5, fill=1, stroke=0)
+    # Cabin
+    c.rect(cx - r * 0.35, cy + r * 0.35, r * 0.35, r * 0.3, fill=1, stroke=0)
+    # Smokestack
+    c.rect(cx + r * 0.05, cy + r * 0.35, r * 0.1, r * 0.2, fill=1, stroke=0)
+    # Wheels
+    c.setFillColor(black)
+    c.circle(cx - r * 0.2, cy - r * 0.2, r * 0.1, fill=1, stroke=0)
+    c.circle(cx + r * 0.1, cy - r * 0.2, r * 0.1, fill=1, stroke=0)
+    # Window
+    c.setFillColor(white)
+    c.rect(cx - r * 0.28, cy + r * 0.42, r * 0.15, r * 0.15, fill=1, stroke=0)
+
+
+def _draw_gamepad(c, cx, cy, r):
+    """Game controller."""
+    # Body
+    c.ellipse(cx - r * 0.5, cy - r * 0.25, cx + r * 0.5, cy + r * 0.25, fill=1, stroke=0)
+    # D-pad
+    c.setFillColor(HexColor("#FFFFFF"))
+    c.rect(cx - r * 0.35, cy - r * 0.03, r * 0.2, r * 0.06, fill=1, stroke=0)
+    c.rect(cx - r * 0.28, cy - r * 0.1, r * 0.06, r * 0.2, fill=1, stroke=0)
+    # Buttons
+    c.circle(cx + r * 0.2, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
+    c.circle(cx + r * 0.3, cy, r * 0.05, fill=1, stroke=0)
+
+
+def _draw_sparkles(c, cx, cy, r):
+    """Sparkle/glitter - 4-point stars."""
+    # Main sparkle
+    _draw_4point_star(c, cx, cy, r * 0.5)
+    # Smaller sparkles
+    color_hex = MOTIF_COLORS.get("sparkles", "#AB47BC")
+    c.setFillColor(HexColor(color_hex))
+    _draw_4point_star(c, cx - r * 0.4, cy + r * 0.3, r * 0.25)
+    _draw_4point_star(c, cx + r * 0.35, cy - r * 0.35, r * 0.2)
+
+
+def _draw_4point_star(c, cx, cy, r):
+    """4-pointed star shape."""
+    path = c.beginPath()
+    path.moveTo(cx, cy + r)
+    path.lineTo(cx + r * 0.2, cy + r * 0.2)
+    path.lineTo(cx + r, cy)
+    path.lineTo(cx + r * 0.2, cy - r * 0.2)
+    path.lineTo(cx, cy - r)
+    path.lineTo(cx - r * 0.2, cy - r * 0.2)
+    path.lineTo(cx - r, cy)
+    path.lineTo(cx - r * 0.2, cy + r * 0.2)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_waves(c, cx, cy, r):
+    """Wavy water lines."""
+    color_hex = MOTIF_COLORS.get("swimming", "#0288D1")
+    c.setStrokeColor(HexColor(color_hex))
+    c.setLineWidth(0.5)
+    for offset in [r * 0.2, 0, -r * 0.2]:
+        path = c.beginPath()
+        path.moveTo(cx - r * 0.5, cy + offset)
+        path.curveTo(cx - r * 0.25, cy + offset + r * 0.15, cx, cy + offset - r * 0.15, cx + r * 0.25, cy + offset)
+        path.curveTo(cx + r * 0.35, cy + offset + r * 0.1, cx + r * 0.45, cy + offset - r * 0.05, cx + r * 0.5, cy + offset)
+        c.drawPath(path, fill=0, stroke=1)
+
+
+def _draw_dumbbell(c, cx, cy, r):
+    """Dumbbell weight."""
+    # Bar
+    c.rect(cx - r * 0.3, cy - r * 0.05, r * 0.6, r * 0.1, fill=1, stroke=0)
+    # Left weight
+    c.rect(cx - r * 0.5, cy - r * 0.25, r * 0.15, r * 0.5, fill=1, stroke=0)
+    # Right weight
+    c.rect(cx + r * 0.35, cy - r * 0.25, r * 0.15, r * 0.5, fill=1, stroke=0)
+
+
+def _draw_target(c, cx, cy, r):
+    """Bullseye target."""
+    c.circle(cx, cy, r * 0.45, fill=1, stroke=0)
+    c.setFillColor(white)
+    c.circle(cx, cy, r * 0.3, fill=1, stroke=0)
+    color_hex = MOTIF_COLORS.get("target", "#E53935")
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx, cy, r * 0.15, fill=1, stroke=0)
+
+
+def _draw_swords(c, cx, cy, r):
+    """Crossed swords."""
+    c.setStrokeColor(HexColor(MOTIF_COLORS.get("swords", "#78909C")))
+    c.setLineWidth(0.6)
+    # Sword 1 (diagonal /)
+    c.line(cx - r * 0.4, cy - r * 0.4, cx + r * 0.4, cy + r * 0.4)
+    # Sword 2 (diagonal \)
+    c.line(cx + r * 0.4, cy - r * 0.4, cx - r * 0.4, cy + r * 0.4)
+    # Guards
+    c.setLineWidth(0.8)
+    c.line(cx - r * 0.2, cy + r * 0.15, cx + r * 0.05, cy - r * 0.1)
+    c.line(cx - r * 0.05, cy - r * 0.1, cx + r * 0.2, cy + r * 0.15)
+
+
+def _draw_shield(c, cx, cy, r):
+    """Shield shape."""
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.lineTo(cx + r * 0.45, cy + r * 0.35)
+    path.lineTo(cx + r * 0.45, cy - r * 0.1)
+    path.curveTo(cx + r * 0.45, cy - r * 0.5, cx, cy - r * 0.7, cx, cy - r * 0.7)
+    path.curveTo(cx, cy - r * 0.7, cx - r * 0.45, cy - r * 0.5, cx - r * 0.45, cy - r * 0.1)
+    path.lineTo(cx - r * 0.45, cy + r * 0.35)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Center stripe
+    c.setFillColor(white)
+    c.rect(cx - r * 0.05, cy - r * 0.4, r * 0.1, r * 0.8, fill=1, stroke=0)
+
+
+def _draw_running(c, cx, cy, r):
+    """Running person - stick figure in motion."""
+    color_hex = MOTIF_COLORS.get("running", "#FF5722")
+    c.setStrokeColor(HexColor(color_hex))
+    c.setFillColor(HexColor(color_hex))
+    c.setLineWidth(0.5)
+    # Head
+    c.circle(cx, cy + r * 0.45, r * 0.12, fill=1, stroke=0)
+    # Body
+    c.line(cx, cy + r * 0.33, cx + r * 0.05, cy - r * 0.1)
+    # Arms
+    c.line(cx, cy + r * 0.2, cx - r * 0.25, cy + r * 0.35)
+    c.line(cx, cy + r * 0.2, cx + r * 0.25, cy + r * 0.1)
+    # Legs
+    c.line(cx + r * 0.05, cy - r * 0.1, cx - r * 0.2, cy - r * 0.45)
+    c.line(cx + r * 0.05, cy - r * 0.1, cx + r * 0.25, cy - r * 0.4)
+
+
+def _draw_rainbow(c, cx, cy, r):
+    """Rainbow - concentric arcs."""
+    colors = ["#E53935", "#FF9800", "#FFC107", "#43A047", "#1E88E5", "#7E57C2"]
+    c.setLineWidth(0.5)
+    for i, col in enumerate(colors):
+        c.setStrokeColor(HexColor(col))
+        arc_r = r * (0.6 - i * 0.07)
+        path = c.beginPath()
+        steps = 20
+        for j in range(steps + 1):
+            angle = math.radians(180 * j / steps)
+            px = cx + arc_r * math.cos(angle)
+            py = cy + arc_r * math.sin(angle)
+            if j == 0:
+                path.moveTo(px, py)
+            else:
+                path.lineTo(px, py)
+        c.drawPath(path, fill=0, stroke=1)
+
+
+def _draw_anchor(c, cx, cy, r):
+    """Anchor shape."""
+    c.setStrokeColor(HexColor(MOTIF_COLORS.get("anchor", "#37474F")))
+    c.setFillColor(HexColor(MOTIF_COLORS.get("anchor", "#37474F")))
+    c.setLineWidth(0.5)
+    # Ring at top
+    c.circle(cx, cy + r * 0.45, r * 0.1, fill=0, stroke=1)
+    # Vertical shaft
+    c.line(cx, cy + r * 0.35, cx, cy - r * 0.4)
+    # Cross bar
+    c.line(cx - r * 0.2, cy + r * 0.15, cx + r * 0.2, cy + r * 0.15)
+    # Curved arms at bottom
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.35, cy - r * 0.15)
+    path.curveTo(cx - r * 0.35, cy - r * 0.4, cx, cy - r * 0.45, cx, cy - r * 0.4)
+    c.drawPath(path, fill=0, stroke=1)
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.35, cy - r * 0.15)
+    path.curveTo(cx + r * 0.35, cy - r * 0.4, cx, cy - r * 0.45, cx, cy - r * 0.4)
+    c.drawPath(path, fill=0, stroke=1)
+
+
+def _draw_skull(c, cx, cy, r):
+    """Skull - round top with jaw."""
+    c.circle(cx, cy + r * 0.1, r * 0.4, fill=1, stroke=0)
+    # Jaw
+    c.rect(cx - r * 0.25, cy - r * 0.3, r * 0.5, r * 0.2, fill=1, stroke=0)
+    # Eyes
+    c.setFillColor(white)
+    c.circle(cx - r * 0.13, cy + r * 0.15, r * 0.1, fill=1, stroke=0)
+    c.circle(cx + r * 0.13, cy + r * 0.15, r * 0.1, fill=1, stroke=0)
+    # Nose
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.05)
+    path.lineTo(cx - r * 0.05, cy - r * 0.05)
+    path.lineTo(cx + r * 0.05, cy - r * 0.05)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_ghost(c, cx, cy, r):
+    """Cute ghost shape."""
+    # Body top (half circle)
+    c.circle(cx, cy + r * 0.1, r * 0.4, fill=1, stroke=0)
+    # Body bottom (wavy)
+    c.rect(cx - r * 0.4, cy - r * 0.35, r * 0.8, r * 0.45, fill=1, stroke=0)
+    # Wavy bottom
+    for i in range(3):
+        bx = cx - r * 0.27 + i * r * 0.27
+        c.circle(bx, cy - r * 0.35, r * 0.13, fill=1, stroke=0)
+    # Eyes
+    c.setFillColor(black)
+    c.circle(cx - r * 0.12, cy + r * 0.15, r * 0.06, fill=1, stroke=0)
+    c.circle(cx + r * 0.12, cy + r * 0.15, r * 0.06, fill=1, stroke=0)
+
+
+def _draw_flame(c, cx, cy, r):
+    """Fire flame."""
+    # Outer flame
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.7)
+    path.curveTo(cx + r * 0.35, cy + r * 0.3, cx + r * 0.4, cy - r * 0.2, cx + r * 0.15, cy - r * 0.5)
+    path.curveTo(cx + r * 0.05, cy - r * 0.2, cx - r * 0.05, cy - r * 0.2, cx - r * 0.15, cy - r * 0.5)
+    path.curveTo(cx - r * 0.4, cy - r * 0.2, cx - r * 0.35, cy + r * 0.3, cx, cy + r * 0.7)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Inner flame (yellow)
+    c.setFillColor(HexColor("#FFC107"))
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.35)
+    path.curveTo(cx + r * 0.15, cy + r * 0.1, cx + r * 0.15, cy - r * 0.15, cx + r * 0.05, cy - r * 0.3)
+    path.curveTo(cx, cy - r * 0.1, cx, cy - r * 0.1, cx - r * 0.05, cy - r * 0.3)
+    path.curveTo(cx - r * 0.15, cy - r * 0.15, cx - r * 0.15, cy + r * 0.1, cx, cy + r * 0.35)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_icecream(c, cx, cy, r):
+    """Ice cream cone."""
+    # Cone
+    color_hex = MOTIF_COLORS.get("icecream", "#F48FB1")
+    c.setFillColor(HexColor("#D2691E"))
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.25, cy)
+    path.lineTo(cx, cy - r * 0.6)
+    path.lineTo(cx + r * 0.25, cy)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Scoop
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx, cy + r * 0.15, r * 0.3, fill=1, stroke=0)
+
+
+def _draw_cherry(c, cx, cy, r):
+    """Two cherries with stems."""
+    color_hex = MOTIF_COLORS.get("cherry", "#D32F2F")
+    c.setFillColor(HexColor(color_hex))
+    c.circle(cx - r * 0.2, cy - r * 0.2, r * 0.22, fill=1, stroke=0)
+    c.circle(cx + r * 0.2, cy - r * 0.15, r * 0.22, fill=1, stroke=0)
+    # Stems
+    c.setStrokeColor(HexColor("#2E7D32"))
+    c.setLineWidth(0.4)
+    c.line(cx - r * 0.2, cy, cx, cy + r * 0.4)
+    c.line(cx + r * 0.2, cy + r * 0.05, cx, cy + r * 0.4)
+    # Leaf
+    c.setFillColor(HexColor("#4CAF50"))
+    path = c.beginPath()
+    path.moveTo(cx, cy + r * 0.4)
+    path.curveTo(cx + r * 0.15, cy + r * 0.55, cx + r * 0.3, cy + r * 0.45, cx + r * 0.2, cy + r * 0.3)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_apple(c, cx, cy, r):
+    """Apple shape."""
+    c.circle(cx, cy - r * 0.05, r * 0.4, fill=1, stroke=0)
+    # Stem
+    c.setStrokeColor(HexColor("#795548"))
+    c.setLineWidth(0.4)
+    c.line(cx, cy + r * 0.35, cx + r * 0.05, cy + r * 0.55)
+    # Leaf
+    c.setFillColor(HexColor("#4CAF50"))
+    path = c.beginPath()
+    path.moveTo(cx + r * 0.05, cy + r * 0.5)
+    path.curveTo(cx + r * 0.2, cy + r * 0.6, cx + r * 0.25, cy + r * 0.45, cx + r * 0.15, cy + r * 0.35)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+
+
+def _draw_pizza(c, cx, cy, r):
+    """Pizza slice."""
+    path = c.beginPath()
+    path.moveTo(cx, cy - r * 0.5)
+    path.lineTo(cx - r * 0.4, cy + r * 0.4)
+    path.curveTo(cx - r * 0.2, cy + r * 0.55, cx + r * 0.2, cy + r * 0.55, cx + r * 0.4, cy + r * 0.4)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
+    # Pepperoni
+    c.setFillColor(HexColor("#D32F2F"))
+    c.circle(cx - r * 0.1, cy + r * 0.1, r * 0.07, fill=1, stroke=0)
+    c.circle(cx + r * 0.1, cy + r * 0.15, r * 0.06, fill=1, stroke=0)
+    c.circle(cx, cy - r * 0.1, r * 0.06, fill=1, stroke=0)
+
+
+def _draw_cake(c, cx, cy, r):
+    """Birthday cake."""
+    # Base
+    c.rect(cx - r * 0.4, cy - r * 0.35, r * 0.8, r * 0.45, fill=1, stroke=0)
+    # Top layer
+    c.setFillColor(HexColor("#FFB6C1"))
+    c.rect(cx - r * 0.4, cy + r * 0.1, r * 0.8, r * 0.1, fill=1, stroke=0)
+    # Candle
+    c.setFillColor(HexColor("#FFC107"))
+    c.rect(cx - r * 0.03, cy + r * 0.2, r * 0.06, r * 0.25, fill=1, stroke=0)
+    # Flame
+    c.setFillColor(HexColor("#FF9800"))
+    c.circle(cx, cy + r * 0.5, r * 0.05, fill=1, stroke=0)
 
 
 def _parse_customization(customization: dict) -> dict:
