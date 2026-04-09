@@ -181,6 +181,10 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Fallback ändrad från cirkel till stjärna för eventuella okända motiv
 - [x] **Gradient-bakgrunder**: Regnbåge och 10 andra gradienter renderas nu korrekt i PDF (tidigare bara solid färg)
 - [x] Implementerat horisontell gradientrendering med färginterpolation mellan alla stopp
+- [x] SVG-paths extraherade från lucide-react (53 ikoner) och nametag_pdf.py helt omskriven med ReportLab canvas-kommandon
+- [x] Backend stödjer `item_index` query param för ordrar med flera namnlappar
+- [x] PDF-nedladdningsknappen borttagen från admin OrderDetailPanel (enligt användarens önskemål)
+- [x] Namnlappsinformation (motiv, namn, bakgrund etc.) visas fortfarande i admin-orderdetaljer
 
 ## Backlog
 ### P1

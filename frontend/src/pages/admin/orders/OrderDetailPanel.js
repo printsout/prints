@@ -149,12 +149,9 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
         <div>
           <p className="text-xs text-slate-500 uppercase">Produkter</p>
           <div className="mt-2 space-y-3">
-            {selectedOrder.items?.map((item, index) => {
-              const nametagIndex = item.customization?.type === 'nametag'
-                ? selectedOrder.items.slice(0, index).filter(it => it.customization?.type === 'nametag').length
-                : 0;
-              return <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} nametagIndex={nametagIndex} />;
-            }) || <p className="text-sm text-slate-500">Inga produkter</p>}
+            {selectedOrder.items?.map((item, index) => (
+              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} />
+            )) || <p className="text-sm text-slate-500">Inga produkter</p>}
           </div>
         </div>
 
@@ -237,7 +234,7 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
   );
 };
 
-const OrderItemDetail = ({ item, toast, orderId, nametagIndex }) => {
+const OrderItemDetail = ({ item, toast, orderId }) => {
   return (
     <div className="border border-slate-100 rounded-lg p-3">
       <div className="flex justify-between text-sm">
@@ -247,7 +244,7 @@ const OrderItemDetail = ({ item, toast, orderId, nametagIndex }) => {
       <p className="text-xs text-slate-500 mt-0.5">Antal: {item.quantity || 1}</p>
       {item.customization && (
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
-          {item.customization.type === 'nametag' && <NametagCustomization item={item} orderId={orderId} nametagIndex={nametagIndex} />}
+          {item.customization.type === 'nametag' && <NametagCustomization item={item} />}
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
@@ -264,25 +261,8 @@ const OrderItemDetail = ({ item, toast, orderId, nametagIndex }) => {
   );
 };
 
-const NametagCustomization = ({ item, orderId, nametagIndex = 0 }) => {
+const NametagCustomization = ({ item }) => {
   const c = item.customization;
-  const handleDownloadPdf = () => {
-    const token = sessionStorage.getItem('adminToken');
-    const url = `${API_BASE}/api/admin/orders/${orderId}/nametag-pdf?item_index=${nametagIndex}`;
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        if (!res.ok) throw new Error('PDF-generering misslyckades');
-        return res.blob();
-      })
-      .then(blob => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `namnlappar_${c.child_name || 'design'}.pdf`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      })
-      .catch(() => {});
-  };
 
   return (
     <>
@@ -291,19 +271,11 @@ const NametagCustomization = ({ item, orderId, nametagIndex = 0 }) => {
       {c.phone_number && <p>Telefon: <strong>{c.phone_number}</strong></p>}
       {c.font && <p>Typsnitt: {c.font}</p>}
       {c.font_color && <p>Typsnittsfärg: <span style={{color: c.font_color}}>{c.font_color}</span></p>}
-      {c.motif && <p>Motiv: {c.motif}</p>}
+      {c.motif && <p>Motiv: <strong>{c.motif}</strong></p>}
       {c.background && <p>Bakgrund: {c.background}</p>}
       {c.uploaded_image_url && (
         <ImagePreview url={c.uploaded_image_url} alt="Kunduppladdning" />
       )}
-      <button
-        onClick={handleDownloadPdf}
-        className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
-        data-testid="download-nametag-pdf"
-      >
-        <Download className="w-3.5 h-3.5" />
-        Ladda ner namnlappar (PDF - 140 st A4)
-      </button>
     </>
   );
 };
