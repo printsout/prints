@@ -34,6 +34,14 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const res = await api.post('/admin/login', { email, password });
+      if (!res.data.requires_2fa) {
+        // Direct login — no 2FA
+        localStorage.setItem('admin_token', res.data.token);
+        setAdminToken(res.data.token);
+        toast.success('Inloggad!');
+        navigate('/admin/dashboard');
+        return;
+      }
       setTempToken(res.data.temp_token);
       if (res.data.needs_setup) {
         setQrCode(res.data.qr_code);

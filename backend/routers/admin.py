@@ -47,29 +47,20 @@ async def admin_login(request: Request, login_data: AdminLogin):
 
     admin_2fa = await db.admin_settings_2fa.find_one({"admin_email": ADMIN_EMAIL}, {"_id": 0})
 
-    temp_token = jwt.encode({
-        "sub": "admin_2fa_pending", "email": ADMIN_EMAIL,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=10)
-    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
+    # If 2FA is enabled and set up, require it
     if admin_2fa and admin_2fa.get("totp_enabled") and admin_2fa.get("totp_secret"):
+        temp_token = jwt.encode({
+            "sub": "admin_2fa_pending", "email": ADMIN_EMAIL,
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10)
+        }, JWT_SECRET, algorithm=JWT_ALGORITHM)
         return {"requires_2fa": True, "needs_setup": False, "temp_token": temp_token}
 
-    secret = pyotp.random_base32()
-    totp = pyotp.TOTP(secret)
-    uri = totp.provisioning_uri(name=ADMIN_EMAIL, issuer_name="Printsout Admin")
-    qr = qrcode.make(uri)
-    buffer = io.BytesIO()
-    qr.save(buffer, format="PNG")
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
-
-    await db.admin_settings_2fa.update_one(
-        {"admin_email": ADMIN_EMAIL},
-        {"$set": {"admin_email": ADMIN_EMAIL, "totp_secret": secret, "totp_enabled": False}},
-        upsert=True
-    )
-
-    return {"requires_2fa": True, "needs_setup": True, "temp_token": temp_token, "qr_code": f"data:image/png;base64,{qr_base64}", "secret": secret}
+    # No 2FA configured — log in directly
+    token = jwt.encode({
+        "sub": "admin", "email": ADMIN_EMAIL,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=8)
+    }, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return {"token": token, "requires_2fa": False}
 
 @router.post("/verify-2fa")
 async def admin_verify_2fa(request: Request, data: dict):
