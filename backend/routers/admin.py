@@ -260,19 +260,51 @@ async def update_order(order_id: str, update_data: AdminOrderUpdate, admin=Depen
 @router.patch("/orders/{order_id}/mark")
 async def toggle_order_marked(order_id: str, admin=Depends(verify_admin_token)):
     order = await db.orders.find_one({"order_id": order_id})
+    col = "orders"
+    if not order:
+        order = await db.catalog_orders.find_one({"order_id": order_id})
+        col = "catalog_orders"
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
     new_val = not order.get("marked", False)
-    await db.orders.update_one({"order_id": order_id}, {"$set": {"marked": new_val}})
+    await db[col].update_one({"order_id": order_id}, {"$set": {"marked": new_val}})
     return {"marked": new_val}
 
 @router.patch("/orders/mark-all")
 async def mark_all_orders(admin=Depends(verify_admin_token)):
     """Toggle all orders: if any unmarked exist, mark all. Otherwise unmark all."""
-    unmarked = await db.orders.count_documents({"$or": [{"marked": False}, {"marked": {"$exists": False}}]})
-    new_val = unmarked > 0
+    unmarked_o = await db.orders.count_documents({"$or": [{"marked": False}, {"marked": {"$exists": False}}]})
+    unmarked_c = await db.catalog_orders.count_documents({"$or": [{"marked": False}, {"marked": {"$exists": False}}]})
+    new_val = (unmarked_o + unmarked_c) > 0
     await db.orders.update_many({}, {"$set": {"marked": new_val}})
+    await db.catalog_orders.update_many({}, {"$set": {"marked": new_val}})
     return {"marked": new_val}
+
+@router.post("/orders/bulk-action")
+async def bulk_order_action(request: Request, admin=Depends(verify_admin_token)):
+    """Perform bulk actions on marked orders: delete or change status."""
+    body = await request.json()
+    action = body.get("action")  # "delete" | "status"
+    new_status = body.get("status")  # for status action
+    order_ids = body.get("order_ids", [])
+
+    if not order_ids:
+        raise HTTPException(status_code=400, detail="Inga ordrar valda")
+
+    if action == "delete":
+        r1 = await db.orders.delete_many({"order_id": {"$in": order_ids}})
+        r2 = await db.catalog_orders.delete_many({"order_id": {"$in": order_ids}})
+        count = r1.deleted_count + r2.deleted_count
+        await db.admin_logs.insert_one({"action": "bulk_delete", "count": count, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
+        return {"message": f"{count} ordrar raderade", "count": count}
+
+    elif action == "status" and new_status:
+        r1 = await db.orders.update_many({"order_id": {"$in": order_ids}}, {"$set": {"status": new_status}})
+        r2 = await db.catalog_orders.update_many({"order_id": {"$in": order_ids}}, {"$set": {"status": new_status}})
+        count = r1.modified_count + r2.modified_count
+        return {"message": f"{count} ordrar uppdaterade till '{new_status}'", "count": count}
+
+    raise HTTPException(status_code=400, detail="Ogiltig åtgärd")
 
 
 

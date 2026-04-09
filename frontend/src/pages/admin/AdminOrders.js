@@ -166,13 +166,29 @@ const AdminOrders = () => {
       const res = await api.patch('/admin/orders/mark-all', {}, { headers: getAuthHeaders() });
       const newMarked = res.data.marked;
       setOrders(prev => prev.map(o => ({ ...o, marked: newMarked })));
-      toast.success(newMarked ? 'Alla beställningar markerade' : 'Alla markeringar borttagna');
     } catch {
       toast.error('Kunde inte markera alla beställningar');
     }
   };
 
-  const allMarked = orders.length > 0 && orders.every(o => o.marked);
+  const markedIds = orders.filter(o => o.marked).map(o => o.order_id);
+  const markedCount = markedIds.length;
+  const allMarked = orders.length > 0 && markedCount === orders.length;
+
+  const handleBulkAction = async (action, status) => {
+    if (markedCount === 0) return;
+    const labels = { delete: 'ta bort', processing: 'Under behandling', shipped: 'Skickad', completed: 'Slutförd' };
+    const label = labels[status] || labels[action];
+    if (action === 'delete' && !window.confirm(`Vill du ta bort ${markedCount} beställning(ar)? Detta går inte att ångra.`)) return;
+    try {
+      const res = await api.post('/admin/orders/bulk-action', { action, status, order_ids: markedIds }, { headers: getAuthHeaders() });
+      toast.success(res.data.message);
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch {
+      toast.error(`Kunde inte ${label}`);
+    }
+  };
 
   const handlePrint = (order) => {
     const formatDate = (d) => new Date(d).toLocaleString('sv-SE');
@@ -317,22 +333,40 @@ const AdminOrders = () => {
         </Select>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button
-          variant={allMarked ? "default" : "outline"}
-          size="sm"
-          onClick={handleMarkAll}
-          data-testid="mark-all-orders-btn"
-          className={allMarked ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-        >
-          {allMarked
-            ? <><CheckSquare className="w-4 h-4 mr-2" />Avmarkera alla</>
-            : <><Square className="w-4 h-4 mr-2" />Markera alla</>
-          }
-        </Button>
-        <p className="text-sm text-slate-500">
-          {orders.filter(o => o.marked).length} av {orders.length} markerade
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Button
+            variant={allMarked ? "default" : "outline"}
+            size="sm"
+            onClick={handleMarkAll}
+            data-testid="mark-all-orders-btn"
+            className={allMarked ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+          >
+            {allMarked
+              ? <><CheckSquare className="w-4 h-4 mr-2" />Avmarkera alla</>
+              : <><Square className="w-4 h-4 mr-2" />Markera alla</>
+            }
+          </Button>
+          <span className="text-sm text-slate-500">{markedCount} av {orders.length} valda</span>
+        </div>
+
+        {markedCount > 0 && (
+          <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5" data-testid="bulk-actions-bar">
+            <span className="text-xs font-medium text-slate-600 mr-1">Åtgärder:</span>
+            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleBulkAction('status', 'processing')} data-testid="bulk-processing-btn">
+              <Clock className="w-3.5 h-3.5 mr-1" />Under behandling
+            </Button>
+            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleBulkAction('status', 'shipped')} data-testid="bulk-shipped-btn">
+              <Truck className="w-3.5 h-3.5 mr-1" />Skickad
+            </Button>
+            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleBulkAction('status', 'completed')} data-testid="bulk-completed-btn">
+              <CheckCircle className="w-3.5 h-3.5 mr-1" />Slutförd
+            </Button>
+            <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => handleBulkAction('delete')} data-testid="bulk-delete-btn">
+              <Trash2 className="w-3.5 h-3.5 mr-1" />Ta bort
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
