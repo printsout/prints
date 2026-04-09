@@ -1,279 +1,403 @@
-"""Generate a printable PDF from a custom catalog design."""
+"""Generate a printable PDF that closely matches the frontend PagePreview design."""
 import os
-import tempfile
 import requests
 from io import BytesIO
 from pathlib import Path
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-from reportlab.lib.colors import HexColor, white, black, Color
+from reportlab.lib.colors import HexColor, white, Color
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from PIL import Image
+from PIL import Image as PILImage
 
-PAGE_W, PAGE_H = A4
-MARGIN = 15 * mm
-CONTENT_W = PAGE_W - 2 * MARGIN
-CONTENT_H = PAGE_H - 2 * MARGIN
-API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8001")
+PAGE_W, PAGE_H = A4  # 210mm x 297mm
+UPLOADS_DIR = Path(__file__).parent / "uploads"
 
 
-def _fetch_image(url: str) -> ImageReader | None:
-    """Fetch image from URL or local path, return ImageReader or None."""
+def _hex(color_str):
     try:
-        if url.startswith("/api/uploads/"):
-            from config import UPLOADS_DIR
-            local_path = UPLOADS_DIR / url.split("/")[-1]
-            if local_path.exists():
-                return ImageReader(str(local_path))
-            url = f"{API_BASE}{url}"
+        return HexColor(color_str)
+    except Exception:
+        return HexColor("#2a9d8f")
 
+
+def _fetch_image(url):
+    """Fetch image from local uploads or URL."""
+    if not url:
+        return None
+    try:
+        if url.startswith("/api/uploads/") or url.startswith("/uploads/"):
+            filename = url.split("/")[-1]
+            local = UPLOADS_DIR / filename
+            if local.exists():
+                return ImageReader(str(local))
         if url.startswith("http"):
             resp = requests.get(url, timeout=10)
             resp.raise_for_status()
             return ImageReader(BytesIO(resp.content))
-        elif os.path.exists(url):
+        if url.startswith("data:"):
+            import base64
+            header, data = url.split(",", 1)
+            return ImageReader(BytesIO(base64.b64decode(data)))
+        if os.path.exists(url):
             return ImageReader(url)
     except Exception:
         pass
     return None
 
 
-def _draw_bg(c, color_hex: str):
-    """Draw a colored background on the current page."""
-    try:
-        color = HexColor(color_hex)
-    except Exception:
-        color = HexColor("#ffffff")
-    c.setFillColor(color)
-    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+def _draw_image_adjusted(c, img, x, y, w, h, settings=None):
+    """Draw image with zoom and position adjustments (crop simulation)."""
+    if not img:
+        return
+    zoom = (settings or {}).get("zoom", 1)
+    pos_x = (settings or {}).get("posX", 50) / 100.0
+    pos_y = (settings or {}).get("posY", 50) / 100.0
+
+    c.saveState()
+    # Clip to the target area
+    p = c.beginPath()
+    p.rect(x, y, w, h)
+    c.clipPath(p, stroke=0)
+
+    # Calculate zoomed dimensions
+    zw = w * zoom
+    zh = h * zoom
+    # Position: posX=0 means left edge, posX=100 means right edge
+    dx = x - (zw - w) * pos_x
+    # posY=0 means top, posY=100 means bottom (invert for PDF coords)
+    dy = y - (zh - h) * (1 - pos_y)
+
+    c.drawImage(img, dx, dy, width=zw, height=zh, preserveAspectRatio=True, mask="auto")
+    c.restoreState()
 
 
-def _draw_text(c, text: str, x: float, y: float, size: float = 12,
-               color=black, font: str = "Helvetica", align: str = "left",
-               max_width: float = None, bold: bool = False):
-    """Draw text with optional alignment and max width."""
-    font_name = f"{font}-Bold" if bold else font
+def _set_font(c, font_name, size, bold=False):
+    """Set font, falling back to Helvetica if custom font unavailable."""
     try:
-        c.setFont(font_name, size)
+        name = f"{font_name}-Bold" if bold else font_name
+        c.setFont(name, size)
     except Exception:
         c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
-    c.setFillColor(color)
-
-    if max_width:
-        text = _truncate_text(c, text, max_width)
-
-    if align == "center":
-        tw = c.stringWidth(text, font_name if font_name in ("Helvetica", "Helvetica-Bold") else "Helvetica", size)
-        x = x - tw / 2
-    elif align == "right":
-        tw = c.stringWidth(text, font_name if font_name in ("Helvetica", "Helvetica-Bold") else "Helvetica", size)
-        x = x - tw
-
-    c.drawString(x, y, text)
 
 
-def _truncate_text(c, text, max_width):
-    """Truncate text to fit within max_width."""
-    if c.stringWidth(text) <= max_width:
-        return text
-    while c.stringWidth(text + "...") > max_width and len(text) > 0:
-        text = text[:-1]
-    return text + "..."
-
-
-def _draw_cover(c, page_data: dict, theme: dict, company_name: str, logo_url: str | None):
-    """Draw the cover page."""
-    primary = theme.get("primaryColor", "#2a9d8f")
-    _draw_bg(c, primary)
-
-    # Logo
-    if logo_url:
-        img = _fetch_image(logo_url)
-        if img:
-            c.drawImage(img, MARGIN, PAGE_H - 80 * mm, width=50 * mm, height=20 * mm,
-                        preserveAspectRatio=True, mask="auto")
-
-    # Title
-    title = page_data.get("title") or company_name or "Produktkatalog"
-    _draw_text(c, title, PAGE_W / 2, PAGE_H / 2 + 20 * mm, size=36, color=white,
-               align="center", bold=True)
-
-    # Subtitle
-    subtitle = page_data.get("subtitle") or ""
-    if subtitle:
-        _draw_text(c, subtitle, PAGE_W / 2, PAGE_H / 2 - 5 * mm, size=16, color=white,
-                   align="center")
-
-    # Background image
-    bg = page_data.get("bgImage")
-    if bg:
-        img = _fetch_image(bg)
-        if img:
-            c.saveState()
-            c.setFillColor(Color(0, 0, 0, alpha=0.3))
-            c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
-            c.restoreState()
-
-
-def _draw_product_page(c, page_data: dict, theme: dict, page_num: int):
-    """Draw a product grid page."""
-    primary = theme.get("primaryColor", "#2a9d8f")
+# ─── Cover Page ─────────────────────────────────────────
+def _draw_cover(c, page, theme, company_logo, template):
+    color = _hex(theme.get("primaryColor", "#2a9d8f"))
+    font = theme.get("font", "Helvetica")
 
     # White background
     c.setFillColor(white)
     c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
 
-    # Header bar
-    c.setFillColor(HexColor(primary))
-    c.rect(0, PAGE_H - 25 * mm, PAGE_W, 25 * mm, fill=1, stroke=0)
+    # Background image with low opacity
+    bg_img = _fetch_image(page.get("bgImage"))
+    if bg_img:
+        c.saveState()
+        c.setFillColor(Color(1, 1, 1, alpha=0.7))
+        _draw_image_adjusted(c, bg_img, 0, 0, PAGE_W, PAGE_H, page.get("bgImgSettings"))
+        # Overlay to reduce opacity (simulate opacity: 0.3)
+        c.setFillColor(Color(1, 1, 1, alpha=0.7))
+        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+        c.restoreState()
 
-    title = page_data.get("title") or f"Produkter"
-    _draw_text(c, title, MARGIN, PAGE_H - 17 * mm, size=18, color=white, bold=True)
+    # Gradient overlay (subtle)
+    c.saveState()
+    c.setFillColor(Color(
+        color.red, color.green, color.blue, alpha=0.05
+    ))
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+    c.restoreState()
 
-    # Product items
-    items = page_data.get("items") or []
+    # Center content
+    center_y = PAGE_H / 2
+
+    # Modern template: accent line above title
+    if template == "modern":
+        c.setFillColor(color)
+        line_w = 50 * mm
+        c.rect((PAGE_W - line_w) / 2, center_y + 30 * mm, line_w, 1 * mm, fill=1, stroke=0)
+
+    # Company logo
+    if company_logo:
+        logo_img = _fetch_image(company_logo)
+        if logo_img:
+            logo_h = 18 * mm
+            logo_w = 50 * mm
+            c.drawImage(logo_img, (PAGE_W - logo_w) / 2, center_y + 12 * mm,
+                        width=logo_w, height=logo_h, preserveAspectRatio=True, mask="auto")
+
+    # Title
+    title = page.get("title") or "Företagsnamn"
+    _set_font(c, font, 28, bold=True)
+    c.setFillColor(color)
+    tw = c.stringWidth(title)
+    c.drawString((PAGE_W - tw) / 2, center_y - 5 * mm, title)
+
+    # Subtitle
+    subtitle = page.get("subtitle") or "Produktkatalog"
+    _set_font(c, font, 14)
+    c.setFillColor(HexColor("#64748b"))
+    sw = c.stringWidth(subtitle)
+    c.drawString((PAGE_W - sw) / 2, center_y - 18 * mm, subtitle)
+
+    # Classic template: accent line below subtitle
+    if template == "classic":
+        c.setFillColor(color)
+        line_w = 32 * mm
+        c.rect((PAGE_W - line_w) / 2, center_y - 26 * mm, line_w, 0.5 * mm, fill=1, stroke=0)
+
+
+# ─── Product Page ───────────────────────────────────────
+def _draw_product_page(c, page, theme):
+    color = _hex(theme.get("primaryColor", "#2a9d8f"))
+    font = theme.get("font", "Helvetica")
+
+    # White background
+    c.setFillColor(white)
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+    # Top color bar (6mm)
+    c.setFillColor(color)
+    c.rect(0, PAGE_H - 6 * mm, PAGE_W, 6 * mm, fill=1, stroke=0)
+
+    items = page.get("items") or []
     if not items:
-        _draw_text(c, "Inga produkter tillagda", PAGE_W / 2, PAGE_H / 2, size=14,
-                   color=HexColor("#94a3b8"), align="center")
+        _set_font(c, font, 12)
+        c.setFillColor(HexColor("#94a3b8"))
+        c.drawCentredString(PAGE_W / 2, PAGE_H / 2, "Inga produkter tillagda")
         return
 
-    cols = 2
-    item_w = (CONTENT_W - 10 * mm) / cols
-    item_h = 70 * mm
-    start_y = PAGE_H - 35 * mm
+    margin = 8 * mm
+    cols = 1 if len(items) <= 2 else 2
+    gap = 6 * mm
+    content_w = PAGE_W - 2 * margin
+    col_w = (content_w - (cols - 1) * gap) / cols
+
+    start_y = PAGE_H - 6 * mm - margin
+    img_h = 50 * mm
+    text_h = 30 * mm
+    card_h = img_h + text_h
+    row_gap = 6 * mm
 
     for i, item in enumerate(items[:6]):
         col = i % cols
         row = i // cols
-        x = MARGIN + col * (item_w + 10 * mm)
-        y = start_y - row * (item_h + 10 * mm)
+        x = margin + col * (col_w + gap)
+        y = start_y - row * (card_h + row_gap)
 
-        # Item card background
+        # Card border
+        c.setStrokeColor(HexColor("#f1f5f9"))
+        c.setLineWidth(0.5)
+        c.roundRect(x, y - card_h, col_w, card_h, 2 * mm, fill=0, stroke=1)
+
+        # Image area
         c.setFillColor(HexColor("#f8fafc"))
-        c.roundRect(x, y - item_h, item_w, item_h, 3 * mm, fill=1, stroke=0)
+        c.rect(x, y - img_h, col_w, img_h, fill=1, stroke=0)
 
-        # Product image
-        img_url = item.get("image")
-        if img_url:
-            img = _fetch_image(img_url)
-            if img:
-                img_size = 35 * mm
-                c.drawImage(img, x + (item_w - img_size) / 2, y - img_size - 5 * mm,
-                            width=img_size, height=img_size,
-                            preserveAspectRatio=True, mask="auto")
+        img = _fetch_image(item.get("image"))
+        if img:
+            _draw_image_adjusted(c, img, x, y - img_h, col_w, img_h, item.get("imgSettings"))
+
+        # Text area
+        text_x = x + 4 * mm
+        text_y = y - img_h - 4 * mm
 
         # Product name
-        name = item.get("name") or "Produkt"
-        _draw_text(c, name, x + 3 * mm, y - 50 * mm, size=10, bold=True,
-                   max_width=item_w - 6 * mm)
+        name = item.get("name") or "Produktnamn"
+        _set_font(c, font, 10, bold=True)
+        c.setFillColor(HexColor("#1e293b"))
+        c.drawString(text_x, text_y - 3 * mm, name[:35])
+
+        # Description
+        desc = item.get("desc") or ""
+        if desc:
+            _set_font(c, font, 7)
+            c.setFillColor(HexColor("#94a3b8"))
+            c.drawString(text_x, text_y - 9 * mm, desc[:50])
 
         # Price
         price = item.get("price")
         if price:
-            _draw_text(c, f"{price} kr", x + 3 * mm, y - 58 * mm, size=10,
-                       color=HexColor(primary))
-
-        # Description
-        desc = item.get("description") or ""
-        if desc:
-            _draw_text(c, desc, x + 3 * mm, y - 65 * mm, size=7,
-                       color=HexColor("#64748b"), max_width=item_w - 6 * mm)
-
-    # Page number
-    _draw_text(c, str(page_num), PAGE_W / 2, 10 * mm, size=9,
-               color=HexColor("#94a3b8"), align="center")
+            _set_font(c, font, 10, bold=True)
+            c.setFillColor(color)
+            c.drawString(text_x, text_y - 16 * mm, f"{price} kr")
 
 
-def _draw_text_page(c, page_data: dict, theme: dict, page_num: int):
-    """Draw a text/about page."""
-    primary = theme.get("primaryColor", "#2a9d8f")
+# ─── Gallery Page ───────────────────────────────────────
+def _draw_gallery_page(c, page, theme):
+    color = _hex(theme.get("primaryColor", "#2a9d8f"))
+    font = theme.get("font", "Helvetica")
 
     c.setFillColor(white)
     c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
 
-    c.setFillColor(HexColor(primary))
-    c.rect(0, PAGE_H - 25 * mm, PAGE_W, 25 * mm, fill=1, stroke=0)
+    # Top bar
+    c.setFillColor(color)
+    c.rect(0, PAGE_H - 6 * mm, PAGE_W, 6 * mm, fill=1, stroke=0)
 
-    title = page_data.get("title") or "Om oss"
-    _draw_text(c, title, MARGIN, PAGE_H - 17 * mm, size=18, color=white, bold=True)
+    margin = 8 * mm
+    y_cursor = PAGE_H - 6 * mm - margin
 
-    # Body text
-    body = page_data.get("body") or page_data.get("description") or ""
+    # Title
+    title = page.get("title")
+    if title:
+        _set_font(c, font, 16, bold=True)
+        c.setFillColor(color)
+        c.drawString(margin, y_cursor - 4 * mm, title)
+        y_cursor -= 14 * mm
+
+    imgs = page.get("images") or []
+    img_settings = page.get("imgSettings") or []
+    gap = 4 * mm
+    content_w = PAGE_W - 2 * margin
+    col_w = (content_w - gap) / 2
+    img_h = col_w * 0.75  # aspect ratio 4:3
+
+    for i, img_url in enumerate(imgs[:4]):
+        col = i % 2
+        row = i // 2
+        x = margin + col * (col_w + gap)
+        y = y_cursor - row * (img_h + gap)
+
+        # Background
+        c.setFillColor(HexColor("#f8fafc"))
+        c.roundRect(x, y - img_h, col_w, img_h, 1.5 * mm, fill=1, stroke=0)
+
+        if img_url:
+            img = _fetch_image(img_url)
+            if img:
+                settings = img_settings[i] if i < len(img_settings) else None
+                _draw_image_adjusted(c, img, x, y - img_h, col_w, img_h, settings)
+
+
+# ─── Text Page ──────────────────────────────────────────
+def _draw_text_page(c, page, theme):
+    color = _hex(theme.get("primaryColor", "#2a9d8f"))
+    font = theme.get("font", "Helvetica")
+
+    c.setFillColor(white)
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+    # Top bar
+    c.setFillColor(color)
+    c.rect(0, PAGE_H - 6 * mm, PAGE_W, 6 * mm, fill=1, stroke=0)
+
+    margin = 10 * mm
+    y = PAGE_H - 6 * mm - margin
+
+    # Title
+    title = page.get("title") or "Rubrik"
+    _set_font(c, font, 18, bold=True)
+    c.setFillColor(color)
+    c.drawString(margin, y - 5 * mm, title)
+    y -= 16 * mm
+
+    # Body text with word wrap
+    body = page.get("body") or ""
     if body:
-        text_obj = c.beginText(MARGIN, PAGE_H - 40 * mm)
-        text_obj.setFont("Helvetica", 11)
-        text_obj.setFillColor(HexColor("#334155"))
-        text_obj.setLeading(16)
+        _set_font(c, font, 9)
+        c.setFillColor(HexColor("#475569"))
+        max_w = PAGE_W - 2 * margin
+        leading = 14
+
         for line in body.split("\n"):
-            # Word-wrap
             words = line.split()
             current = ""
             for word in words:
                 test = f"{current} {word}".strip()
-                if c.stringWidth(test, "Helvetica", 11) > CONTENT_W:
-                    text_obj.textLine(current)
+                if c.stringWidth(test) > max_w:
+                    c.drawString(margin, y, current)
+                    y -= leading
                     current = word
+                    if y < 20 * mm:
+                        break
                 else:
                     current = test
-            if current:
-                text_obj.textLine(current)
-            text_obj.textLine("")
-        c.drawText(text_obj)
-
-    # Page number
-    _draw_text(c, str(page_num), PAGE_W / 2, 10 * mm, size=9,
-               color=HexColor("#94a3b8"), align="center")
+            if current and y > 20 * mm:
+                c.drawString(margin, y, current)
+                y -= leading
+            y -= leading * 0.5
 
 
-def _draw_contact_page(c, page_data: dict, theme: dict, company_name: str, page_num: int):
-    """Draw a contact/back page."""
-    primary = theme.get("primaryColor", "#2a9d8f")
-    _draw_bg(c, primary)
+# ─── Back Cover ─────────────────────────────────────────
+def _draw_backcover(c, page, theme, company_logo):
+    color = _hex(theme.get("primaryColor", "#2a9d8f"))
+    font = theme.get("font", "Helvetica")
 
-    _draw_text(c, company_name or "Kontakta oss", PAGE_W / 2, PAGE_H / 2 + 30 * mm,
-               size=28, color=white, align="center", bold=True)
+    c.setFillColor(white)
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
 
-    info_lines = []
-    for key in ("email", "phone", "website", "address"):
-        val = page_data.get(key) or page_data.get(f"contact_{key}")
+    # Subtle gradient overlay
+    c.setFillColor(Color(
+        color.red, color.green, color.blue, alpha=0.03
+    ))
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+    center_y = PAGE_H / 2
+
+    # Logo
+    if company_logo:
+        logo_img = _fetch_image(company_logo)
+        if logo_img:
+            logo_h = 16 * mm
+            c.drawImage(logo_img, (PAGE_W - 50 * mm) / 2, center_y + 15 * mm,
+                        width=50 * mm, height=logo_h, preserveAspectRatio=True, mask="auto")
+
+    # Company name
+    name = page.get("companyName") or ""
+    _set_font(c, font, 16, bold=True)
+    c.setFillColor(HexColor("#1e293b"))
+    nw = c.stringWidth(name)
+    c.drawString((PAGE_W - nw) / 2, center_y, name)
+
+    # Contact info
+    y = center_y - 10 * mm
+    _set_font(c, font, 9)
+    for key, clr in [("phone", "#64748b"), ("email", theme.get("primaryColor", "#2a9d8f")), ("website", "#64748b")]:
+        val = page.get(key)
         if val:
-            info_lines.append(val)
+            c.setFillColor(HexColor(clr))
+            vw = c.stringWidth(val)
+            c.drawString((PAGE_W - vw) / 2, y, val)
+            y -= 6 * mm
 
-    y = PAGE_H / 2
-    for line in info_lines:
-        _draw_text(c, line, PAGE_W / 2, y, size=14, color=white, align="center")
-        y -= 8 * mm
+    # Address
+    address = page.get("address")
+    if address:
+        _set_font(c, font, 8)
+        c.setFillColor(HexColor("#94a3b8"))
+        aw = c.stringWidth(address)
+        c.drawString((PAGE_W - aw) / 2, y - 4 * mm, address)
 
-    _draw_text(c, str(page_num), PAGE_W / 2, 10 * mm, size=9,
-               color=Color(1, 1, 1, alpha=0.5), align="center")
 
-
+# ─── Main Generator ────────────────────────────────────
 def generate_catalog_pdf(design_data: dict, output_path: str):
-    """Generate a catalog PDF from design data and save to output_path."""
+    """Generate a catalog PDF matching the frontend PagePreview design."""
     pages = design_data.get("pages") or []
     theme = design_data.get("theme") or {"primaryColor": "#2a9d8f", "font": "Helvetica"}
     company = design_data.get("company_name") or ""
     logo_url = design_data.get("logo_url")
+    template = design_data.get("template") or "classic"
 
     c = canvas.Canvas(output_path, pagesize=A4)
-    c.setTitle(f"Katalog - {company}" if company else "Katalog")
+    c.setTitle(f"Katalog — {company}" if company else "Katalog")
 
-    for i, page in enumerate(pages):
-        page_type = page.get("type", "products")
-        page_num = i + 1
+    for page in pages:
+        page_type = page.get("type", "product")
 
         if page_type == "cover":
-            _draw_cover(c, page, theme, company, logo_url)
-        elif page_type in ("products", "product_grid"):
-            _draw_product_page(c, page, theme, page_num)
-        elif page_type in ("text", "about", "intro"):
-            _draw_text_page(c, page, theme, page_num)
-        elif page_type in ("contact", "back_cover"):
-            _draw_contact_page(c, page, theme, company, page_num)
+            _draw_cover(c, page, theme, logo_url, template)
+        elif page_type == "product":
+            _draw_product_page(c, page, theme)
+        elif page_type == "gallery":
+            _draw_gallery_page(c, page, theme)
+        elif page_type == "text":
+            _draw_text_page(c, page, theme)
+        elif page_type == "backcover":
+            _draw_backcover(c, page, theme, logo_url)
         else:
-            # Generic fallback
-            _draw_product_page(c, page, theme, page_num)
+            _draw_product_page(c, page, theme)
 
         c.showPage()
 
