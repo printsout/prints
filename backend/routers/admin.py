@@ -257,6 +257,16 @@ async def update_order(order_id: str, update_data: AdminOrderUpdate, admin=Depen
     await db.admin_logs.insert_one({"action": "update_order", "order_id": order_id, "changes": update_dict, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
     return {"message": "Order uppdaterad"}
 
+@router.patch("/orders/{order_id}/mark")
+async def toggle_order_marked(order_id: str, admin=Depends(verify_admin_token)):
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    new_val = not order.get("marked", False)
+    await db.orders.update_one({"order_id": order_id}, {"$set": {"marked": new_val}})
+    return {"marked": new_val}
+
+
 @router.delete("/orders/{order_id}")
 async def delete_order(order_id: str, admin=Depends(verify_admin_token)):
     result = await db.orders.delete_one({"order_id": order_id})

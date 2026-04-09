@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Trash2, Briefcase, Download } from 'lucide-react';
+import { Search, Eye, Package, Truck, CheckCircle, Clock, Printer, Trash2, Briefcase, Download, Square, CheckSquare } from 'lucide-react';
 import OrderDetailPanel from './orders/OrderDetailPanel';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL;
@@ -147,6 +147,17 @@ const AdminOrders = () => {
       toast.success('Beställning borttagen');
     } catch (error) {
       toast.error('Kunde inte ta bort beställningen');
+    }
+  };
+
+  const handleToggleMark = async (e, orderId) => {
+    e.stopPropagation();
+    try {
+      const res = await api.patch(`/admin/orders/${orderId}/mark`, {}, { headers: getAuthHeaders() });
+      const newMarked = res.data.marked;
+      setOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, marked: newMarked } : o));
+    } catch {
+      toast.error('Kunde inte markera beställningen');
     }
   };
 
@@ -299,6 +310,7 @@ const AdminOrders = () => {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase w-10"></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
@@ -313,9 +325,22 @@ const AdminOrders = () => {
                   filteredOrders.map((order) => (
                     <tr
                       key={order.order_id}
-                      className={`hover:bg-slate-50 cursor-pointer ${selectedOrder?.order_id === order.order_id ? 'bg-primary/5' : ''}`}
+                      className={`hover:bg-slate-50 cursor-pointer ${selectedOrder?.order_id === order.order_id ? 'bg-primary/5' : ''} ${order.marked ? 'bg-emerald-50/50' : ''}`}
                       onClick={() => setSelectedOrder(order)}
                     >
+                      <td className="px-3 py-4 text-center">
+                        <button
+                          onClick={(e) => handleToggleMark(e, order.order_id)}
+                          className="transition-colors"
+                          title={order.marked ? 'Avmarkera' : 'Markera som hanterad'}
+                          data-testid={`mark-order-${order.order_id}`}
+                        >
+                          {order.marked
+                            ? <CheckSquare className="w-5 h-5 text-emerald-600" />
+                            : <Square className="w-5 h-5 text-slate-300 hover:text-slate-500" />
+                          }
+                        </button>
+                      </td>
                       <td className="px-4 py-4 text-sm font-mono text-slate-600">#{order.order_id?.slice(0, 8)}</td>
                       <td className="px-4 py-4">
                         <p className="text-sm font-medium text-slate-900 truncate max-w-[140px]">{order.shipping_address?.name || order.email}</p>
@@ -353,7 +378,7 @@ const AdminOrders = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Inga beställningar hittades</td>
+                    <td colSpan={8} className="px-6 py-8 text-center text-slate-500">Inga beställningar hittades</td>
                   </tr>
                 )}
               </tbody>
