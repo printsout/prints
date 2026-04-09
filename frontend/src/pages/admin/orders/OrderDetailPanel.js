@@ -439,7 +439,7 @@ const CatalogDesignCustomization = ({ item, orderId }) => {
 
   const handleDownloadPdf = () => {
     const url = `${API_BASE}/api/admin/orders/${orderId}/catalog-pdf`;
-    const token = localStorage.getItem('admin_token');
+    const token = sessionStorage.getItem('adminToken');
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('Kunde inte generera PDF');
@@ -542,7 +542,7 @@ const PrintCatalogCustomization = ({ item, orderId }) => {
   const handleB2bDownload = () => {
     if (!orderId) return;
     const url = `${API_BASE}/api/admin/b2b-orders/${orderId}/pdf`;
-    const token = localStorage.getItem('admin_token');
+    const token = sessionStorage.getItem('adminToken');
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error();

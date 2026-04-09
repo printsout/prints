@@ -36,7 +36,7 @@ const AdminLogin = () => {
       const res = await api.post('/admin/login', { email, password });
       if (!res.data.requires_2fa) {
         // Direct login — no 2FA
-        localStorage.setItem('admin_token', res.data.token);
+        sessionStorage.setItem('adminToken', res.data.token);
         setAdminToken(res.data.token);
         toast.success('Inloggad!');
         navigate('/admin/dashboard');

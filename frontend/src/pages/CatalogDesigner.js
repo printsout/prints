@@ -202,7 +202,7 @@ const CatalogDesigner = () => {
   // Hydrate from admin order
   useEffect(() => {
     if (!adminEditOrderId) return;
-    const token = localStorage.getItem('admin_token');
+    const token = sessionStorage.getItem('adminToken');
     if (!token) { toast.error('Admin-inloggning krävs'); return; }
     api.get(`/admin/orders/${adminEditOrderId}/catalog-design`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -323,7 +323,7 @@ const CatalogDesigner = () => {
       }));
 
       if (isAdminMode) {
-        const token = localStorage.getItem('admin_token');
+        const token = sessionStorage.getItem('adminToken');
         await api.put(`/admin/orders/${adminEditOrderId}/catalog-design`, {
           company_name: companyName, logo_url: logoUrl, template, theme,
           pages: uploadedPages, page_count: uploadedPages.length,

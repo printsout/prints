@@ -49,8 +49,8 @@ const Checkout = () => {
           try {
             const response = await api.get(`/products/${id}`);
             productData[id] = response.data;
-          } catch {
-            // skip missing products
+          } catch (err) {
+            console.error('Failed to fetch product:', id, err);
           }
         }));
         setProducts(productData);
