@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { toast } from 'sonner';
 import {
-  ShoppingCart, ChevronLeft, Type, Palette, ImageIcon, Upload,
+  ShoppingCart, ChevronLeft, Type, Palette, ImageIcon, Upload, Copy,
   Star, Heart, Cat, Dog, Rabbit, Fish, Bird, Bug,
   Flower2, TreePine, Sun, Moon, Cloud, Leaf, Snowflake,
   Car, Plane, Rocket, Ship, Bike, Train,
@@ -577,14 +577,57 @@ const MotifTab = ({ motifEnabled, setMotifEnabled, selectedMotif, setSelectedMot
     <div className={`grid grid-cols-5 sm:grid-cols-7 gap-2 ${!motifEnabled ? 'opacity-40 pointer-events-none' : ''}`} data-testid="motif-grid">
       {filteredMotifs.map(motif => {
         const Icon = motif.icon;
+        const handleCopy = async (e) => {
+          e.stopPropagation();
+          try {
+            const svgEl = e.currentTarget.closest('[data-motif-wrap]').querySelector('svg');
+            if (!svgEl) return;
+            const clone = svgEl.cloneNode(true);
+            clone.setAttribute('width', '128');
+            clone.setAttribute('height', '128');
+            clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            const svgStr = new XMLSerializer().serializeToString(clone);
+            const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = async () => {
+              const canvas = document.createElement('canvas');
+              canvas.width = 128; canvas.height = 128;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, 128, 128);
+              URL.revokeObjectURL(url);
+              canvas.toBlob(async (pngBlob) => {
+                try {
+                  await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+                  toast.success(`${motif.label} kopierad!`);
+                } catch {
+                  toast.error('Kunde inte kopiera');
+                }
+              }, 'image/png');
+            };
+            img.src = url;
+          } catch {
+            toast.error('Kunde inte kopiera');
+          }
+        };
         return (
-          <button key={motif.id} onClick={() => { setSelectedMotif(motif.id); setUploadedImage(null); }}
-            className={`aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 transition-all ${
-              selectedMotif === motif.id && !uploadedImage ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-            }`} title={motif.label} data-testid={`motif-${motif.id}`}>
-            <Icon className="w-6 h-6" style={{ color: motif.color }} />
-            <span className="text-[9px] text-slate-500 leading-none">{motif.label}</span>
-          </button>
+          <div key={motif.id} className="relative group" data-motif-wrap>
+            <button onClick={() => { setSelectedMotif(motif.id); setUploadedImage(null); }}
+              className={`w-full aspect-square rounded-lg border-2 flex flex-col items-center justify-center gap-0.5 transition-all ${
+                selectedMotif === motif.id && !uploadedImage ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+              }`} title={motif.label} data-testid={`motif-${motif.id}`}>
+              <Icon className="w-6 h-6" style={{ color: motif.color }} />
+              <span className="text-[9px] text-slate-500 leading-none">{motif.label}</span>
+            </button>
+            <button
+              onClick={handleCopy}
+              className="absolute top-0.5 right-0.5 p-0.5 rounded bg-white/80 border border-slate-200 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
+              title="Kopiera motiv"
+              data-testid={`copy-motif-${motif.id}`}
+            >
+              <Copy className="w-3 h-3 text-slate-500" />
+            </button>
+          </div>
         );
       })}
     </div>
