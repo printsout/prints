@@ -317,25 +317,31 @@ const AdminOrders = () => {
         </Select>
       </div>
 
+      <div className="flex items-center justify-between">
+        <Button
+          variant={allMarked ? "default" : "outline"}
+          size="sm"
+          onClick={handleMarkAll}
+          data-testid="mark-all-orders-btn"
+          className={allMarked ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+        >
+          {allMarked
+            ? <><CheckSquare className="w-4 h-4 mr-2" />Avmarkera alla</>
+            : <><Square className="w-4 h-4 mr-2" />Markera alla</>
+          }
+        </Button>
+        <p className="text-sm text-slate-500">
+          {orders.filter(o => o.marked).length} av {orders.length} markerade
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-3 text-center w-10">
-                    <button
-                      onClick={handleMarkAll}
-                      className="transition-colors"
-                      title={allMarked ? 'Avmarkera alla' : 'Markera alla'}
-                      data-testid="mark-all-orders"
-                    >
-                      {allMarked
-                        ? <CheckSquare className="w-5 h-5 text-emerald-600" />
-                        : <Square className="w-5 h-5 text-slate-400 hover:text-slate-600" />
-                      }
-                    </button>
-                  </th>
+                  <th className="px-3 py-3 w-10"></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
