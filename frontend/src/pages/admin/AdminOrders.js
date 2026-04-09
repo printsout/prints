@@ -150,12 +150,17 @@ const AdminOrders = () => {
     }
   };
 
+  const allOrders = [...orders, ...b2bOrders].sort((a, b) =>
+    new Date(b.created_at || 0) - new Date(a.created_at || 0)
+  );
+
   const handleToggleMark = async (e, orderId) => {
     e.stopPropagation();
     try {
       const res = await api.patch(`/admin/orders/${orderId}/mark`, {}, { headers: getAuthHeaders() });
       const newMarked = res.data.marked;
       setOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, marked: newMarked } : o));
+      setB2bOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, marked: newMarked } : o));
     } catch {
       toast.error('Kunde inte markera beställningen');
     }
@@ -163,22 +168,19 @@ const AdminOrders = () => {
 
   const handleMarkAll = async () => {
     try {
-      const res = await api.patch('/admin/orders/mark-all', {}, { headers: getAuthHeaders() });
-      const newMarked = res.data.marked;
-      setOrders(prev => prev.map(o => ({ ...o, marked: newMarked })));
+      await api.patch('/admin/orders/mark-all', {}, { headers: getAuthHeaders() });
+      fetchOrders();
     } catch {
       toast.error('Kunde inte markera alla beställningar');
     }
   };
 
-  const markedIds = orders.filter(o => o.marked).map(o => o.order_id);
+  const markedIds = allOrders.filter(o => o.marked).map(o => o.order_id);
   const markedCount = markedIds.length;
-  const allMarked = orders.length > 0 && markedCount === orders.length;
+  const allMarked = allOrders.length > 0 && markedCount === allOrders.length;
 
   const handleBulkAction = async (action, status) => {
     if (markedCount === 0) return;
-    const labels = { delete: 'ta bort', processing: 'Under behandling', shipped: 'Skickad', completed: 'Slutförd' };
-    const label = labels[status] || labels[action];
     if (action === 'delete' && !window.confirm(`Vill du ta bort ${markedCount} beställning(ar)? Detta går inte att ångra.`)) return;
     try {
       const res = await api.post('/admin/orders/bulk-action', { action, status, order_ids: markedIds }, { headers: getAuthHeaders() });
@@ -186,7 +188,7 @@ const AdminOrders = () => {
       fetchOrders();
       setSelectedOrder(null);
     } catch {
-      toast.error(`Kunde inte ${label}`);
+      toast.error('Åtgärden misslyckades');
     }
   };
 
@@ -279,10 +281,6 @@ const AdminOrders = () => {
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const allOrders = [...orders, ...b2bOrders].sort((a, b) =>
-    new Date(b.created_at) - new Date(a.created_at)
-  );
-
   const filteredOrders = allOrders.filter(order => {
     const matchesSearch = order.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -347,7 +345,7 @@ const AdminOrders = () => {
               : <><Square className="w-4 h-4 mr-2" />Markera alla</>
             }
           </Button>
-          <span className="text-sm text-slate-500">{markedCount} av {orders.length} valda</span>
+          <span className="text-sm text-slate-500">{markedCount} av {allOrders.length} valda</span>
         </div>
 
         {markedCount > 0 && (
