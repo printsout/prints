@@ -149,9 +149,12 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
         <div>
           <p className="text-xs text-slate-500 uppercase">Produkter</p>
           <div className="mt-2 space-y-3">
-            {selectedOrder.items?.map((item, index) => (
-              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} />
-            )) || <p className="text-sm text-slate-500">Inga produkter</p>}
+            {selectedOrder.items?.map((item, index) => {
+              const nametagIndex = item.customization?.type === 'nametag'
+                ? selectedOrder.items.slice(0, index).filter(it => it.customization?.type === 'nametag').length
+                : 0;
+              return <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} nametagIndex={nametagIndex} />;
+            }) || <p className="text-sm text-slate-500">Inga produkter</p>}
           </div>
         </div>
 
@@ -234,7 +237,7 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
   );
 };
 
-const OrderItemDetail = ({ item, toast, orderId }) => {
+const OrderItemDetail = ({ item, toast, orderId, nametagIndex }) => {
   return (
     <div className="border border-slate-100 rounded-lg p-3">
       <div className="flex justify-between text-sm">
@@ -244,7 +247,7 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
       <p className="text-xs text-slate-500 mt-0.5">Antal: {item.quantity || 1}</p>
       {item.customization && (
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
-          {item.customization.type === 'nametag' && <NametagCustomization item={item} orderId={orderId} />}
+          {item.customization.type === 'nametag' && <NametagCustomization item={item} orderId={orderId} nametagIndex={nametagIndex} />}
           {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
@@ -261,11 +264,11 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
   );
 };
 
-const NametagCustomization = ({ item, orderId }) => {
+const NametagCustomization = ({ item, orderId, nametagIndex = 0 }) => {
   const c = item.customization;
   const handleDownloadPdf = () => {
     const token = sessionStorage.getItem('adminToken');
-    const url = `${API_BASE}/api/admin/orders/${orderId}/nametag-pdf`;
+    const url = `${API_BASE}/api/admin/orders/${orderId}/nametag-pdf?item_index=${nametagIndex}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('PDF-generering misslyckades');

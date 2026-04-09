@@ -317,22 +317,24 @@ async def delete_order(order_id: str, admin=Depends(verify_admin_token)):
     return {"message": "Order raderad"}
 
 @router.get("/orders/{order_id}/nametag-pdf")
-async def download_nametag_pdf(order_id: str, admin=Depends(verify_admin_token)):
+async def download_nametag_pdf(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
     from nametag_pdf import generate_nametag_pdf
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
-    nametag_item = None
-    for item in order.get("items", []):
-        if item.get("customization", {}).get("type") == "nametag":
-            nametag_item = item
-            break
-    if not nametag_item:
+    nametag_items = [
+        (i, item) for i, item in enumerate(order.get("items", []))
+        if item.get("customization", {}).get("type") == "nametag"
+    ]
+    if not nametag_items:
         raise HTTPException(status_code=400, detail="Ordern innehåller inga namnlappar")
+    if item_index >= len(nametag_items):
+        item_index = 0
+    _, nametag_item = nametag_items[item_index]
     customization = nametag_item["customization"]
     output_dir = Path("/tmp/nametag_pdfs")
     output_dir.mkdir(exist_ok=True)
-    output_path = str(output_dir / f"namnlappar_{order_id[:8]}.pdf")
+    output_path = str(output_dir / f"namnlappar_{order_id[:8]}_{item_index}.pdf")
     generate_nametag_pdf(customization, output_path)
     child_name = customization.get("child_name", "namnlapp")
     filename = f"namnlappar_{child_name}_{order_id[:8]}.pdf"
