@@ -355,6 +355,24 @@ const CalendarCustomization = ({ item, orderId }) => {
       .catch(() => {});
   };
 
+  const handleDownloadPdf = () => {
+    const token = sessionStorage.getItem('adminToken');
+    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-pdf`;
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error('Kunde inte generera PDF');
+        return res.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `kalender_${c.year || 2026}_${orderId?.slice(0, 8)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => {});
+  };
+
   return (
     <>
       {c.year && <p>År: <strong>{c.year}</strong></p>}
@@ -384,6 +402,14 @@ const CalendarCustomization = ({ item, orderId }) => {
           >
             <Download className="w-3.5 h-3.5" />
             Ladda ner alla bilder (ZIP)
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition-colors"
+            data-testid="download-calendar-pdf"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Ladda ner kalender (PDF)
           </button>
         </div>
       )}

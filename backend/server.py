@@ -1,6 +1,6 @@
 """Printsout API — Main application entry point."""
 from fastapi import FastAPI, APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -71,6 +71,23 @@ async def shipping_settings():
 @api_router.post("/webhook/stripe")
 async def stripe_webhook(request: Request):
     return await handle_stripe_webhook(request)
+
+@api_router.post("/calendar/generate-pdf")
+async def generate_calendar_pdf_endpoint(request: Request):
+    """Generate a calendar PDF from editor data (public endpoint for preview)."""
+    from calendar_pdf import generate_calendar_pdf
+    from pathlib import Path
+    import uuid
+    data = await request.json()
+    year = data.get("year", 2026)
+    months = data.get("months", [])
+    pdf_id = str(uuid.uuid4())[:8]
+    output_dir = Path("/tmp/calendar_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / f"kalender_{year}_{pdf_id}.pdf")
+    generate_calendar_pdf(year, months, output_path)
+    filename = f"kalender_{year}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 app.include_router(api_router)
 

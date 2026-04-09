@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { 
   Upload, ChevronLeft, ChevronRight, ShoppingCart, 
-  Trash2, Check, Calendar, Image as ImageIcon
+  Trash2, Check, Calendar, Image as ImageIcon, Download
 } from 'lucide-react';
 
 const MONTHS = [
@@ -112,6 +112,49 @@ const CalendarEditor = () => {
 
   const getUploadedCount = () => {
     return monthImages.filter(m => m.preview !== null).length;
+  };
+
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (getUploadedCount() === 0) {
+      toast.error('Lägg till minst en bild för att ladda ner PDF');
+      return;
+    }
+    setDownloadingPdf(true);
+    try {
+      toast.info('Genererar kalender-PDF...');
+      // Upload any base64 images first
+      const uploadedMonths = [];
+      for (let i = 0; i < monthImages.length; i++) {
+        const m = monthImages[i];
+        let imageUrl = null;
+        if (m.preview) {
+          if (m.preview.startsWith('data:')) {
+            const uploadRes = await api.post('/upload-base64', { image: m.preview });
+            imageUrl = uploadRes.data.url;
+          } else {
+            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+            imageUrl = m.preview.startsWith(backendUrl)
+              ? m.preview.replace(backendUrl, '')
+              : m.preview;
+          }
+        }
+        uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl });
+      }
+      const res = await api.post('/calendar/generate-pdf', { year: selectedYear, months: uploadedMonths }, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kalender_${selectedYear}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Kalender-PDF nedladdad!');
+    } catch {
+      toast.error('Kunde inte generera PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   const handleAddToCart = async () => {
@@ -417,6 +460,18 @@ const CalendarEditor = () => {
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 {editCartItemId ? 'Spara ändringar' : 'Lägg i varukorg'}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full mt-3"
+                size="lg"
+                onClick={handleDownloadPdf}
+                disabled={getUploadedCount() === 0 || downloadingPdf}
+                data-testid="download-calendar-pdf"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                {downloadingPdf ? 'Genererar...' : 'Ladda ner som PDF'}
               </Button>
 
               {getUploadedCount() === 0 && (

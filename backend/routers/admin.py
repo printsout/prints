@@ -381,6 +381,31 @@ async def download_calendar_images(order_id: str, admin=Depends(verify_admin_tok
         headers={"Content-Disposition": f'attachment; filename="kalenderbilder_{order_id[:8]}.zip"'}
     )
 
+@router.get("/orders/{order_id}/calendar-pdf")
+async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)):
+    """Generate and download a calendar PDF from order data."""
+    from calendar_pdf import generate_calendar_pdf
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    calendar_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "calendar":
+            calendar_item = item
+            break
+    if not calendar_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller ingen kalender")
+    customization = calendar_item["customization"]
+    year = customization.get("year", 2026)
+    months = customization.get("months", [])
+    output_dir = Path("/tmp/calendar_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / f"kalender_{order_id[:8]}.pdf")
+    generate_calendar_pdf(year, months, output_path)
+    filename = f"kalender_{year}_{order_id[:8]}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 
 @router.get("/orders/{order_id}/catalog-pdf")
 async def download_catalog_pdf(order_id: str, admin=Depends(verify_admin_token)):

@@ -203,3 +203,12 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [ ] Förbättra e-postmallar med Jinja2
 - [ ] Fixa Unsplash ORB-bildproblem (ersätt med lokala bilder)
 - [ ] Molnlagring för uppladdade filer (bilder/PDF försvinner vid omstart)
+
+## Kalender PDF-nedladdning (2026-04-09) - NYTT
+- [x] Ny backend `calendar_pdf.py` — genererar 12-sidig kalender-PDF med bilder + kalenderrutnät
+- [x] Varje sida: bild överst (60%), månadsrubrik + veckodag-headers + korrekt daggrid underst (40%)
+- [x] Helgdagar (lör/sön) i rött, varannan rad med alternerad bakgrund
+- [x] Publik endpoint `POST /api/calendar/generate-pdf` — kunder kan ladda ner PDF direkt från editorn
+- [x] Admin endpoint `GET /api/admin/orders/{id}/calendar-pdf` — admin kan ladda ner kalender-PDF från orderdetaljer
+- [x] "Ladda ner som PDF"-knapp i CalendarEditor (under "Lägg i varukorg")
+- [x] "Ladda ner kalender (PDF)"-knapp i admin OrderDetailPanel (indigo, bredvid ZIP-knappen)
