@@ -57,7 +57,7 @@ async def admin_login(request: Request, login_data: AdminLogin):
 
     # No 2FA configured — log in directly
     token = jwt.encode({
-        "sub": "admin", "email": ADMIN_EMAIL,
+        "sub": "admin", "email": ADMIN_EMAIL, "is_admin": True,
         "exp": datetime.now(timezone.utc) + timedelta(hours=8)
     }, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return {"token": token, "requires_2fa": False}
