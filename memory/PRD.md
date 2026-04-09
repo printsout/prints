@@ -179,6 +179,8 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Lagt till 33+ vektorritningar för alla saknade motiv (cat, dog, rabbit, fish, bird, bug, car, plane, rocket, ship, bike, train, gamepad, sparkles, etc.)
 - [x] Tidigare ritades saknade motiv som en enkel cirkel (prick) — nu har varje motiv en unik igenkännbar form
 - [x] Fallback ändrad från cirkel till stjärna för eventuella okända motiv
+- [x] **Gradient-bakgrunder**: Regnbåge och 10 andra gradienter renderas nu korrekt i PDF (tidigare bara solid färg)
+- [x] Implementerat horisontell gradientrendering med färginterpolation mellan alla stopp
 
 ## Backlog
 ### P1

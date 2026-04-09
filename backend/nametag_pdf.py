@@ -64,12 +64,19 @@ BG_COLOR_MAP = {
     "p13": "#D0CDE8", "p14": "#B3CEAF", "p15": "#FFBB91", "p16": "#E4BEAD",
 }
 
-# Gradient backgrounds -> use first color
+# Gradient backgrounds -> list of hex color stops (left-to-right)
 GRADIENT_MAP = {
-    "rainbow_bg": "#fad0c4",
-    "g1": "#667eea", "g2": "#f093fb", "g3": "#4facfe", "g4": "#43e97b",
-    "g5": "#fa709a", "g6": "#a18cd1", "g7": "#ffecd2", "g8": "#89f7fe",
-    "g9": "#fddb92", "g10": "#c1dfc4",
+    "rainbow_bg": ["#ff9a9e", "#fad0c4", "#ffecd2", "#a8edea", "#d4fc79"],
+    "g1": ["#667eea", "#764ba2"],
+    "g2": ["#f093fb", "#f5576c"],
+    "g3": ["#4facfe", "#00f2fe"],
+    "g4": ["#43e97b", "#38f9d7"],
+    "g5": ["#fa709a", "#fee140"],
+    "g6": ["#a18cd1", "#fbc2eb"],
+    "g7": ["#ffecd2", "#fcb69f"],
+    "g8": ["#89f7fe", "#66a6ff"],
+    "g9": ["#fddb92", "#d1fdff"],
+    "g10": ["#c1dfc4", "#deecdd"],
 }
 
 # Motif colors for vector drawing
@@ -135,13 +142,42 @@ def _register_font(c: canvas.Canvas, font_id: str) -> str:
     return "Helvetica"
 
 
-def _get_bg_color(bg_id: str) -> str:
-    """Return hex color string for a background ID."""
+def _get_bg_info(bg_id: str) -> dict:
+    """Return background info: either a solid hex or a gradient color list."""
     if bg_id in BG_COLOR_MAP:
-        return BG_COLOR_MAP[bg_id]
+        return {"type": "solid", "color": BG_COLOR_MAP[bg_id]}
     if bg_id in GRADIENT_MAP:
-        return GRADIENT_MAP[bg_id]
-    return "#FFFFFF"
+        return {"type": "gradient", "colors": GRADIENT_MAP[bg_id]}
+    return {"type": "solid", "color": "#FFFFFF"}
+
+
+def _hex_to_rgb(hex_color: str):
+    """Convert hex color to (r, g, b) tuple with 0-255 values."""
+    h = hex_color.lstrip("#")
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+
+def _interpolate_color(c1, c2, t):
+    """Linearly interpolate between two RGB tuples."""
+    return tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
+
+
+def _draw_gradient_rect(c: canvas.Canvas, x: float, y: float, w: float, h: float, color_stops: list):
+    """Draw a horizontal gradient rectangle using thin vertical strips."""
+    num_strips = max(int(w / 0.5), 20)  # ~0.5pt per strip for smooth gradient
+    strip_w = w / num_strips
+    rgb_stops = [_hex_to_rgb(col) for col in color_stops]
+    num_segments = len(rgb_stops) - 1
+
+    for i in range(num_strips):
+        t = i / max(num_strips - 1, 1)
+        seg_pos = t * num_segments
+        seg_idx = min(int(seg_pos), num_segments - 1)
+        seg_t = seg_pos - seg_idx
+        rgb = _interpolate_color(rgb_stops[seg_idx], rgb_stops[seg_idx + 1], seg_t)
+        hex_col = "#{:02x}{:02x}{:02x}".format(*rgb)
+        c.setFillColor(HexColor(hex_col))
+        c.rect(x + i * strip_w, y, strip_w + 0.5, h, fill=1, stroke=0)  # +0.5 overlap to avoid gaps
 
 
 import math
@@ -1019,13 +1055,14 @@ def _parse_customization(customization: dict) -> dict:
     child_name = customization.get("child_name", "")
     last_name = customization.get("last_name", "")
     display_name = f"{child_name} {last_name}" if last_name else child_name
+    bg_info = _get_bg_info(customization.get("background", "white"))
     return {
         "display_name": display_name,
         "phone_number": customization.get("phone_number", ""),
         "font_id": customization.get("font", "roboto"),
         "font_color_hex": customization.get("font_color", "#000000"),
         "motif_id": customization.get("motif"),
-        "bg_hex": _get_bg_color(customization.get("background", "white")),
+        "bg_info": bg_info,
     }
 
 
@@ -1052,12 +1089,17 @@ def _calc_font_size(name: str) -> float:
 
 def _draw_sticker(c: canvas.Canvas, x: float, y: float, data: dict, font_name: str):
     """Render a single sticker at (x, y) bottom-left."""
-    bg_color = HexColor(data["bg_hex"])
     font_color = HexColor(data["font_color_hex"])
+    bg_info = data["bg_info"]
 
-    # Background + border
-    c.setFillColor(bg_color)
-    c.rect(x, y, STICKER_W, STICKER_H, fill=1, stroke=0)
+    # Background: gradient or solid
+    if bg_info["type"] == "gradient":
+        _draw_gradient_rect(c, x, y, STICKER_W, STICKER_H, bg_info["colors"])
+    else:
+        c.setFillColor(HexColor(bg_info["color"]))
+        c.rect(x, y, STICKER_W, STICKER_H, fill=1, stroke=0)
+
+    # Border
     c.setStrokeColor(HexColor("#CCCCCC"))
     c.setLineWidth(0.15)
     c.rect(x, y, STICKER_W, STICKER_H, fill=0, stroke=1)
