@@ -11,9 +11,14 @@ export const PagePreview = ({ page, template, theme, companyLogo, scale = 1 }) =
   };
 
   if (page.type === 'cover') {
+    const bgS = page.bgImgSettings || {};
     return (
       <div style={base} className="flex flex-col items-center justify-center text-center">
-        {page.bgImage && <img src={page.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />}
+        {page.bgImage && <img src={page.bgImage} alt="" className="absolute inset-0 w-full h-full opacity-30" style={{
+          objectFit: 'cover',
+          objectPosition: `${bgS.posX ?? 50}% ${bgS.posY ?? 50}%`,
+          transform: `scale(${bgS.zoom ?? 1})`,
+        }} />}
         <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${color}15, ${color}05)` }} />
         <div className="relative z-10 flex flex-col items-center gap-2 px-4">
           {template === 'modern' && <div className="w-12 h-1 rounded-full mb-2" style={{ backgroundColor: color, width: 50 * scale }} />}
@@ -38,7 +43,11 @@ export const PagePreview = ({ page, template, theme, companyLogo, scale = 1 }) =
               <div key={item.id || `preview-item-${i}`} style={{ border: '1px solid #f1f5f9', borderRadius: 4 * scale, overflow: 'hidden' }}>
                 <div style={{ height: 50 * scale, backgroundColor: '#f8fafc' }} className="flex items-center justify-center">
                   {item.image ? (
-                    <img src={item.image} alt="" className="w-full h-full object-cover" />
+                    <img src={item.image} alt="" className="w-full h-full" style={{
+                      objectFit: 'cover',
+                      objectPosition: `${(item.imgSettings?.posX ?? 50)}% ${(item.imgSettings?.posY ?? 50)}%`,
+                      transform: `scale(${item.imgSettings?.zoom ?? 1})`,
+                    }} />
                   ) : (
                     <ImageIcon style={{ width: 16 * scale, height: 16 * scale }} className="text-slate-300" />
                   )}
@@ -66,7 +75,11 @@ export const PagePreview = ({ page, template, theme, companyLogo, scale = 1 }) =
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 * scale, flex: 1 }}>
             {imgs.map((img, i) => (
               <div key={`gallery-${i}`} style={{ backgroundColor: '#f8fafc', borderRadius: 3 * scale, overflow: 'hidden', aspectRatio: '4/3' }} className="flex items-center justify-center">
-                {img ? <img src={img} alt="" className="w-full h-full object-cover" /> : <ImageIcon style={{ width: 14 * scale, height: 14 * scale }} className="text-slate-300" />}
+                {img ? <img src={img} alt="" className="w-full h-full" style={{
+                  objectFit: 'cover',
+                  objectPosition: `${((page.imgSettings || [])[i]?.posX ?? 50)}% ${((page.imgSettings || [])[i]?.posY ?? 50)}%`,
+                  transform: `scale(${(page.imgSettings || [])[i]?.zoom ?? 1})`,
+                }} /> : <ImageIcon style={{ width: 14 * scale, height: 14 * scale }} className="text-slate-300" />}
               </div>
             ))}
           </div>

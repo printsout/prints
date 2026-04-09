@@ -1,7 +1,57 @@
 import { Input } from '../../components/ui/input';
-import { Upload, X, Image as ImageIcon, Trash2, Plus } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Trash2, Plus, ZoomIn, Move } from 'lucide-react';
 import { toast } from 'sonner';
 import { PAGE_TYPES, nextItemId, makeProduct, makeGallery, makeTextPage } from './catalogConstants';
+
+/** Reusable image with zoom + position adjustment */
+const AdjustableImage = ({ src, settings, onChange, className = '', style = {} }) => {
+  const zoom = settings?.zoom ?? 1;
+  const posX = settings?.posX ?? 50;
+  const posY = settings?.posY ?? 50;
+  return (
+    <img
+      src={src} alt=""
+      className={className}
+      style={{
+        ...style,
+        objectFit: 'cover',
+        objectPosition: `${posX}% ${posY}%`,
+        transform: `scale(${zoom})`,
+      }}
+      draggable={false}
+    />
+  );
+};
+
+/** Controls for zoom and position */
+const ImageAdjustControls = ({ settings, onChange }) => {
+  const zoom = settings?.zoom ?? 1;
+  const posX = settings?.posX ?? 50;
+  const posY = settings?.posY ?? 50;
+  const update = (key, val) => onChange({ ...settings, zoom, posX, posY, [key]: val });
+  return (
+    <div className="mt-2 space-y-1.5 bg-slate-50 rounded-lg p-2.5" data-testid="image-adjust">
+      <div className="flex items-center gap-2">
+        <ZoomIn className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <input type="range" min="1" max="2.5" step="0.05" value={zoom}
+          onChange={e => update('zoom', parseFloat(e.target.value))}
+          className="flex-1 h-1.5 accent-[#2a9d8f]" data-testid="img-zoom" />
+        <span className="text-[10px] text-slate-400 w-8 text-right">{Math.round(zoom * 100)}%</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Move className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <div className="flex-1 flex gap-1.5">
+          <input type="range" min="0" max="100" step="1" value={posX}
+            onChange={e => update('posX', parseInt(e.target.value))}
+            className="flex-1 h-1.5 accent-[#2a9d8f]" data-testid="img-pos-x" title="Horisontell" />
+          <input type="range" min="0" max="100" step="1" value={posY}
+            onChange={e => update('posY', parseInt(e.target.value))}
+            className="flex-1 h-1.5 accent-[#2a9d8f]" data-testid="img-pos-y" title="Vertikal" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProductItemEditor = ({ item, index, onChange, onRemove, onImageUpload }) => (
   <div className="bg-slate-50 rounded-xl p-4 space-y-3" data-testid={`product-item-${index}`}>
@@ -13,13 +63,16 @@ const ProductItemEditor = ({ item, index, onChange, onRemove, onImageUpload }) =
     </div>
     <div className="relative">
       {item.image ? (
-        <div className="relative w-full h-28 rounded-lg overflow-hidden bg-slate-100">
-          <img src={item.image} alt="" className="w-full h-full object-cover" />
-          <button type="button" onClick={() => onChange({ ...item, image: null })}
-            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition-colors">
-            <X className="w-3 h-3" />
-          </button>
-        </div>
+        <>
+          <div className="relative w-full h-28 rounded-lg overflow-hidden bg-slate-100">
+            <AdjustableImage src={item.image} settings={item.imgSettings} className="w-full h-full" />
+            <button type="button" onClick={() => onChange({ ...item, image: null, imgSettings: null })}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition-colors">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <ImageAdjustControls settings={item.imgSettings} onChange={s => onChange({ ...item, imgSettings: s })} />
+        </>
       ) : (
         <button type="button" onClick={onImageUpload}
           className="w-full h-28 rounded-lg border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] flex flex-col items-center justify-center gap-1 transition-colors">
@@ -104,11 +157,14 @@ const CoverEditor = ({ page, activePage, updatePage, triggerImageUpload }) => (
     <div>
       <label className="block text-xs font-medium text-slate-500 mb-1">Bakgrundsbild (valfritt)</label>
       {page.bgImage ? (
-        <div className="relative h-24 rounded-lg overflow-hidden">
-          <img src={page.bgImage} alt="" className="w-full h-full object-cover" />
-          <button type="button" onClick={() => updatePage(activePage, { bgImage: null })}
-            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center"><X className="w-3 h-3" /></button>
-        </div>
+        <>
+          <div className="relative h-24 rounded-lg overflow-hidden">
+            <AdjustableImage src={page.bgImage} settings={page.bgImgSettings} className="w-full h-full" />
+            <button type="button" onClick={() => updatePage(activePage, { bgImage: null, bgImgSettings: null })}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center"><X className="w-3 h-3" /></button>
+          </div>
+          <ImageAdjustControls settings={page.bgImgSettings} onChange={s => updatePage(activePage, { bgImgSettings: s })} />
+        </>
       ) : (
         <button type="button" onClick={() => triggerImageUpload(activePage, 'cover')}
           className="w-full h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] flex items-center justify-center gap-2 text-sm text-slate-500 transition-colors" data-testid="cover-bg-upload">
@@ -157,16 +213,25 @@ const GalleryEditor = ({ page, activePage, updatePage, triggerImageUpload }) => 
       {(page.images || []).map((img, i) => (
         <div key={`gal-slot-${i}`}>
           {img ? (
-            <div className="relative h-24 rounded-lg overflow-hidden">
-              <img src={img} alt="" className="w-full h-full object-cover" />
-              <button type="button" onClick={() => {
-                const images = [...(page.images || [])];
-                images[i] = null;
-                updatePage(activePage, { images });
-              }} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
+            <>
+              <div className="relative h-24 rounded-lg overflow-hidden">
+                <AdjustableImage src={img} settings={(page.imgSettings || [])[i]} className="w-full h-full" />
+                <button type="button" onClick={() => {
+                  const images = [...(page.images || [])];
+                  const imgSettings = [...(page.imgSettings || [])];
+                  images[i] = null;
+                  imgSettings[i] = null;
+                  updatePage(activePage, { images, imgSettings });
+                }} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <ImageAdjustControls settings={(page.imgSettings || [])[i]} onChange={s => {
+                const imgSettings = [...(page.imgSettings || new Array((page.images || []).length).fill(null))];
+                imgSettings[i] = s;
+                updatePage(activePage, { imgSettings });
+              }} />
+            </>
           ) : (
             <button type="button" onClick={() => triggerImageUpload(activePage, 'gallery', i)}
               className="w-full h-24 rounded-lg border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] flex flex-col items-center justify-center gap-1 transition-colors"

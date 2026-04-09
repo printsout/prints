@@ -118,6 +118,14 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Knappen visar "Spara ändringar" istället för "Lägg i varukorgen" i redigeringsläge
 - [x] Sparande uppdaterar befintlig artikel via PATCH (ingen dubblett skapas)
 
+## Bildjustering i katalogdesigner (2026-04-09) - NYTT
+- [x] Ny `AdjustableImage` komponent med zoom + position via object-position/transform
+- [x] Ny `ImageAdjustControls` komponent med reglage för zoom (100-250%) och position (H/V)
+- [x] Bildjustering på omslagssida (bakgrundsbild med bgImgSettings)
+- [x] Bildjustering på produktsidor (per produkt med imgSettings)
+- [x] Bildjustering på gallerisidor (per galleribild med imgSettings[])
+- [x] Förhandsgranskning (PagePreview) uppdaterad att visa justering i realtid
+
 ## B2B-produkter i admin + Katalogdesign-redigeringsverktyg (2026-04-08) - NYTT
 - [x] 3 B2B-produkter seedade i databasen: Visitkort, Katalogutskrift, Egen Katalogdesign
 - [x] AdminProducts visar B2B-produkter med kategorifilter (Alla/Webbshop/Företag) och B2B-badge
