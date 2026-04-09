@@ -266,6 +266,15 @@ async def toggle_order_marked(order_id: str, admin=Depends(verify_admin_token)):
     await db.orders.update_one({"order_id": order_id}, {"$set": {"marked": new_val}})
     return {"marked": new_val}
 
+@router.patch("/orders/mark-all")
+async def mark_all_orders(admin=Depends(verify_admin_token)):
+    """Toggle all orders: if any unmarked exist, mark all. Otherwise unmark all."""
+    unmarked = await db.orders.count_documents({"$or": [{"marked": False}, {"marked": {"$exists": False}}]})
+    new_val = unmarked > 0
+    await db.orders.update_many({}, {"$set": {"marked": new_val}})
+    return {"marked": new_val}
+
+
 
 @router.delete("/orders/{order_id}")
 async def delete_order(order_id: str, admin=Depends(verify_admin_token)):

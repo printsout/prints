@@ -161,6 +161,19 @@ const AdminOrders = () => {
     }
   };
 
+  const handleMarkAll = async () => {
+    try {
+      const res = await api.patch('/admin/orders/mark-all', {}, { headers: getAuthHeaders() });
+      const newMarked = res.data.marked;
+      setOrders(prev => prev.map(o => ({ ...o, marked: newMarked })));
+      toast.success(newMarked ? 'Alla beställningar markerade' : 'Alla markeringar borttagna');
+    } catch {
+      toast.error('Kunde inte markera alla beställningar');
+    }
+  };
+
+  const allMarked = orders.length > 0 && orders.every(o => o.marked);
+
   const handlePrint = (order) => {
     const formatDate = (d) => new Date(d).toLocaleString('sv-SE');
     const formatCustomization = (c) => {
@@ -310,7 +323,19 @@ const AdminOrders = () => {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase w-10"></th>
+                  <th className="px-3 py-3 text-center w-10">
+                    <button
+                      onClick={handleMarkAll}
+                      className="transition-colors"
+                      title={allMarked ? 'Avmarkera alla' : 'Markera alla'}
+                      data-testid="mark-all-orders"
+                    >
+                      {allMarked
+                        ? <CheckSquare className="w-5 h-5 text-emerald-600" />
+                        : <Square className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+                      }
+                    </button>
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
