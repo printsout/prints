@@ -249,16 +249,18 @@ def _draw_gallery_page(c, page, theme):
 
     imgs = page.get("images") or []
     img_settings = page.get("imgSettings") or []
+    captions = page.get("captions") or []
     gap = 4 * mm
     content_w = PAGE_W - 2 * margin
     col_w = (content_w - gap) / 2
     img_h = col_w * 0.75  # aspect ratio 4:3
+    caption_h = 5 * mm
 
     for i, img_url in enumerate(imgs[:4]):
         col = i % 2
         row = i // 2
         x = margin + col * (col_w + gap)
-        y = y_cursor - row * (img_h + gap)
+        y = y_cursor - row * (img_h + caption_h + gap)
 
         # Background
         c.setFillColor(HexColor("#f8fafc"))
@@ -269,6 +271,15 @@ def _draw_gallery_page(c, page, theme):
             if img:
                 settings = img_settings[i] if i < len(img_settings) else None
                 _draw_image_adjusted(c, img, x, y - img_h, col_w, img_h, settings)
+
+        # Caption
+        caption = captions[i] if i < len(captions) else None
+        if caption:
+            _set_font(c, font, 8)
+            c.setFillColor(HexColor("#64748b"))
+            cw = c.stringWidth(caption)
+            cx = x + (col_w - cw) / 2
+            c.drawString(cx, y - img_h - caption_h, caption)
 
 
 # ─── Text Page ──────────────────────────────────────────

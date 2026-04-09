@@ -74,12 +74,17 @@ export const PagePreview = ({ page, template, theme, companyLogo, scale = 1 }) =
           {page.title && <p style={{ fontSize: 12 * scale, fontWeight: 700, color, marginBottom: 6 * scale }}>{page.title}</p>}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 * scale, flex: 1 }}>
             {imgs.map((img, i) => (
-              <div key={`gallery-${i}`} style={{ backgroundColor: '#f8fafc', borderRadius: 3 * scale, overflow: 'hidden', aspectRatio: '4/3' }} className="flex items-center justify-center">
-                {img ? <img src={img} alt="" className="w-full h-full" style={{
-                  objectFit: 'cover',
-                  objectPosition: `${((page.imgSettings || [])[i]?.posX ?? 50)}% ${((page.imgSettings || [])[i]?.posY ?? 50)}%`,
-                  transform: `scale(${(page.imgSettings || [])[i]?.zoom ?? 1})`,
-                }} /> : <ImageIcon style={{ width: 14 * scale, height: 14 * scale }} className="text-slate-300" />}
+              <div key={`gallery-${i}`}>
+                <div style={{ backgroundColor: '#f8fafc', borderRadius: 3 * scale, overflow: 'hidden', aspectRatio: '4/3' }} className="flex items-center justify-center">
+                  {img ? <img src={img} alt="" className="w-full h-full" style={{
+                    objectFit: 'cover',
+                    objectPosition: `${((page.imgSettings || [])[i]?.posX ?? 50)}% ${((page.imgSettings || [])[i]?.posY ?? 50)}%`,
+                    transform: `scale(${(page.imgSettings || [])[i]?.zoom ?? 1})`,
+                  }} /> : <ImageIcon style={{ width: 14 * scale, height: 14 * scale }} className="text-slate-300" />}
+                </div>
+                {(page.captions || [])[i] && (
+                  <p style={{ fontSize: 6 * scale, color: '#64748b', marginTop: 2 * scale, textAlign: 'center' }}>{page.captions[i]}</p>
+                )}
               </div>
             ))}
           </div>
