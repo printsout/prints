@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { useCart } from '../context/CartContext';
@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 import { 
   Upload, ChevronLeft, ChevronRight, ShoppingCart, 
-  Trash2, Check, Calendar, Image as ImageIcon, Download
+  Trash2, Check, Calendar, Image as ImageIcon, Download, Type
 } from 'lucide-react';
 
 const MONTHS = [
@@ -15,6 +15,118 @@ const MONTHS = [
   'Maj', 'Juni', 'Juli', 'Augusti',
   'September', 'Oktober', 'November', 'December'
 ];
+
+const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, onUpdateText, onUpdateTextPos, getRootProps, getInputProps, isDragActive }) => {
+  const containerRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+
+  const handleMouseDown = useCallback((e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    if (!monthData.text) return;
+    e.preventDefault();
+    setDragging(true);
+  }, [monthData.text]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!dragging || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
+    onUpdateTextPos({ x, y });
+  }, [dragging, onUpdateTextPos]);
+
+  const handleMouseUp = useCallback(() => setDragging(false), []);
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [dragging, handleMouseMove, handleMouseUp]);
+
+  const handleTouchStart = useCallback((e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    if (!monthData.text || !containerRef.current) return;
+    setDragging(true);
+  }, [monthData.text]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!dragging || !containerRef.current) return;
+    const touch = e.touches[0];
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(5, Math.min(95, ((touch.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(5, Math.min(95, ((touch.clientY - rect.top) / rect.height) * 100));
+    onUpdateTextPos({ x, y });
+  }, [dragging, onUpdateTextPos]);
+
+  if (!monthData.preview) {
+    return (
+      <div className="h-2/3 bg-slate-100 relative">
+        <div
+          {...getRootProps()}
+          className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors ${isDragActive ? 'bg-primary/10' : 'hover:bg-slate-200'}`}
+        >
+          <input {...getInputProps()} />
+          <Upload className="w-12 h-12 text-slate-400 mb-4" />
+          <p className="text-slate-600 font-medium">Ladda upp bild för {monthName}</p>
+          <p className="text-slate-400 text-sm mt-1">Dra & släpp eller klicka</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-2/3 bg-slate-100 relative select-none"
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => setDragging(false)}
+      style={{ cursor: monthData.text ? (dragging ? 'grabbing' : 'grab') : 'default' }}
+    >
+      <img src={monthData.preview} alt={monthName} className="w-full h-full object-cover pointer-events-none" />
+      {monthData.text && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: `${monthData.textPos.x}%`,
+            top: `${monthData.textPos.y}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+          data-testid="calendar-text-overlay"
+        >
+          <span
+            style={{
+              fontSize: `${monthData.fontSize}px`,
+              color: monthData.textColor,
+              textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {monthData.text}
+          </span>
+        </div>
+      )}
+      <button
+        onClick={onRemoveImage}
+        className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors z-10"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+      {monthData.text && (
+        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded pointer-events-none">
+          Dra texten för att flytta
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CalendarEditor = () => {
   const { productId } = useParams();
@@ -27,7 +139,7 @@ const CalendarEditor = () => {
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(0);
   const [monthImages, setMonthImages] = useState(
-    Array(12).fill(null).map(() => ({ image: null, preview: null }))
+    Array(12).fill(null).map(() => ({ image: null, preview: null, text: '', textPos: { x: 50, y: 85 }, textColor: '#FFFFFF', fontSize: 24 }))
   );
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() + 1);
@@ -61,13 +173,20 @@ const CalendarEditor = () => {
     if (c.months?.length) {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
       setMonthImages(c.months.map(m => {
+        const base = { 
+          image: null, preview: null, 
+          text: m.text || '', 
+          textPos: m.textPos || { x: 50, y: 85 }, 
+          textColor: m.textColor || '#FFFFFF', 
+          fontSize: m.fontSize || 24 
+        };
         if (m.image_url) {
           const fullUrl = m.image_url.startsWith('/api')
             ? `${backendUrl}${m.image_url}`
             : m.image_url;
-          return { image: null, preview: fullUrl };
+          base.preview = fullUrl;
         }
-        return { image: null, preview: null };
+        return base;
       }));
     }
   }, [editCartItemId, cart.items]);
@@ -79,6 +198,7 @@ const CalendarEditor = () => {
       reader.onload = () => {
         const newImages = [...monthImages];
         newImages[currentMonth] = {
+          ...newImages[currentMonth],
           image: file,
           preview: reader.result
         };
@@ -97,7 +217,7 @@ const CalendarEditor = () => {
 
   const removeImage = (monthIndex) => {
     const newImages = [...monthImages];
-    newImages[monthIndex] = { image: null, preview: null };
+    newImages[monthIndex] = { ...newImages[monthIndex], image: null, preview: null };
     setMonthImages(newImages);
     toast.success('Bild borttagen');
   };
@@ -140,7 +260,7 @@ const CalendarEditor = () => {
               : m.preview;
           }
         }
-        uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl });
+        uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl, text: m.text || '', textPos: m.textPos || { x: 50, y: 85 }, textColor: m.textColor || '#FFFFFF', fontSize: m.fontSize || 24 });
       }
       const res = await api.post('/calendar/generate-pdf', { year: selectedYear, months: uploadedMonths }, { responseType: 'blob' });
       const url = URL.createObjectURL(res.data);
@@ -188,6 +308,10 @@ const CalendarEditor = () => {
           month: MONTHS[i],
           hasImage: m.preview !== null,
           image_url: imageUrl,
+          text: m.text || '',
+          textPos: m.textPos || { x: 50, y: 85 },
+          textColor: m.textColor || '#FFFFFF',
+          fontSize: m.fontSize || 24,
         });
       }
 
@@ -283,35 +407,25 @@ const CalendarEditor = () => {
               {/* Calendar Page Preview */}
               <div className="aspect-[3/4] bg-white border-2 border-slate-200 rounded-lg overflow-hidden shadow-lg">
                 {/* Image Area */}
-                <div className="h-2/3 bg-slate-100 relative">
-                  {monthImages[currentMonth].preview ? (
-                    <>
-                      <img 
-                        src={monthImages[currentMonth].preview}
-                        alt={MONTHS[currentMonth]}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => removeImage(currentMonth)}
-                        className="absolute top-4 right-4 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <div 
-                      {...getRootProps()}
-                      className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                        isDragActive ? 'bg-primary/10' : 'hover:bg-slate-200'
-                      }`}
-                    >
-                      <input {...getInputProps()} />
-                      <Upload className="w-12 h-12 text-slate-400 mb-4" />
-                      <p className="text-slate-600 font-medium">Ladda upp bild för {MONTHS[currentMonth]}</p>
-                      <p className="text-slate-400 text-sm mt-1">Dra & släpp eller klicka</p>
-                    </div>
-                  )}
-                </div>
+                <DraggableImageArea
+                  monthData={monthImages[currentMonth]}
+                  monthIndex={currentMonth}
+                  monthName={MONTHS[currentMonth]}
+                  onRemoveImage={() => removeImage(currentMonth)}
+                  onUpdateText={(text) => {
+                    const next = [...monthImages];
+                    next[currentMonth] = { ...next[currentMonth], text };
+                    setMonthImages(next);
+                  }}
+                  onUpdateTextPos={(textPos) => {
+                    const next = [...monthImages];
+                    next[currentMonth] = { ...next[currentMonth], textPos };
+                    setMonthImages(next);
+                  }}
+                  getRootProps={getRootProps}
+                  getInputProps={getInputProps}
+                  isDragActive={isDragActive}
+                />
                 
                 {/* Calendar Grid Area */}
                 <div className="h-1/3 p-4 bg-white">
@@ -400,6 +514,64 @@ const CalendarEditor = () => {
                   Alla 12 månader har bilder!
                 </div>
               )}
+            </div>
+
+            {/* Text on Image */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Type className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-slate-900">Text på bild</h3>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">Skriv en text som visas på bilden för {MONTHS[currentMonth]}. Dra texten för att flytta.</p>
+              <input
+                type="text"
+                value={monthImages[currentMonth].text}
+                onChange={(e) => {
+                  const next = [...monthImages];
+                  next[currentMonth] = { ...next[currentMonth], text: e.target.value };
+                  setMonthImages(next);
+                }}
+                placeholder={`T.ex. "${MONTHS[currentMonth]} äventyr"`}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                data-testid="calendar-text-input"
+              />
+              <div className="flex gap-3 mt-3">
+                <div className="flex-1">
+                  <label className="text-xs text-slate-500 block mb-1">Färg</label>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['#FFFFFF', '#000000', '#FFD700', '#E53935', '#2196F3', '#4CAF50'].map(color => (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          const next = [...monthImages];
+                          next[currentMonth] = { ...next[currentMonth], textColor: color };
+                          setMonthImages(next);
+                        }}
+                        className={`w-7 h-7 rounded-full border-2 transition-all ${monthImages[currentMonth].textColor === color ? 'border-primary scale-110' : 'border-slate-300'}`}
+                        style={{ backgroundColor: color }}
+                        data-testid={`text-color-${color.replace('#','')}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="w-24">
+                  <label className="text-xs text-slate-500 block mb-1">Storlek</label>
+                  <input
+                    type="range"
+                    min={12}
+                    max={48}
+                    value={monthImages[currentMonth].fontSize}
+                    onChange={(e) => {
+                      const next = [...monthImages];
+                      next[currentMonth] = { ...next[currentMonth], fontSize: parseInt(e.target.value) };
+                      setMonthImages(next);
+                    }}
+                    className="w-full"
+                    data-testid="text-size-slider"
+                  />
+                  <span className="text-xs text-slate-400 text-center block">{monthImages[currentMonth].fontSize}px</span>
+                </div>
+              </div>
             </div>
 
             {/* Year Selection */}

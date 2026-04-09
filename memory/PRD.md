@@ -212,3 +212,5 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] Admin endpoint `GET /api/admin/orders/{id}/calendar-pdf` — admin kan ladda ner kalender-PDF från orderdetaljer
 - [x] "Ladda ner som PDF"-knapp i CalendarEditor (under "Lägg i varukorg")
 - [x] "Ladda ner kalender (PDF)"-knapp i admin OrderDetailPanel (indigo, bredvid ZIP-knappen)
+- [x] **Textskrivning på bilder**: Kunden kan skriva text per månadsbild, dra texten vart de vill, välja färg (6 val) och storlek (12-48px)
+- [x] Texten renderas på PDF:en med skugga på exakt position som i editorn

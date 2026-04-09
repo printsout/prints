@@ -34,7 +34,41 @@ SUBTLE_TEXT = HexColor("#94a3b8")
 UPLOADS_DIR = Path(os.path.dirname(__file__)) / "uploads"
 
 
-def _draw_month_page(c, year: int, month_index: int, image_path: str = None):
+def _draw_text_overlay(c, month_data, cal_h, img_h):
+    """Draw user text on the image area at the specified position."""
+    if not month_data:
+        return
+    text = month_data.get("text", "")
+    if not text:
+        return
+    pos = month_data.get("textPos", {"x": 50, "y": 85})
+    color = month_data.get("textColor", "#FFFFFF")
+    font_size = month_data.get("fontSize", 24)
+    
+    # Convert % position to PDF coordinates
+    x = (pos.get("x", 50) / 100) * PAGE_W
+    y = cal_h + img_h - (pos.get("y", 85) / 100) * img_h  # flip Y axis
+    
+    # Draw text shadow first
+    c.saveState()
+    c.setFillColor(HexColor("#000000"))
+    c.setFont("Helvetica-Bold", font_size)
+    c.setFillAlpha(0.5)
+    c.drawCentredString(x + 1.5, y - 1.5, text)
+    c.restoreState()
+    
+    # Draw main text
+    c.saveState()
+    try:
+        c.setFillColor(HexColor(color))
+    except Exception:
+        c.setFillColor(white)
+    c.setFont("Helvetica-Bold", font_size)
+    c.drawCentredString(x, y, text)
+    c.restoreState()
+
+
+def _draw_month_page(c, year: int, month_index: int, image_path: str = None, month_data: dict = None):
     """Draw a single calendar month page."""
     month_num = month_index + 1
     month_name = MONTHS_SV[month_index]
@@ -66,6 +100,8 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None):
                 c.rect(0, cal_h, PAGE_W, img_h, fill=1, stroke=0)
                 y_pos = cal_h + (img_h - draw_h) / 2
             c.drawImage(img, 0, y_pos, PAGE_W, draw_h)
+            # Draw text overlay if present
+            _draw_text_overlay(c, month_data, cal_h, img_h)
             c.restoreState()
         except Exception:
             # Draw placeholder
@@ -173,8 +209,10 @@ def generate_calendar_pdf(year: int, months_data: list, output_path: str):
             c.showPage()
 
         image_path = None
+        month_data = None
         if i < len(months_data):
-            img_url = months_data[i].get("image_url")
+            month_data = months_data[i]
+            img_url = month_data.get("image_url")
             if img_url:
                 # Extract filename from URL path like /api/uploads/abc.jpg
                 filename = img_url.split("/")[-1]
@@ -182,7 +220,7 @@ def generate_calendar_pdf(year: int, months_data: list, output_path: str):
                 if candidate.exists():
                     image_path = str(candidate)
 
-        _draw_month_page(c, year, i, image_path)
+        _draw_month_page(c, year, i, image_path, month_data)
 
     c.save()
     return output_path
