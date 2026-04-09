@@ -194,14 +194,14 @@ def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: flo
     dispatch = {
         "star": lambda: _draw_star(c, cx, cy, s * 0.45, 5),
         "heart": lambda: _draw_heart(c, cx, cy, s * 0.4),
-        "flower": lambda: _draw_flower(c, cx, cy, s * 0.4),
+        "flower": lambda: _draw_flower(c, cx, cy, s * 0.55),
         "sun": lambda: _draw_sun(c, cx, cy, s * 0.4),
         "moon": lambda: _draw_moon(c, cx, cy, s * 0.4),
         "snowflake": lambda: _draw_snowflake(c, cx, cy, s * 0.4),
         "tree": lambda: _draw_tree(c, cx, cy, s * 0.45),
         "leaf": lambda: _draw_leaf(c, cx, cy, s * 0.4),
         "crown": lambda: _draw_crown(c, cx, cy, s * 0.4),
-        "football": lambda: _draw_football(c, cx, cy, s * 0.35),
+        "football": lambda: _draw_football(c, cx, cy, s * 0.45),
         "volleyball": lambda: _draw_volleyball(c, cx, cy, s * 0.35),
         "trophy": lambda: _draw_trophy(c, cx, cy, s * 0.4),
         "medal": lambda: _draw_medal(c, cx, cy, s * 0.4),
@@ -213,21 +213,21 @@ def _draw_motif(c: canvas.Canvas, cx: float, cy: float, motif_id: str, size: flo
         "mountain": lambda: _draw_triangle(c, cx, cy, s * 0.45),
         "flag": lambda: _draw_flag(c, cx, cy, s * 0.4),
         # Animals
-        "cat": lambda: _draw_cat(c, cx, cy, s * 0.4),
-        "dog": lambda: _draw_dog(c, cx, cy, s * 0.4),
-        "rabbit": lambda: _draw_rabbit(c, cx, cy, s * 0.4),
-        "fish": lambda: _draw_fish(c, cx, cy, s * 0.4),
-        "bird": lambda: _draw_bird(c, cx, cy, s * 0.4),
-        "bug": lambda: _draw_bug(c, cx, cy, s * 0.4),
-        "baby": lambda: _draw_baby(c, cx, cy, s * 0.4),
-        "horse": lambda: _draw_horse(c, cx, cy, s * 0.4),
-        "footprints": lambda: _draw_footprints(c, cx, cy, s * 0.4),
+        "cat": lambda: _draw_cat(c, cx, cy, s * 0.5),
+        "dog": lambda: _draw_dog(c, cx, cy, s * 0.5),
+        "rabbit": lambda: _draw_rabbit(c, cx, cy, s * 0.5),
+        "fish": lambda: _draw_fish(c, cx, cy, s * 0.5),
+        "bird": lambda: _draw_bird(c, cx, cy, s * 0.5),
+        "bug": lambda: _draw_bug(c, cx, cy, s * 0.5),
+        "baby": lambda: _draw_baby(c, cx, cy, s * 0.5),
+        "horse": lambda: _draw_horse(c, cx, cy, s * 0.5),
+        "footprints": lambda: _draw_footprints(c, cx, cy, s * 0.5),
         # Vehicles
-        "car": lambda: _draw_car(c, cx, cy, s * 0.4),
-        "plane": lambda: _draw_plane(c, cx, cy, s * 0.4),
-        "rocket": lambda: _draw_rocket(c, cx, cy, s * 0.45),
-        "ship": lambda: _draw_ship(c, cx, cy, s * 0.4),
-        "bike": lambda: _draw_bike(c, cx, cy, s * 0.4),
+        "car": lambda: _draw_car(c, cx, cy, s * 0.5),
+        "plane": lambda: _draw_plane(c, cx, cy, s * 0.5),
+        "rocket": lambda: _draw_rocket(c, cx, cy, s * 0.5),
+        "ship": lambda: _draw_ship(c, cx, cy, s * 0.5),
+        "bike": lambda: _draw_bike(c, cx, cy, s * 0.5),
         "train": lambda: _draw_train(c, cx, cy, s * 0.4),
         # Sports & activities
         "gamepad": lambda: _draw_gamepad(c, cx, cy, s * 0.4),
@@ -286,13 +286,31 @@ def _draw_heart(c, cx, cy, r):
 
 
 def _draw_flower(c, cx, cy, r):
+    """Flower with petals, center and a prominent leaf (like Flower2 icon)."""
+    # Stem - thick and visible
+    c.setStrokeColor(HexColor("#388E3C"))
+    c.setLineWidth(max(0.8, r * 0.08))
+    c.line(cx, cy + r * 0.05, cx, cy - r * 0.75)
+    # Leaf on right side of stem - big enough to see
+    c.setFillColor(HexColor("#4CAF50"))
+    leaf = c.beginPath()
+    leaf.moveTo(cx + r * 0.02, cy - r * 0.2)
+    leaf.curveTo(cx + r * 0.5, cy - r * 0.05, cx + r * 0.55, cy - r * 0.35, cx + r * 0.3, cy - r * 0.55)
+    leaf.curveTo(cx + r * 0.15, cy - r * 0.5, cx + r * 0.05, cy - r * 0.35, cx + r * 0.02, cy - r * 0.2)
+    leaf.close()
+    c.drawPath(leaf, fill=1, stroke=0)
+    # Petals at top - big and colorful
+    color_hex = MOTIF_COLORS.get("flower", "#E91E63")
+    c.setFillColor(HexColor(color_hex))
+    petal_cy = cy + r * 0.35
     for i in range(5):
-        angle = math.radians(i * 72)
-        px = cx + r * 0.5 * math.cos(angle)
-        py = cy + r * 0.5 * math.sin(angle)
-        c.circle(px, py, r * 0.3, fill=1, stroke=0)
+        angle = math.radians(i * 72 + 90)
+        px = cx + r * 0.25 * math.cos(angle)
+        py = petal_cy + r * 0.25 * math.sin(angle)
+        c.circle(px, py, r * 0.22, fill=1, stroke=0)
+    # Yellow center
     c.setFillColor(HexColor("#FFC107"))
-    c.circle(cx, cy, r * 0.2, fill=1, stroke=0)
+    c.circle(cx, petal_cy, r * 0.13, fill=1, stroke=0)
 
 
 def _draw_sun(c, cx, cy, r):
@@ -418,19 +436,46 @@ def _draw_leaf(c, cx, cy, r):
 
 
 def _draw_football(c, cx, cy, r):
-    """Football/soccer ball - circle with pentagon pattern."""
+    """Football/soccer ball - recognizable ball at any size."""
+    # Solid green ball with thin white highlight
+    c.setFillColor(HexColor("#1B5E20"))
     c.circle(cx, cy, r, fill=1, stroke=0)
-    c.setFillColor(white)
-    _draw_star(c, cx, cy, r * 0.4, 5)
+    # Single white arc highlight to suggest roundness/ball
+    c.setStrokeColor(white)
+    c.setLineWidth(max(0.3, r * 0.1))
+    path = c.beginPath()
+    path.moveTo(cx - r * 0.3, cy + r * 0.6)
+    path.curveTo(cx - r * 0.5, cy + r * 0.2, cx - r * 0.5, cy - r * 0.3, cx - r * 0.15, cy - r * 0.55)
+    c.drawPath(path, fill=0, stroke=1)
+
+
+def _draw_pentagon(c, cx, cy, r):
+    """Draw a filled pentagon."""
+    path = c.beginPath()
+    for i in range(5):
+        angle = math.radians(i * 72 - 90)
+        x = cx + r * math.cos(angle)
+        y = cy + r * math.sin(angle)
+        if i == 0:
+            path.moveTo(x, y)
+        else:
+            path.lineTo(x, y)
+    path.close()
+    c.drawPath(path, fill=1, stroke=0)
 
 
 def _draw_volleyball(c, cx, cy, r):
-    """Volleyball - circle with cross lines."""
-    c.circle(cx, cy, r, fill=1, stroke=0)
-    c.setStrokeColor(white)
-    c.setLineWidth(0.4)
-    c.line(cx - r, cy, cx + r, cy)
-    c.line(cx, cy - r, cx, cy + r)
+    """Volleyball - circle with curved panel lines."""
+    c.setFillColor(HexColor("#FFF8E1"))
+    c.setStrokeColor(HexColor(MOTIF_COLORS.get("volleyball", "#FF8F00")))
+    lw = max(0.5, r * 0.1)
+    c.setLineWidth(lw)
+    c.circle(cx, cy, r, fill=1, stroke=1)
+    # Panel lines
+    c.setLineWidth(max(0.3, r * 0.06))
+    c.line(cx - r * 0.85, cy, cx + r * 0.85, cy)
+    c.line(cx - r * 0.3, cy + r * 0.8, cx + r * 0.3, cy - r * 0.8)
+    c.line(cx + r * 0.3, cy + r * 0.8, cx - r * 0.3, cy - r * 0.8)
 
 
 def _draw_medal(c, cx, cy, r):
@@ -451,159 +496,113 @@ def _draw_medal(c, cx, cy, r):
 
 
 def _draw_cat(c, cx, cy, r):
-    """Cat face with ears."""
-    c.circle(cx, cy - r * 0.1, r * 0.45, fill=1, stroke=0)
-    # Left ear
+    """Cat silhouette - simple bold shape with prominent ears."""
+    # Head - large circle
+    c.circle(cx, cy, r * 0.55, fill=1, stroke=0)
+    # Left ear - big triangle
     path = c.beginPath()
-    path.moveTo(cx - r * 0.45, cy + r * 0.15)
-    path.lineTo(cx - r * 0.3, cy + r * 0.7)
-    path.lineTo(cx - r * 0.05, cy + r * 0.3)
+    path.moveTo(cx - r * 0.5, cy + r * 0.25)
+    path.lineTo(cx - r * 0.35, cy + r * 0.9)
+    path.lineTo(cx - r * 0.05, cy + r * 0.4)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
-    # Right ear
+    # Right ear - big triangle
     path = c.beginPath()
-    path.moveTo(cx + r * 0.45, cy + r * 0.15)
-    path.lineTo(cx + r * 0.3, cy + r * 0.7)
-    path.lineTo(cx + r * 0.05, cy + r * 0.3)
+    path.moveTo(cx + r * 0.5, cy + r * 0.25)
+    path.lineTo(cx + r * 0.35, cy + r * 0.9)
+    path.lineTo(cx + r * 0.05, cy + r * 0.4)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
-    # Eyes
-    c.setFillColor(white)
-    c.circle(cx - r * 0.15, cy, r * 0.08, fill=1, stroke=0)
-    c.circle(cx + r * 0.15, cy, r * 0.08, fill=1, stroke=0)
 
 
 def _draw_dog(c, cx, cy, r):
-    """Dog face with floppy ears."""
-    c.circle(cx, cy, r * 0.4, fill=1, stroke=0)
-    # Floppy ears
-    c.ellipse(cx - r * 0.55, cy - r * 0.15, cx - r * 0.2, cy + r * 0.55, fill=1, stroke=0)
-    c.ellipse(cx + r * 0.2, cy - r * 0.15, cx + r * 0.55, cy + r * 0.55, fill=1, stroke=0)
+    """Dog silhouette - round head with big floppy ears."""
+    # Floppy ears (drawn first, behind head)
+    c.ellipse(cx - r * 0.7, cy - r * 0.4, cx - r * 0.15, cy + r * 0.45, fill=1, stroke=0)
+    c.ellipse(cx + r * 0.15, cy - r * 0.4, cx + r * 0.7, cy + r * 0.45, fill=1, stroke=0)
+    # Head
+    c.circle(cx, cy + r * 0.1, r * 0.5, fill=1, stroke=0)
     # Snout
-    c.setFillColor(HexColor("#D7CCC8"))
-    c.ellipse(cx - r * 0.2, cy - r * 0.35, cx + r * 0.2, cy - r * 0.05, fill=1, stroke=0)
-    # Nose
-    c.setFillColor(black)
-    c.circle(cx, cy - r * 0.1, r * 0.08, fill=1, stroke=0)
-    # Eyes
-    c.circle(cx - r * 0.15, cy + r * 0.1, r * 0.05, fill=1, stroke=0)
-    c.circle(cx + r * 0.15, cy + r * 0.1, r * 0.05, fill=1, stroke=0)
+    c.ellipse(cx - r * 0.2, cy - r * 0.25, cx + r * 0.2, cy + r * 0.05, fill=1, stroke=0)
 
 
 def _draw_rabbit(c, cx, cy, r):
-    """Rabbit face with long ears."""
-    c.circle(cx, cy - r * 0.2, r * 0.4, fill=1, stroke=0)
+    """Rabbit silhouette - round head with very long ears."""
+    # Head
+    c.circle(cx, cy - r * 0.2, r * 0.45, fill=1, stroke=0)
     # Long ears
-    c.ellipse(cx - r * 0.25, cy + r * 0.1, cx - r * 0.05, cy + r * 0.85, fill=1, stroke=0)
-    c.ellipse(cx + r * 0.05, cy + r * 0.1, cx + r * 0.25, cy + r * 0.85, fill=1, stroke=0)
-    # Inner ear (pink tint)
-    c.setFillColor(HexColor("#FFB6C1"))
-    c.ellipse(cx - r * 0.2, cy + r * 0.2, cx - r * 0.1, cy + r * 0.7, fill=1, stroke=0)
-    c.ellipse(cx + r * 0.1, cy + r * 0.2, cx + r * 0.2, cy + r * 0.7, fill=1, stroke=0)
-    # Eyes
-    c.setFillColor(black)
-    c.circle(cx - r * 0.12, cy - r * 0.1, r * 0.05, fill=1, stroke=0)
-    c.circle(cx + r * 0.12, cy - r * 0.1, r * 0.05, fill=1, stroke=0)
+    c.ellipse(cx - r * 0.3, cy + r * 0.05, cx - r * 0.05, cy + r * 0.95, fill=1, stroke=0)
+    c.ellipse(cx + r * 0.05, cy + r * 0.05, cx + r * 0.3, cy + r * 0.95, fill=1, stroke=0)
 
 
 def _draw_fish(c, cx, cy, r):
-    """Simple fish shape."""
-    # Body (ellipse-like)
-    c.ellipse(cx - r * 0.5, cy - r * 0.3, cx + r * 0.3, cy + r * 0.3, fill=1, stroke=0)
-    # Tail
+    """Fish silhouette - body with tail fin."""
+    # Body
+    c.ellipse(cx - r * 0.55, cy - r * 0.3, cx + r * 0.25, cy + r * 0.3, fill=1, stroke=0)
+    # Tail fin
     path = c.beginPath()
-    path.moveTo(cx + r * 0.2, cy)
-    path.lineTo(cx + r * 0.6, cy + r * 0.35)
-    path.lineTo(cx + r * 0.6, cy - r * 0.35)
+    path.moveTo(cx + r * 0.15, cy)
+    path.lineTo(cx + r * 0.65, cy + r * 0.4)
+    path.lineTo(cx + r * 0.65, cy - r * 0.4)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
-    # Eye
-    c.setFillColor(white)
-    c.circle(cx - r * 0.2, cy + r * 0.05, r * 0.08, fill=1, stroke=0)
-    c.setFillColor(black)
-    c.circle(cx - r * 0.2, cy + r * 0.05, r * 0.04, fill=1, stroke=0)
 
 
 def _draw_bird(c, cx, cy, r):
-    """Simple bird silhouette."""
+    """Bird silhouette - body with wing and beak."""
     # Body
-    c.ellipse(cx - r * 0.35, cy - r * 0.2, cx + r * 0.25, cy + r * 0.2, fill=1, stroke=0)
+    c.ellipse(cx - r * 0.4, cy - r * 0.25, cx + r * 0.3, cy + r * 0.25, fill=1, stroke=0)
     # Head
-    c.circle(cx - r * 0.35, cy + r * 0.15, r * 0.2, fill=1, stroke=0)
+    c.circle(cx - r * 0.35, cy + r * 0.15, r * 0.25, fill=1, stroke=0)
     # Beak
-    c.setFillColor(HexColor("#FF9800"))
     path = c.beginPath()
-    path.moveTo(cx - r * 0.55, cy + r * 0.15)
-    path.lineTo(cx - r * 0.75, cy + r * 0.1)
+    path.moveTo(cx - r * 0.55, cy + r * 0.2)
+    path.lineTo(cx - r * 0.8, cy + r * 0.1)
     path.lineTo(cx - r * 0.55, cy + r * 0.05)
-    path.close()
-    c.drawPath(path, fill=1, stroke=0)
-    # Wing
-    color_hex = MOTIF_COLORS.get("bird", "#66BB6A")
-    c.setFillColor(HexColor(color_hex))
-    path = c.beginPath()
-    path.moveTo(cx - r * 0.1, cy + r * 0.1)
-    path.curveTo(cx + r * 0.2, cy + r * 0.5, cx + r * 0.5, cy + r * 0.3, cx + r * 0.3, cy)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
     # Tail
     path = c.beginPath()
-    path.moveTo(cx + r * 0.2, cy)
-    path.lineTo(cx + r * 0.55, cy + r * 0.2)
-    path.lineTo(cx + r * 0.5, cy - r * 0.1)
+    path.moveTo(cx + r * 0.25, cy + r * 0.05)
+    path.lineTo(cx + r * 0.6, cy + r * 0.25)
+    path.lineTo(cx + r * 0.55, cy - r * 0.1)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
 
 
 def _draw_bug(c, cx, cy, r):
-    """Ladybug - circle with line and dots."""
-    c.circle(cx, cy, r * 0.45, fill=1, stroke=0)
+    """Ladybug silhouette - oval with dots."""
+    # Body
+    c.circle(cx, cy, r * 0.55, fill=1, stroke=0)
     # Center line
     c.setStrokeColor(black)
-    c.setLineWidth(0.3)
-    c.line(cx, cy + r * 0.45, cx, cy - r * 0.45)
-    # Spots
-    c.setFillColor(black)
-    c.circle(cx - r * 0.15, cy + r * 0.15, r * 0.08, fill=1, stroke=0)
-    c.circle(cx + r * 0.15, cy + r * 0.15, r * 0.08, fill=1, stroke=0)
-    c.circle(cx - r * 0.12, cy - r * 0.15, r * 0.07, fill=1, stroke=0)
-    c.circle(cx + r * 0.12, cy - r * 0.15, r * 0.07, fill=1, stroke=0)
+    c.setLineWidth(max(0.3, r * 0.04))
+    c.line(cx, cy + r * 0.55, cx, cy - r * 0.55)
     # Head
-    c.circle(cx, cy + r * 0.55, r * 0.15, fill=1, stroke=0)
+    c.setFillColor(black)
+    c.circle(cx, cy + r * 0.65, r * 0.2, fill=1, stroke=0)
 
 
 def _draw_baby(c, cx, cy, r):
-    """Baby face - simple circle with features."""
-    c.circle(cx, cy, r * 0.45, fill=1, stroke=0)
-    # Eyes
-    c.setFillColor(black)
-    c.circle(cx - r * 0.12, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
-    c.circle(cx + r * 0.12, cy + r * 0.05, r * 0.05, fill=1, stroke=0)
-    # Smile
-    c.setStrokeColor(black)
-    c.setLineWidth(0.3)
-    path = c.beginPath()
-    path.moveTo(cx - r * 0.1, cy - r * 0.1)
-    path.curveTo(cx - r * 0.05, cy - r * 0.2, cx + r * 0.05, cy - r * 0.2, cx + r * 0.1, cy - r * 0.1)
-    c.drawPath(path, fill=0, stroke=1)
+    """Baby face - simple pacifier-like silhouette."""
+    c.circle(cx, cy, r * 0.55, fill=1, stroke=0)
 
 
 def _draw_horse(c, cx, cy, r):
     """Horse head silhouette."""
-    # Head
     path = c.beginPath()
-    path.moveTo(cx - r * 0.15, cy - r * 0.5)
-    path.curveTo(cx - r * 0.4, cy - r * 0.3, cx - r * 0.35, cy + r * 0.2, cx - r * 0.15, cy + r * 0.4)
-    path.lineTo(cx + r * 0.1, cy + r * 0.6)
-    path.curveTo(cx + r * 0.35, cy + r * 0.4, cx + r * 0.35, cy + r * 0.1, cx + r * 0.2, cy - r * 0.2)
-    path.lineTo(cx + r * 0.15, cy - r * 0.5)
+    path.moveTo(cx - r * 0.2, cy - r * 0.6)
+    path.curveTo(cx - r * 0.5, cy - r * 0.4, cx - r * 0.4, cy + r * 0.3, cx - r * 0.2, cy + r * 0.5)
+    path.lineTo(cx + r * 0.1, cy + r * 0.7)
+    path.curveTo(cx + r * 0.4, cy + r * 0.5, cx + r * 0.4, cy + r * 0.1, cx + r * 0.25, cy - r * 0.2)
+    path.lineTo(cx + r * 0.2, cy - r * 0.6)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
     # Ear
     path = c.beginPath()
-    path.moveTo(cx, cy + r * 0.5)
-    path.lineTo(cx - r * 0.1, cy + r * 0.75)
-    path.lineTo(cx + r * 0.1, cy + r * 0.6)
+    path.moveTo(cx + r * 0.05, cy + r * 0.6)
+    path.lineTo(cx - r * 0.1, cy + r * 0.85)
+    path.lineTo(cx + r * 0.15, cy + r * 0.7)
     path.close()
     c.drawPath(path, fill=1, stroke=0)
 
@@ -1107,13 +1106,13 @@ def _draw_sticker(c: canvas.Canvas, x: float, y: float, data: dict, font_name: s
     content_x = x + 1.5 * mm
     motif_x_offset = 0
 
-    # Motif icon (vector graphics)
+    # Motif icon (vector graphics) - size 5mm for visibility
     motif_id = data["motif_id"]
     if motif_id and motif_id in MOTIF_COLORS:
-        motif_cx = content_x + 1.5 * mm
+        motif_cx = content_x + 2.5 * mm
         motif_cy = y + STICKER_H / 2
-        _draw_motif(c, motif_cx, motif_cy, motif_id)
-        motif_x_offset = 4.5 * mm
+        _draw_motif(c, motif_cx, motif_cy, motif_id, size=5.0)
+        motif_x_offset = 6.5 * mm
 
     # Text
     text_x = content_x + motif_x_offset
