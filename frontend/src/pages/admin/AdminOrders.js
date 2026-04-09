@@ -299,13 +299,13 @@ const AdminOrders = () => {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Datum</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Summa</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"></th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Order</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Kund</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Typ</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Datum</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Summa</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase sticky right-0 bg-slate-50">Åtgärd</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -316,12 +316,12 @@ const AdminOrders = () => {
                       className={`hover:bg-slate-50 cursor-pointer ${selectedOrder?.order_id === order.order_id ? 'bg-primary/5' : ''}`}
                       onClick={() => setSelectedOrder(order)}
                     >
-                      <td className="px-6 py-4 text-sm font-mono text-slate-600">#{order.order_id?.slice(0, 8)}</td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-slate-900">{order.shipping_address?.name || order.email}</p>
-                        <p className="text-xs text-slate-500">{order.email}</p>
+                      <td className="px-4 py-4 text-sm font-mono text-slate-600">#{order.order_id?.slice(0, 8)}</td>
+                      <td className="px-4 py-4">
+                        <p className="text-sm font-medium text-slate-900 truncate max-w-[140px]">{order.shipping_address?.name || order.email}</p>
+                        <p className="text-xs text-slate-500 truncate max-w-[140px]">{order.email}</p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {(() => {
                           const label = getOrderTypeLabel(order);
                           return label === 'B2B'
@@ -329,14 +329,14 @@ const AdminOrders = () => {
                             : <span className="text-xs text-slate-500">Webbshop</span>;
                         })()}
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString('sv-SE')}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 text-sm text-slate-500">{new Date(order.created_at).toLocaleDateString('sv-SE')}</td>
+                      <td className="px-4 py-4 text-sm font-medium text-slate-900">{(order.total_amount || order.total)?.toLocaleString('sv-SE')} kr</td>
+                      <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)} {getStatusLabel(order.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 sticky right-0 bg-white">
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" data-testid={`view-order-${order.order_id}`}>
                             <Eye className="w-4 h-4" />

@@ -118,14 +118,14 @@ def _draw_cover(c, page, theme, company_logo, template):
         line_w = 50 * mm
         c.rect((PAGE_W - line_w) / 2, center_y + 30 * mm, line_w, 1 * mm, fill=1, stroke=0)
 
-    # Company logo
+    # Company logo — clear and visible
     if company_logo:
         logo_img = _fetch_image(company_logo)
         if logo_img:
-            logo_h = 18 * mm
-            logo_w = 50 * mm
+            logo_h = 22 * mm
+            logo_w = 60 * mm
             c.drawImage(logo_img, (PAGE_W - logo_w) / 2, center_y + 12 * mm,
-                        width=logo_w, height=logo_h, preserveAspectRatio=True, mask="auto")
+                        width=logo_w, height=logo_h, preserveAspectRatio=True)
 
     # Title
     title = page.get("title") or "Företagsnamn"
@@ -339,21 +339,16 @@ def _draw_backcover(c, page, theme, company_logo):
     c.setFillColor(white)
     c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
 
-    # Subtle gradient overlay
-    c.setFillColor(Color(
-        color.red, color.green, color.blue, alpha=0.03
-    ))
-    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
-
     center_y = PAGE_H / 2
 
-    # Logo
+    # Logo — large and clear
     if company_logo:
         logo_img = _fetch_image(company_logo)
         if logo_img:
-            logo_h = 16 * mm
-            c.drawImage(logo_img, (PAGE_W - 50 * mm) / 2, center_y + 15 * mm,
-                        width=50 * mm, height=logo_h, preserveAspectRatio=True, mask="auto")
+            logo_h = 25 * mm
+            logo_w = 70 * mm
+            c.drawImage(logo_img, (PAGE_W - logo_w) / 2, center_y + 15 * mm,
+                        width=logo_w, height=logo_h, preserveAspectRatio=True)
 
     # Company name
     name = page.get("companyName") or ""
