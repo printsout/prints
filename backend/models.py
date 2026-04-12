@@ -35,6 +35,7 @@ class Product(BaseModel):
     colors: List[str] = []
     sizes: List[str] = []
     model_type: str
+    quantity_prices: Optional[List[dict]] = None  # e.g. [{"quantity": 100, "price": 89}, {"quantity": 250, "price": 149}]
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class DiscountCode(BaseModel):
@@ -113,6 +114,7 @@ class AdminProductCreate(BaseModel):
     colors: List[str] = []
     sizes: List[str] = []
     model_type: str
+    quantity_prices: Optional[List[dict]] = None
 
 class AdminOrderUpdate(BaseModel):
     status: Optional[str] = None

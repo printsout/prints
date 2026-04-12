@@ -84,7 +84,8 @@ const AdminProducts = () => {
     images: [''],
     colors: [],
     sizes: [],
-    model_type: 'mug'
+    model_type: 'mug',
+    quantity_prices: [],
   });
 
   const fetchProducts = useCallback(async () => {
@@ -149,7 +150,8 @@ const AdminProducts = () => {
       images: product.images.length > 0 ? product.images : [''],
       colors: product.colors || [],
       sizes: product.sizes || [],
-      model_type: product.model_type
+      model_type: product.model_type,
+      quantity_prices: product.quantity_prices || [],
     });
     setShowModal(true);
   };
@@ -164,7 +166,8 @@ const AdminProducts = () => {
       images: [''],
       colors: [],
       sizes: [],
-      model_type: 'mug'
+      model_type: 'mug',
+      quantity_prices: [],
     });
   };
 
@@ -399,6 +402,73 @@ const AdminProducts = () => {
                   </Select>
                 </div>
               </div>
+
+              {/* Quantity-based pricing for business cards */}
+              {formData.model_type === 'businesscard' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <span className="flex items-center gap-1.5">Stafflade priser (antal → pris)</span>
+                  </label>
+                  <p className="text-xs text-slate-400 mb-2">Priset baseras på antal beställda visitkort</p>
+                  {formData.quantity_prices.map((qp, idx) => (
+                    <div key={`qp-${idx}`} className="flex gap-2 mb-2 items-center">
+                      <Input
+                        type="number"
+                        value={qp.quantity || ''}
+                        onChange={(e) => {
+                          const next = [...formData.quantity_prices];
+                          next[idx] = { ...next[idx], quantity: parseInt(e.target.value) || 0 };
+                          setFormData(prev => ({ ...prev, quantity_prices: next }));
+                        }}
+                        placeholder="Antal"
+                        className="w-24"
+                        min="1"
+                        data-testid={`qp-quantity-${idx}`}
+                      />
+                      <span className="text-sm text-slate-400">st →</span>
+                      <Input
+                        type="number"
+                        value={qp.price || ''}
+                        onChange={(e) => {
+                          const next = [...formData.quantity_prices];
+                          next[idx] = { ...next[idx], price: parseFloat(e.target.value) || 0 };
+                          setFormData(prev => ({ ...prev, quantity_prices: next }));
+                        }}
+                        placeholder="Pris (kr)"
+                        className="w-28"
+                        min="0"
+                        step="0.01"
+                        data-testid={`qp-price-${idx}`}
+                      />
+                      <span className="text-sm text-slate-400">kr</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const next = formData.quantity_prices.filter((_, i) => i !== idx);
+                          setFormData(prev => ({ ...prev, quantity_prices: next }));
+                        }}
+                        data-testid={`qp-remove-${idx}`}
+                      >
+                        <X className="w-4 h-4 text-red-400" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      quantity_prices: [...prev.quantity_prices, { quantity: 0, price: 0 }]
+                    }))}
+                    data-testid="add-quantity-price"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Lägg till prissteg
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">

@@ -186,7 +186,13 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] PDF-nedladdningsknappen borttagen från admin OrderDetailPanel (enligt användarens önskemål)
 - [x] Namnlappsinformation (motiv, namn, bakgrund etc.) visas fortfarande i admin-orderdetaljer
 
-## Backlog
+## Visitkort Admin (2026-04-12) - NYTT
+- [x] Stafflade priser i admin produktredigeraren — visas villkorligt för model_type='businesscard'
+- [x] Ny `businesscard_pdf.py` — genererar tryckbar A4-PDF med 8 visitkort per sida + klippmarkeringar
+- [x] 3 mallar stöds: classic, modern, minimal — matchar frontend-editorn
+- [x] Admin endpoint `GET /api/admin/orders/{id}/businesscard-pdf`
+- [x] "Generera visitkort (PDF - 8 st/A4)"-knapp i admin OrderDetailPanel
+- [x] Backend `Product` och `AdminProductCreate` modeller uppdaterade med `quantity_prices` fält
 ### P1
 - [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
 - [x] ~~B2B virtuella produkter i varukorgen~~ (2026-04-07: useCartData.js + CartItemCard.js)
@@ -213,4 +219,6 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] "Ladda ner som PDF"-knapp i CalendarEditor (under "Lägg i varukorg")
 - [x] "Ladda ner kalender (PDF)"-knapp i admin OrderDetailPanel (indigo, bredvid ZIP-knappen)
 - [x] **Textskrivning på bilder**: Kunden kan skriva text per månadsbild, dra texten vart de vill, välja färg (6 val) och storlek (12-48px)
+
+## Backlog
 - [x] Texten renderas på PDF:en med skugga på exakt position som i editorn

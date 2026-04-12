@@ -406,6 +406,38 @@ async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
+@router.get("/orders/{order_id}/businesscard-pdf")
+async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_token)):
+    """Generate and download a printable business card PDF from order data."""
+    from businesscard_pdf import generate_businesscard_pdf
+    # Check webshop orders first
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    customization = None
+    if order:
+        for item in order.get("items", []):
+            if item.get("customization", {}).get("type") == "businesscard":
+                customization = item["customization"]
+                break
+    # Check B2B catalog_orders if not found
+    if not customization:
+        b2b_order = await db.catalog_orders.find_one({"order_id": order_id}, {"_id": 0})
+        if b2b_order and b2b_order.get("order_type") == "businesscard":
+            customization = {
+                "card_details": b2b_order.get("card_details", {}),
+                "logo_url": b2b_order.get("logo_url", ""),
+                "color": b2b_order.get("card_details", {}).get("color", "#2a9d8f"),
+            }
+    if not customization:
+        raise HTTPException(status_code=404, detail="Ingen visitkortsorder hittades")
+    output_dir = Path("/tmp/businesscard_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / f"visitkort_{order_id[:8]}.pdf")
+    generate_businesscard_pdf(customization, output_path)
+    name = customization.get("card_details", {}).get("name", "visitkort")
+    filename = f"visitkort_{name}_{order_id[:8]}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 
 @router.get("/orders/{order_id}/catalog-pdf")
 async def download_catalog_pdf(order_id: str, admin=Depends(verify_admin_token)):
