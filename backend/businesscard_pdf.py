@@ -36,34 +36,53 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
     c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=1)
 
     if template == "modern":
+        # Logo at top-right of header bar
+        logo_drawn = False
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), x + CARD_W - 22 * mm, y + CARD_H - 7.5 * mm, 18 * mm, 7 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
+                logo_drawn = True
+            except Exception:
+                pass
         # Top accent bar
+        c.saveState()
+        p = c.beginPath()
+        p.rect(x, y + CARD_H - 8 * mm, CARD_W, 8 * mm)
+        c.clipPath(p, stroke=0)
         c.setFillColor(accent)
         c.rect(x, y + CARD_H - 8 * mm, CARD_W, 8 * mm, fill=1, stroke=0)
-        # Name centered
+        # Name left-aligned in header
         c.setFillColor(white)
         c.setFont("Helvetica-Bold", 11)
-        c.drawCentredString(x + CARD_W / 2, y + CARD_H - 6.5 * mm, name)
+        c.drawString(x + 4 * mm, y + CARD_H - 6.5 * mm, name)
+        # Logo in header bar (on top of accent)
+        if logo_drawn and logo_path:
+            try:
+                c.drawImage(ImageReader(logo_path), x + CARD_W - 22 * mm, y + CARD_H - 7.5 * mm, 18 * mm, 7 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
+            except Exception:
+                pass
+        c.restoreState()
         # Title
         c.setFillColor(accent)
         c.setFont("Helvetica", 7)
-        c.drawCentredString(x + CARD_W / 2, y + CARD_H - 12 * mm, title)
+        c.drawString(x + 4 * mm, y + CARD_H - 12 * mm, title)
         # Company
         if company:
             c.setFillColor(HexColor("#64748b"))
             c.setFont("Helvetica", 6.5)
-            c.drawCentredString(x + CARD_W / 2, y + CARD_H - 16 * mm, company)
-        # Contact info centered
+            c.drawString(x + 4 * mm, y + CARD_H - 16 * mm, company)
+        # Contact info left-aligned
         cy = y + 16 * mm
         c.setFont("Helvetica", 6)
         c.setFillColor(HexColor("#475569"))
         for line in [phone, email, website, address]:
             if line:
-                c.drawCentredString(x + CARD_W / 2, cy, line)
+                c.drawString(x + 4 * mm, cy, line)
                 cy -= 3.5 * mm
-        # Logo
+        # Large logo bottom-right
         if logo_path and os.path.exists(logo_path):
             try:
-                c.drawImage(ImageReader(logo_path), x + CARD_W / 2 - 6 * mm, y + 2 * mm, 12 * mm, 6 * mm, preserveAspectRatio=True, anchor="c")
+                c.drawImage(ImageReader(logo_path), x + CARD_W - 24 * mm, y + 2 * mm, 20 * mm, 10 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
             except Exception:
                 pass
 
@@ -95,7 +114,7 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
             c.drawString(x + 5 * mm, y + 7 * mm, company)
         if logo_path and os.path.exists(logo_path):
             try:
-                c.drawImage(ImageReader(logo_path), rx - 12 * mm, y + 4 * mm, 12 * mm, 6 * mm, preserveAspectRatio=True, anchor="c")
+                c.drawImage(ImageReader(logo_path), rx - 20 * mm, y + 4 * mm, 18 * mm, 9 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
             except Exception:
                 pass
 
@@ -104,12 +123,12 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
         c.setFillColor(accent)
         c.rect(x, y, 2 * mm, CARD_H, fill=1, stroke=0)
         lx = x + 6 * mm
-        # Logo top-left
+        # Logo top-left (larger)
         logo_bottom = y + CARD_H - 12 * mm
         if logo_path and os.path.exists(logo_path):
             try:
-                c.drawImage(ImageReader(logo_path), lx, y + CARD_H - 10 * mm, 14 * mm, 7 * mm, preserveAspectRatio=True, anchor="sw")
-                logo_bottom = y + CARD_H - 15 * mm
+                c.drawImage(ImageReader(logo_path), lx, y + CARD_H - 12 * mm, 20 * mm, 10 * mm, preserveAspectRatio=True, anchor="sw", mask="auto")
+                logo_bottom = y + CARD_H - 16 * mm
             except Exception:
                 pass
         # Name
