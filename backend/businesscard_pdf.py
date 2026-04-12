@@ -162,8 +162,9 @@ def generate_businesscard_pdf(customization: dict, output_path: str) -> str:
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     card_details = customization.get("card_details", {})
-    template = card_details.get("template", "classic")
-    color = card_details.get("color", customization.get("color", "#2a9d8f"))
+    # template and color can be at top-level or inside card_details
+    template = customization.get("template") or card_details.get("template", "classic")
+    color = customization.get("color") or card_details.get("color", "#2a9d8f")
 
     # Resolve logo
     logo_path = None
