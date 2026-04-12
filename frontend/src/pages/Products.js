@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Filter, Grid, List } from 'lucide-react';
 import api from '../services/api';
@@ -24,7 +24,7 @@ const Products = () => {
         ]);
         setProducts(productsRes.data.filter(p => p.category !== 'foretag'));
         setCategories(categoriesRes.data);
-      } catch (error) {
+      } catch {
         toast.error('Kunde inte hämta produkter');
       } finally {
         setLoading(false);
@@ -33,17 +33,20 @@ const Products = () => {
     fetchData();
   }, [category]);
 
-  const sortedProducts = [...products].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'name':
-      default:
-        return a.name.localeCompare(b.name);
-    }
-  });
+  const sortedProducts = useMemo(() =>
+    [...products].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    }),
+    [products, sortBy]
+  );
 
   const currentCategory = categories.find(c => c.id === category);
 

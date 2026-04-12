@@ -31,7 +31,7 @@ const ProductDetail = () => {
         if (response.data.sizes?.length > 0) {
           setSelectedSize(response.data.sizes[0]);
         }
-      } catch (error) {
+      } catch {
         toast.error('Kunde inte ladda produkten');
       } finally {
         setLoading(false);
@@ -55,7 +55,7 @@ const ProductDetail = () => {
           onClick: () => navigate('/varukorg')
         }
       });
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte lägga till i varukorgen');
     } finally {
       setAdding(false);

@@ -225,3 +225,10 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 
 ## Backlog
 - [x] Texten renderas på PDF:en med skugga på exakt position som i editorn
+
+## Kodkvalitetsförbättringar (2026-04-12) - NYTT
+- [x] **businesscard_pdf.py refaktorerad**: Brutit ner `_draw_card()` (358 rader, komplexitet 72) till 8 separata mallfunktioner + 2 hjälpfunktioner (`_draw_logo`, `_draw_contact_lines`). Dispatch via `_TEMPLATE_RENDERERS`-dict.
+- [x] **XSS-skydd verifierat**: `dangerouslySetInnerHTML` i AdminContent.js och ContentPage.js redan skyddade med DOMPurify.sanitize()
+- [x] **React-prestandafix**: `useMemo` för `sortedProducts` i Products.js
+- [x] **Oanvända variabler borttagna**: `catch (error)` → `catch` i Products.js, ProductDetail.js, AdminDashboard.js
+- [x] **Backend-validering**: upload-base64 avvisar URL-strängar och filer < 100 bytes

@@ -33,7 +33,7 @@ const AdminDashboard = () => {
         ]);
         setStats(statsRes.data);
         setRecentOrders(ordersRes.data.orders || []);
-      } catch (error) {
+      } catch {
         toast.error('Kunde inte hämta dashboard-data');
       } finally {
         setLoading(false);
