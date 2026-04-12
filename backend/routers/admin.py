@@ -410,6 +410,7 @@ async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)
 async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_token)):
     """Generate and download a printable business card PDF from order data."""
     from businesscard_pdf import generate_businesscard_pdf
+    from config import UPLOADS_DIR
     # Check webshop orders first
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     customization = None
@@ -426,9 +427,22 @@ async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_to
                 "card_details": b2b_order.get("card_details", {}),
                 "logo_url": b2b_order.get("logo_url", ""),
                 "color": b2b_order.get("card_details", {}).get("color", "#2a9d8f"),
+                "source": b2b_order.get("source", "editor"),
+                "pdf_url": b2b_order.get("pdf_url", ""),
+                "original_filename": b2b_order.get("original_filename", ""),
             }
     if not customization:
         raise HTTPException(status_code=404, detail="Ingen visitkortsorder hittades")
+
+    # If source is "pdf", return the user's uploaded PDF directly
+    if customization.get("source") == "pdf" and customization.get("pdf_url"):
+        pdf_filename = customization["pdf_url"].split("/")[-1]
+        pdf_path = UPLOADS_DIR / pdf_filename
+        if pdf_path.exists():
+            orig = customization.get("original_filename") or "visitkort_design.pdf"
+            return FileResponse(str(pdf_path), media_type="application/pdf", filename=orig, headers={"Content-Disposition": f'attachment; filename="{orig}"'})
+        raise HTTPException(status_code=404, detail="Uppladdad PDF-fil hittades inte")
+
     output_dir = Path("/tmp/businesscard_pdfs")
     output_dir.mkdir(exist_ok=True)
     output_path = str(output_dir / f"visitkort_{order_id[:8]}.pdf")
