@@ -189,10 +189,11 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 ## Visitkort Admin (2026-04-12) - NYTT
 - [x] Stafflade priser i admin produktredigeraren — visas villkorligt för model_type='businesscard'
 - [x] Ny `businesscard_pdf.py` — genererar tryckbar A4-PDF med 8 visitkort per sida + klippmarkeringar
-- [x] 3 mallar stöds: classic, modern, minimal — matchar frontend-editorn
+- [x] 8 mallar stöds: classic, modern, minimal, elegant, creative, corporate, nature, tech — matchar frontend-editorn
 - [x] Admin endpoint `GET /api/admin/orders/{id}/businesscard-pdf`
 - [x] "Generera visitkort (PDF - 8 st/A4)"-knapp i admin OrderDetailPanel
 - [x] Backend `Product` och `AdminProductCreate` modeller uppdaterade med `quantity_prices` fält
+- [x] **Modern-mall PDF-fix** (2026-04-12): PDF-layouten för "modern"-mallen korrigerad så att den matchar frontend-förhandsgranskningen — 38% accent-topp med centrerad logotyp, centrerad text i vit botten
 ### P1
 - [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
 - [x] ~~B2B virtuella produkter i varukorgen~~ (2026-04-07: useCartData.js + CartItemCard.js)

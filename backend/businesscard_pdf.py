@@ -36,55 +36,40 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
     c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=1)
 
     if template == "modern":
-        # Logo at top-right of header bar
-        logo_drawn = False
+        # Top accent section (38% of card height) — matches frontend
+        top_h = CARD_H * 0.38
+        c.setFillColor(accent)
+        c.rect(x, y + CARD_H - top_h, CARD_W, top_h, fill=1, stroke=0)
+        # Logo centered in top section (or company name if no logo)
         if logo_path and os.path.exists(logo_path):
             try:
-                c.drawImage(ImageReader(logo_path), x + CARD_W - 22 * mm, y + CARD_H - 7.5 * mm, 18 * mm, 7 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
-                logo_drawn = True
+                logo_w, logo_h = 22 * mm, 9 * mm
+                c.drawImage(ImageReader(logo_path), x + CARD_W / 2 - logo_w / 2, y + CARD_H - top_h / 2 - logo_h / 2, logo_w, logo_h, preserveAspectRatio=True, anchor="c", mask="auto")
             except Exception:
                 pass
-        # Top accent bar
-        c.saveState()
-        p = c.beginPath()
-        p.rect(x, y + CARD_H - 8 * mm, CARD_W, 8 * mm)
-        c.clipPath(p, stroke=0)
-        c.setFillColor(accent)
-        c.rect(x, y + CARD_H - 8 * mm, CARD_W, 8 * mm, fill=1, stroke=0)
-        # Name left-aligned in header
-        c.setFillColor(white)
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(x + 4 * mm, y + CARD_H - 6.5 * mm, name)
-        # Logo in header bar (on top of accent)
-        if logo_drawn and logo_path:
-            try:
-                c.drawImage(ImageReader(logo_path), x + CARD_W - 22 * mm, y + CARD_H - 7.5 * mm, 18 * mm, 7 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
-            except Exception:
-                pass
-        c.restoreState()
-        # Title
+        elif company:
+            c.setFillColor(white)
+            c.setFont("Helvetica-Bold", 8)
+            c.drawCentredString(x + CARD_W / 2, y + CARD_H - top_h / 2 - 3, company)
+        # Bottom white section — all centered
+        bottom_h = CARD_H - top_h
+        mid_x = x + CARD_W / 2
+        # Name centered
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 10)
+        c.drawCentredString(mid_x, y + bottom_h - 8 * mm, name)
+        # Title centered in accent color
         c.setFillColor(accent)
         c.setFont("Helvetica", 7)
-        c.drawString(x + 4 * mm, y + CARD_H - 12 * mm, title)
-        # Company
-        if company:
-            c.setFillColor(HexColor("#64748b"))
-            c.setFont("Helvetica", 6.5)
-            c.drawString(x + 4 * mm, y + CARD_H - 16 * mm, company)
-        # Contact info left-aligned
-        cy = y + 16 * mm
+        c.drawCentredString(mid_x, y + bottom_h - 12 * mm, title)
+        # Contact info centered
+        cy = y + bottom_h - 17 * mm
         c.setFont("Helvetica", 6)
         c.setFillColor(HexColor("#475569"))
-        for line in [phone, email, website, address]:
+        for line in [phone, email, website]:
             if line:
-                c.drawString(x + 4 * mm, cy, line)
-                cy -= 3.5 * mm
-        # Large logo bottom-right
-        if logo_path and os.path.exists(logo_path):
-            try:
-                c.drawImage(ImageReader(logo_path), x + CARD_W - 24 * mm, y + 2 * mm, 20 * mm, 10 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
-            except Exception:
-                pass
+                c.drawCentredString(mid_x, cy, line)
+                cy -= 3.2 * mm
 
     elif template == "minimal":
         # Thin bottom line
@@ -118,7 +103,7 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
             except Exception:
                 pass
 
-    else:  # classic
+    elif template == "classic":
         # Left accent bar
         c.setFillColor(accent)
         c.rect(x, y, 2 * mm, CARD_H, fill=1, stroke=0)
@@ -166,6 +151,229 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
         for line in contact_lines:
             c.drawString(lx, cy, line)
             cy -= 3.5 * mm
+
+    elif template == "elegant":
+        # Dark background
+        c.setFillColor(HexColor("#1a1a2e"))
+        c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=0)
+        # Subtle glow circle top-right
+        c.setFillColor(accent)
+        c.setFillAlpha(0.08)
+        c.circle(x + CARD_W - 8 * mm, y + CARD_H - 4 * mm, 18 * mm, fill=1, stroke=0)
+        c.setFillAlpha(1)
+        # Logo top-left
+        lx = x + 5 * mm
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), lx, y + CARD_H - 11 * mm, 18 * mm, 8 * mm, preserveAspectRatio=True, anchor="sw", mask="auto")
+            except Exception:
+                pass
+        # Name
+        c.setFillColor(white)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(lx, y + CARD_H - 17 * mm, name)
+        # Title in accent
+        c.setFillColor(accent)
+        c.setFont("Helvetica", 7)
+        c.drawString(lx, y + CARD_H - 21 * mm, title)
+        # Company
+        if company:
+            c.setFillColor(HexColor("#94a3b8"))
+            c.setFont("Helvetica", 6)
+            c.drawString(lx, y + CARD_H - 25 * mm, company)
+        # Accent divider
+        c.setStrokeColor(accent)
+        c.setLineWidth(0.5)
+        c.line(lx, y + 14 * mm, lx + 10 * mm, y + 14 * mm)
+        # Contact
+        cy = y + 11 * mm
+        c.setFont("Helvetica", 5.5)
+        c.setFillColor(HexColor("#94a3b8"))
+        for line in [phone, email, website]:
+            if line:
+                c.drawString(lx, cy, line)
+                cy -= 3 * mm
+
+    elif template == "creative":
+        # White bg with gradient top bar
+        c.setFillColor(accent)
+        c.rect(x, y + CARD_H - 2 * mm, CARD_W, 2 * mm, fill=1, stroke=0)
+        # Decorative circles
+        c.setFillColor(accent)
+        c.setFillAlpha(0.06)
+        c.circle(x + CARD_W - 6 * mm, y + CARD_H - 10 * mm, 14 * mm, fill=1, stroke=0)
+        c.circle(x + 8 * mm, y + 6 * mm, 10 * mm, fill=1, stroke=0)
+        c.setFillAlpha(1)
+        # Name top-left
+        lx = x + 5 * mm
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(lx, y + CARD_H - 10 * mm, name)
+        c.setFillColor(accent)
+        c.setFont("Helvetica", 7)
+        c.drawString(lx, y + CARD_H - 14 * mm, title)
+        # Logo top-right
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), x + CARD_W - 24 * mm, y + CARD_H - 13 * mm, 18 * mm, 9 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
+            except Exception:
+                pass
+        # Contact bottom split
+        cy = y + 10 * mm
+        c.setFont("Helvetica", 5.5)
+        c.setFillColor(HexColor("#475569"))
+        for line in [phone, email]:
+            if line:
+                c.drawString(lx, cy, line)
+                cy -= 3 * mm
+        ry = y + 10 * mm
+        for line in [website, address]:
+            if line:
+                c.drawRightString(x + CARD_W - 5 * mm, ry, line)
+                ry -= 3 * mm
+
+    elif template == "corporate":
+        # Left color panel (35%)
+        panel_w = CARD_W * 0.35
+        c.setFillColor(accent)
+        c.rect(x, y, panel_w, CARD_H, fill=1, stroke=0)
+        # Logo centered in panel
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), x + panel_w / 2 - 10 * mm, y + CARD_H / 2 - 5 * mm, 20 * mm, 10 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
+            except Exception:
+                pass
+        else:
+            c.setFillColor(white)
+            c.setFont("Helvetica-Bold", 18)
+            initial = (company or name or "A")[0].upper()
+            c.drawCentredString(x + panel_w / 2, y + CARD_H / 2 - 3, initial)
+        # Right content
+        rx = x + panel_w + 4 * mm
+        # Company name top
+        if company:
+            c.setFillColor(accent)
+            c.setFont("Helvetica-Bold", 5.5)
+            c.drawString(rx, y + CARD_H - 7 * mm, company.upper())
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(rx, y + CARD_H - 13 * mm, name)
+        c.setFillColor(HexColor("#64748b"))
+        c.setFont("Helvetica", 6)
+        c.drawString(rx, y + CARD_H - 17 * mm, title)
+        # Contact
+        cy = y + 10 * mm
+        c.setFont("Helvetica", 5.5)
+        c.setFillColor(HexColor("#475569"))
+        for line in [phone, email, website]:
+            if line:
+                c.drawString(rx, cy, line)
+                cy -= 3 * mm
+
+    elif template == "nature":
+        # Green gradient background
+        c.setFillColor(HexColor("#f0fdf4"))
+        c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=0)
+        c.setFillColor(HexColor("#dcfce7"))
+        c.setFillAlpha(0.5)
+        c.roundRect(x, y, CARD_W, CARD_H / 2, 0, fill=1, stroke=0)
+        c.setFillAlpha(1)
+        lx = x + 5 * mm
+        # Logo
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), lx, y + CARD_H - 12 * mm, 18 * mm, 8 * mm, preserveAspectRatio=True, anchor="sw", mask="auto")
+            except Exception:
+                pass
+        # Name
+        c.setFillColor(HexColor("#14532d"))
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(lx, y + CARD_H - 18 * mm, name)
+        c.setFillColor(HexColor("#15803d"))
+        c.setFont("Helvetica", 7)
+        c.drawString(lx, y + CARD_H - 22 * mm, title)
+        if company:
+            c.setFillColor(HexColor("#16a34a"))
+            c.setFillAlpha(0.7)
+            c.setFont("Helvetica", 6)
+            c.drawString(lx, y + CARD_H - 26 * mm, company)
+            c.setFillAlpha(1)
+        # Green divider
+        c.setStrokeColor(HexColor("#86efac"))
+        c.setLineWidth(0.5)
+        c.line(lx, y + 13 * mm, lx + 12 * mm, y + 13 * mm)
+        # Contact
+        cy = y + 10 * mm
+        c.setFont("Helvetica", 5.5)
+        c.setFillColor(HexColor("#166534"))
+        c.setFillAlpha(0.6)
+        for line in [phone, email, website]:
+            if line:
+                c.drawString(lx, cy, line)
+                cy -= 3 * mm
+        c.setFillAlpha(1)
+
+    elif template == "tech":
+        # Dark background with dot grid
+        c.setFillColor(HexColor("#0f172a"))
+        c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=0)
+        # Dot grid pattern
+        c.setFillColor(white)
+        c.setFillAlpha(0.04)
+        for dx in range(0, int(CARD_W / (3 * mm)), 1):
+            for dy in range(0, int(CARD_H / (3 * mm)), 1):
+                c.circle(x + 2 * mm + dx * 3 * mm, y + 2 * mm + dy * 3 * mm, 0.3, fill=1, stroke=0)
+        c.setFillAlpha(1)
+        lx = x + 5 * mm
+        # Name + title
+        c.setFillColor(white)
+        c.setFont("Courier-Bold", 10)
+        c.drawString(lx, y + CARD_H - 10 * mm, name)
+        c.setFillColor(accent)
+        c.setFont("Courier", 7)
+        c.drawString(lx, y + CARD_H - 14 * mm, title)
+        if company:
+            c.setFillColor(HexColor("#64748b"))
+            c.setFont("Courier", 6)
+            c.drawString(lx, y + CARD_H - 18 * mm, company)
+        # Logo top-right
+        if logo_path and os.path.exists(logo_path):
+            try:
+                c.drawImage(ImageReader(logo_path), x + CARD_W - 22 * mm, y + CARD_H - 12 * mm, 16 * mm, 8 * mm, preserveAspectRatio=True, anchor="c", mask="auto")
+            except Exception:
+                pass
+        # Neon accent line
+        c.setStrokeColor(accent)
+        c.setLineWidth(0.7)
+        c.line(lx, y + 13 * mm, x + CARD_W / 2, y + 13 * mm)
+        # Contact with $ prefix
+        cy = y + 10 * mm
+        c.setFont("Courier", 5.5)
+        c.setFillColor(HexColor("#94a3b8"))
+        for line in [phone, email, website]:
+            if line:
+                c.setFillColor(accent)
+                c.drawString(lx, cy, "$")
+                c.setFillColor(HexColor("#94a3b8"))
+                c.drawString(lx + 3 * mm, cy, line)
+                cy -= 3 * mm
+
+    else:
+        # Fallback: use classic style
+        lx = x + 5 * mm
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(lx, y + CARD_H - 10 * mm, name)
+        c.setFillColor(accent)
+        c.setFont("Helvetica", 7)
+        c.drawString(lx, y + CARD_H - 14 * mm, title)
+        cy = y + 10 * mm
+        c.setFont("Helvetica", 6)
+        c.setFillColor(HexColor("#475569"))
+        for line in [phone, email, website]:
+            if line:
+                c.drawString(lx, cy, line)
+                cy -= 3 * mm
 
     c.restoreState()
 

@@ -9,6 +9,11 @@ const TEMPLATES = [
   { id: 'classic', name: 'Klassisk', desc: 'Ren och professionell' },
   { id: 'modern', name: 'Modern', desc: 'Djärv och centrerad' },
   { id: 'minimal', name: 'Minimal', desc: 'Enkel och elegant' },
+  { id: 'elegant', name: 'Elegant', desc: 'Mörk bakgrund, lyxig känsla' },
+  { id: 'creative', name: 'Kreativ', desc: 'Diagonal layout, unik stil' },
+  { id: 'corporate', name: 'Företag', desc: 'Strikt professionell, stor logga' },
+  { id: 'nature', name: 'Natur', desc: 'Gröna toner, organisk känsla' },
+  { id: 'tech', name: 'Tech', desc: 'Mörk med neonaccenter' },
 ];
 
 const COLORS = [
@@ -88,6 +93,117 @@ function CardPreview({ card, logo, template, color }) {
     </div>
   );
 
+  const renderElegant = () => (
+    <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ backgroundColor: '#1a1a2e' }}>
+      <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10" style={{ background: `radial-gradient(circle, ${color}, transparent)`, transform: 'translate(30%, -30%)' }} />
+      <div>
+        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain brightness-0 invert" />}
+        <h3 className="text-sm font-bold text-white tracking-wide">{card.name || 'Förnamn Efternamn'}</h3>
+        <p className="text-[10px] font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
+        {card.company && <p className="text-[10px] text-slate-400 mt-0.5">{card.company}</p>}
+      </div>
+      <div className="space-y-0.5 text-[9px] text-slate-400">
+        <div className="w-8 h-px mb-2" style={{ backgroundColor: color }} />
+        {card.phone && <p>{card.phone}</p>}
+        {card.email && <p>{card.email}</p>}
+        {card.website && <p>{card.website}</p>}
+      </div>
+    </div>
+  );
+
+  const renderCreative = () => (
+    <div className="w-full h-full relative overflow-hidden bg-white">
+      <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-20" style={{ backgroundColor: color }} />
+      <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-10" style={{ backgroundColor: color }} />
+      <div className="absolute top-0 left-0 w-full h-1.5" style={{ background: `linear-gradient(90deg, ${color}, ${color}88, ${color}22)` }} />
+      <div className="relative z-10 p-5 h-full flex flex-col justify-between">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">{card.name || 'Förnamn Efternamn'}</h3>
+            <p className="text-[10px] font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
+          </div>
+          {logo && <img src={logo} alt="Logo" className="h-8 object-contain" />}
+        </div>
+        <div className="flex justify-between items-end">
+          <div className="space-y-0.5 text-[9px] text-slate-500">
+            {card.phone && <p>{card.phone}</p>}
+            {card.email && <p>{card.email}</p>}
+          </div>
+          <div className="space-y-0.5 text-[9px] text-slate-500 text-right">
+            {card.website && <p>{card.website}</p>}
+            {card.address && <p>{card.address}</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCorporate = () => (
+    <div className="w-full h-full flex bg-white overflow-hidden">
+      <div className="w-[35%] flex items-center justify-center" style={{ backgroundColor: color }}>
+        {logo ? (
+          <img src={logo} alt="Logo" className="w-16 h-16 object-contain" />
+        ) : (
+          <span className="text-white text-lg font-bold">{(card.company || 'AB')[0]}</span>
+        )}
+      </div>
+      <div className="flex-1 p-4 flex flex-col justify-between">
+        <div>
+          {card.company && <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color }}>{card.company}</p>}
+          <h3 className="text-sm font-bold text-slate-900 mt-1">{card.name || 'Förnamn Efternamn'}</h3>
+          <p className="text-[10px] text-slate-500 mt-0.5">{card.title || 'Titel'}</p>
+        </div>
+        <div className="space-y-0.5 text-[9px] text-slate-500">
+          {card.phone && <p>{card.phone}</p>}
+          {card.email && <p>{card.email}</p>}
+          {card.website && <p>{card.website}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderNature = () => (
+    <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7, #f0fdf4)' }}>
+      <div className="absolute top-2 right-3 text-4xl opacity-10">&#127793;</div>
+      <div>
+        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain" />}
+        <h3 className="text-sm font-bold text-green-900">{card.name || 'Förnamn Efternamn'}</h3>
+        <p className="text-[10px] font-medium text-green-700 mt-0.5">{card.title || 'Titel'}</p>
+        {card.company && <p className="text-[10px] text-green-600/70 mt-0.5">{card.company}</p>}
+      </div>
+      <div className="space-y-0.5 text-[9px] text-green-800/60">
+        <div className="w-10 h-px bg-green-300 mb-2" />
+        {card.phone && <p>{card.phone}</p>}
+        {card.email && <p>{card.email}</p>}
+        {card.website && <p>{card.website}</p>}
+      </div>
+    </div>
+  );
+
+  const renderTech = () => (
+    <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
+      <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)', backgroundSize: '16px 16px' }} />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-white font-mono">{card.name || 'Förnamn Efternamn'}</h3>
+            <p className="text-[10px] font-mono mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
+          </div>
+          {logo && <img src={logo} alt="Logo" className="h-7 object-contain brightness-0 invert" />}
+        </div>
+        {card.company && <p className="text-[10px] text-slate-500 font-mono mt-1">{card.company}</p>}
+      </div>
+      <div className="relative z-10 space-y-0.5 text-[9px] text-slate-400 font-mono">
+        <div className="w-full h-px mb-2" style={{ background: `linear-gradient(90deg, ${color}, transparent)` }} />
+        {card.phone && <p><span style={{ color }}>$</span> {card.phone}</p>}
+        {card.email && <p><span style={{ color }}>$</span> {card.email}</p>}
+        {card.website && <p><span style={{ color }}>$</span> {card.website}</p>}
+      </div>
+    </div>
+  );
+
+  const renderers = { classic: renderClassic, modern: renderModern, minimal: renderMinimal, elegant: renderElegant, creative: renderCreative, corporate: renderCorporate, nature: renderNature, tech: renderTech };
+
   return (
     <div className="bg-slate-100 rounded-xl p-6 flex items-center justify-center" data-testid="card-preview-container">
       <div
@@ -95,9 +211,7 @@ function CardPreview({ card, logo, template, color }) {
         style={{ width: '340px', height: '200px' }}
         data-testid="card-preview"
       >
-        {template === 'classic' && renderClassic()}
-        {template === 'modern' && renderModern()}
-        {template === 'minimal' && renderMinimal()}
+        {(renderers[template] || renderClassic)()}
       </div>
     </div>
   );
