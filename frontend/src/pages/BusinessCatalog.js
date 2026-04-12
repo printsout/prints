@@ -187,7 +187,12 @@ const BusinessCatalog = () => {
         pdfUrl = await uploadFile(cardPdfFile);
       }
       if (logo) {
-        logoUrl = await uploadBase64(logo);
+        // If logo is already a server URL (from edit mode), reuse it directly
+        if (logo.startsWith('/api/') || logo.startsWith('http')) {
+          logoUrl = logo;
+        } else {
+          logoUrl = await uploadBase64(logo);
+        }
       }
 
       const unitPrice = getCardPrice(quantity);

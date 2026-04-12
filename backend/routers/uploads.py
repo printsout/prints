@@ -33,6 +33,10 @@ async def upload_base64(data: dict):
     if not image_data:
         raise HTTPException(status_code=400, detail="Ingen bild skickad")
 
+    # Reject server URLs passed by mistake (must be a data URL or raw base64)
+    if image_data.startswith("/api/") or image_data.startswith("http"):
+        raise HTTPException(status_code=400, detail="Ogiltig bilddata — URL skickad istället för base64")
+
     if "base64," in image_data:
         header, image_data = image_data.split("base64,", 1)
         if "png" in header:
@@ -48,6 +52,10 @@ async def upload_base64(data: dict):
         contents = base64.b64decode(image_data)
     except Exception:
         raise HTTPException(status_code=400, detail="Ogiltig bilddata")
+
+    # Validate it's actually an image (check magic bytes)
+    if len(contents) < 100:
+        raise HTTPException(status_code=400, detail="Ogiltig bildfil — för liten")
 
     max_size = 10 * 1024 * 1024
     if len(contents) > max_size:

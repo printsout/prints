@@ -194,6 +194,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] "Generera visitkort (PDF - 8 st/A4)"-knapp i admin OrderDetailPanel
 - [x] Backend `Product` och `AdminProductCreate` modeller uppdaterade med `quantity_prices` fält
 - [x] **Modern-mall PDF-fix** (2026-04-12): PDF-layouten för "modern"-mallen korrigerad så att den matchar frontend-förhandsgranskningen — 38% accent-topp med centrerad logotyp, centrerad text i vit botten
+- [x] **Logo-korruptionsbugg fixad** (2026-04-12): Vid redigering av visitkort i varukorgen skickades server-URL:en till upload-base64 istället för ny bilddata, vilket skapade korrupta 36-byte filer. Fix: frontend återanvänder befintlig URL vid redigering, backend avvisar ogiltiga URL-strängar
 ### P1
 - [x] ~~B2B Katalogbeställning~~ (2026-04-07: /foretag + admin /admin/catalogs)
 - [x] ~~B2B virtuella produkter i varukorgen~~ (2026-04-07: useCartData.js + CartItemCard.js)
