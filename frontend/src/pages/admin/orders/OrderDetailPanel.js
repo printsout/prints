@@ -534,15 +534,29 @@ const BusinesscardCustomization = ({ item, orderId }) => {
       .catch(() => {});
   };
 
+  const logoFullUrl = c.logo_url
+    ? (c.logo_url.startsWith('http') ? c.logo_url : `${API_BASE}${c.logo_url}`)
+    : null;
+
   return (
     <>
       <p>Källa: <strong>{c.source === 'editor' ? 'Editor' : 'PDF-uppladdning'}</strong></p>
-      {c.card_details?.template && <p>Mall: {c.card_details.template}</p>}
+      {c.template && <p>Mall: <strong>{c.template}</strong></p>}
+      {c.color && <p>Färg: <span className="inline-block w-3 h-3 rounded-full mr-1 align-middle" style={{backgroundColor: c.color}} /> {c.color}</p>}
       {c.card_details?.name && <p>Namn: {c.card_details.name}</p>}
+      {c.card_details?.title && <p>Titel: {c.card_details.title}</p>}
       {c.card_details?.company && <p>Företag: {c.card_details.company}</p>}
       {c.card_details?.email && <p>E-post: {c.card_details.email}</p>}
       {c.card_details?.phone && <p>Telefon: {c.card_details.phone}</p>}
+      {c.card_details?.website && <p>Webb: {c.card_details.website}</p>}
+      {c.card_details?.address && <p>Adress: {c.card_details.address}</p>}
       {c.original_filename && <p>Fil: {c.original_filename}</p>}
+      {logoFullUrl && (
+        <div className="mt-2">
+          <p className="text-xs text-slate-500 mb-1">Uppladdad logotyp:</p>
+          <img src={logoFullUrl} alt="Logotyp" className="max-h-16 max-w-[120px] border border-slate-200 rounded p-1 bg-white" />
+        </div>
+      )}
       {c.pdf_url && (
         <a href={c.pdf_url.startsWith('http') ? c.pdf_url : `${API_BASE}${c.pdf_url}`} download target="_blank" rel="noreferrer" className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline text-xs">
           <Download className="w-3 h-3" /> Ladda ner uppladdad PDF
