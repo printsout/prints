@@ -203,7 +203,36 @@ const AdminProducts = () => {
       const res = await api.post('/upload', formDataUpload, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
       const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
       updateImage(index, url);
-      toast.success('Bild uppladdad');
+      toast.success('Bild uppladdad!');
+    } catch {
+      toast.error('Kunde inte ladda upp bilden');
+    }
+  };
+
+  const handleNewImageUpload = async (file) => {
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Bara JPG, PNG eller WebP');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Max 10MB');
+      return;
+    }
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await api.post('/upload', formDataUpload, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
+      const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+      // Replace first empty slot or add new
+      const emptyIdx = formData.images.findIndex(img => !img.trim());
+      if (emptyIdx >= 0) {
+        updateImage(emptyIdx, url);
+      } else {
+        setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+      }
+      toast.success('Bild uppladdad!');
     } catch {
       toast.error('Kunde inte ladda upp bilden');
     }
@@ -520,49 +549,63 @@ const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Bilder</label>
-                {formData.images.map((img, index) => (
-                  <div key={`img-${index}-${img.slice(0,10)}`} className="flex gap-2 mb-3 items-start">
-                    {img && (
-                      <div className="w-16 h-16 rounded-lg border bg-slate-50 overflow-hidden shrink-0">
-                        <img
-                          src={img}
-                          alt={`Bild ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                          data-testid={`image-preview-${index}`}
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 space-y-1">
-                      <Input
-                        value={img}
-                        onChange={(e) => updateImage(index, e.target.value)}
-                        placeholder="Klistra in bild-URL eller ladda upp..."
-                        data-testid={`image-url-${index}`}
-                      />
-                      <label className="inline-flex items-center gap-1.5 text-xs text-[#2a9d8f] cursor-pointer hover:underline">
-                        <Upload className="w-3.5 h-3.5" />
-                        Ladda upp bild
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(index, e.target.files?.[0])}
-                          data-testid={`image-upload-${index}`}
-                        />
-                      </label>
-                    </div>
-                    {formData.images.length > 1 && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeImage(index)} data-testid={`image-remove-${index}`}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
+                <label className="block text-sm font-medium text-slate-700 mb-2">Produktbilder</label>
+
+                {/* Uploaded images grid */}
+                {formData.images.some(img => img.trim()) && (
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {formData.images.map((img, index) => (
+                      img.trim() ? (
+                        <div key={`img-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                          <img
+                            src={img}
+                            alt={`Bild ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.src = ''; e.target.alt = 'Kunde inte ladda'; }}
+                            data-testid={`image-preview-${index}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            data-testid={`image-remove-${index}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                          {index === 0 && (
+                            <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1.5 py-0.5 rounded">Huvudbild</span>
+                          )}
+                        </div>
+                      ) : null
+                    ))}
                   </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={addImageField} data-testid="add-image-btn">
-                  <Plus className="w-4 h-4 mr-1" /> Lägg till bild
-                </Button>
+                )}
+
+                {/* Upload button */}
+                <label
+                  className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-xl p-5 cursor-pointer transition-colors bg-white group"
+                  data-testid="image-upload-area"
+                >
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="w-10 h-10 rounded-lg bg-[#2a9d8f]/10 group-hover:bg-[#2a9d8f]/20 flex items-center justify-center transition-colors">
+                      <Upload className="w-5 h-5 text-[#2a9d8f]" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700">Klicka för att ladda upp bilder</span>
+                    <span className="text-xs text-slate-400">JPG, PNG eller WebP — max 10MB</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      files.forEach(f => handleNewImageUpload(f));
+                      e.target.value = '';
+                    }}
+                    data-testid="image-file-input"
+                  />
+                </label>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">
