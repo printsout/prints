@@ -9,7 +9,7 @@ import BusinessCardEditor from './BusinessCardEditor';
 import {
   Building2, Check, Printer, X,
   FileText, Upload, Package, Clock, ShieldCheck, Minus, Plus,
-  BookOpen, FileDown, CreditCard, ShoppingCart, Palette
+  BookOpen, FileDown, CreditCard, ShoppingCart, Palette, Download
 } from 'lucide-react';
 
 /* ───── Tab 1: "Vår produktkatalog" constants ───── */
@@ -473,12 +473,53 @@ const BusinessCatalog = () => {
                   </div>
 
                   {cardSource === 'editor' ? (
-                    <BusinessCardEditor
-                      card={card} setCard={setCard}
-                      logo={logo} setLogo={setLogo}
-                      template={cardTemplate} setTemplate={setCardTemplate}
-                      color={cardColor} setColor={setCardColor}
-                    />
+                    <>
+                      <BusinessCardEditor
+                        card={card} setCard={setCard}
+                        logo={logo} setLogo={setLogo}
+                        template={cardTemplate} setTemplate={setCardTemplate}
+                        color={cardColor} setColor={setCardColor}
+                      />
+                      {card.name.trim() && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              toast.info('Genererar PDF...');
+                              let logoUrl = null;
+                              if (logo) {
+                                if (logo.startsWith('/api/') || logo.startsWith('http')) {
+                                  logoUrl = logo;
+                                } else {
+                                  const uploadRes = await api.post('/upload-base64', { image: logo });
+                                  logoUrl = uploadRes.data.url;
+                                }
+                              }
+                              const res = await api.post('/catalog/businesscard/preview-pdf', {
+                                card_details: { ...card },
+                                template: cardTemplate,
+                                color: cardColor,
+                                logo_url: logoUrl,
+                              }, { responseType: 'blob' });
+                              const url = URL.createObjectURL(res.data);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `visitkort_${card.name.replace(/\s+/g, '_')}.pdf`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                              toast.success('PDF nedladdad!');
+                            } catch {
+                              toast.error('Kunde inte generera PDF');
+                            }
+                          }}
+                          className="w-full mt-4 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#2a9d8f] text-[#2a9d8f] font-semibold hover:bg-[#2a9d8f] hover:text-white transition-colors"
+                          data-testid="download-card-pdf"
+                        >
+                          <Download className="w-4 h-4" />
+                          Ladda ner visitkort (PDF)
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <>
                       {!cardPdfFile ? (

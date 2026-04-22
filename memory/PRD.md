@@ -234,3 +234,4 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] **Backend-validering**: upload-base64 avvisar URL-strängar och filer < 100 bytes
 - [x] **Admin bildhantering förbättrad** (2026-04-12): Lagt till bildförhandsgranskning (thumbnail) + filuppladdning i admin produktredigeraren. Relativa URL:er (`/api/uploads/...`) hanteras korrekt på admin, Products och ProductDetail-sidorna.
 - [x] **Produktsida bildgalleri** (2026-04-12): ProductDetail.js visar nu alla produktbilder med klickbara thumbnails under huvudbilden. Stöder både 3D-förhandsgranskning och vanliga bilder.
+- [x] **Visitkort PDF-nedladdning från editorn** (2026-04-12): Ny publik endpoint `POST /api/catalog/businesscard/preview-pdf` + "Ladda ner visitkort (PDF)"-knapp i visitkortseditorn. Kunder kan ladda ner sin design direkt utan att beställa.

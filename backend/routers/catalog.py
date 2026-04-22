@@ -175,3 +175,41 @@ async def order_businesscard(
 async def get_catalog_orders():
     orders = await db.catalog_orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
     return orders
+
+
+@router.post("/businesscard/preview-pdf")
+async def preview_businesscard_pdf(data: dict):
+    """Generate a preview PDF from business card editor data (public, no auth)."""
+    from businesscard_pdf import generate_businesscard_pdf
+    import os
+
+    card_details = data.get("card_details", {})
+    template = data.get("template", "classic")
+    color = data.get("color", "#2a9d8f")
+    logo_url = data.get("logo_url", "")
+
+    # Resolve logo from uploads
+    if logo_url:
+        filename = logo_url.split("/")[-1]
+        candidate = UPLOADS_DIR / filename
+        if not (candidate.exists() and candidate.stat().st_size > 100):
+            logo_url = ""
+
+    customization = {
+        "card_details": card_details,
+        "template": template,
+        "color": color,
+        "logo_url": logo_url,
+    }
+
+    output_dir = UPLOADS_DIR.parent / "tmp_pdfs"
+    output_dir.mkdir(exist_ok=True)
+    uid = str(uuid.uuid4())[:8]
+    name = card_details.get("name", "visitkort").replace(" ", "_")
+    output_path = str(output_dir / f"visitkort_{name}_{uid}.pdf")
+    generate_businesscard_pdf(customization, output_path)
+
+    from fastapi.responses import FileResponse
+    filename = f"visitkort_{name}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename,
+                        headers={"Content-Disposition": f'attachment; filename="{filename}"'})
