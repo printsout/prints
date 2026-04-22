@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, Palette, ChevronLeft, Check } from 'lucide-react';
+import { ShoppingCart, Palette, ChevronLeft, Check, Box } from 'lucide-react';
 import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
@@ -20,6 +20,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [show3D, setShow3D] = useState(false);
+  const has3D = product && !['nametag', 'calendar'].includes(product.model_type) && !['namnskylt', 'kalender', 'fotoalbum'].includes(product.category);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -130,30 +132,64 @@ const ProductDetail = () => {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left - Preview */}
           <div className="lg:sticky lg:top-24 lg:h-fit space-y-3">
-            {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' || product.category === 'fotoalbum' ? (
-              <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
-                <img
-                  src={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  data-testid="product-main-image"
-                />
-              </div>
-            ) : (
-              <>
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-50">
+            {/* Main image display */}
+            <div className="relative">
+              <div className="aspect-square rounded-xl overflow-hidden bg-slate-50">
+                {show3D && has3D ? (
                   <ProductPreview3D 
                     modelType={product.model_type}
                     color={colorHexMap[selectedColor] || '#FFFFFF'}
-                    productImage={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
+                    productImage={resolveImageUrl(product.images?.[0])}
                   />
-                </div>
-                <p className="text-center text-sm text-slate-400 mt-1">
-                  Dra för att rotera • Scrolla för att zooma
-                </p>
-              </>
+                ) : (
+                  <img
+                    src={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    data-testid="product-main-image"
+                  />
+                )}
+              </div>
+              {/* Navigation arrows */}
+              {!show3D && product.images?.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : product.images.length - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-transform hover:scale-105"
+                    data-testid="prev-image"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-slate-700" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedImageIndex(prev => prev < product.images.length - 1 ? prev + 1 : 0)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center rotate-180 transition-transform hover:scale-105"
+                    data-testid="next-image"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-slate-700" />
+                  </button>
+                </>
+              )}
+              {/* 3D toggle button */}
+              {has3D && (
+                <button
+                  onClick={() => setShow3D(prev => !prev)}
+                  className={`absolute top-3 right-3 z-20 px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-1.5 transition-colors ${
+                    show3D ? 'bg-[#2a9d8f] text-white' : 'bg-white/90 hover:bg-white text-slate-700'
+                  }`}
+                  data-testid="toggle-3d"
+                >
+                  <Box className="w-3.5 h-3.5" />
+                  {show3D ? '3D aktiv' : '3D vy'}
+                </button>
+              )}
+            </div>
+            {show3D && has3D && (
+              <p className="text-center text-sm text-slate-400">
+                Dra för att rotera • Scrolla för att zooma
+              </p>
             )}
-            {product.images?.length > 1 && (
+            {/* Thumbnails row */}
+            {!show3D && product.images?.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1" data-testid="image-thumbnails">
                 {product.images.map((img, idx) => (
                   <button
