@@ -19,6 +19,7 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,6 +40,11 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [productId]);
+
+  const resolveImageUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${url}` : url;
+  };
 
   const handleAddToCart = async () => {
     setAdding(true);
@@ -123,13 +129,14 @@ const ProductDetail = () => {
       <div className="container-main py-12">
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Left - Preview */}
-          <div className="lg:sticky lg:top-24 lg:h-fit">
+          <div className="lg:sticky lg:top-24 lg:h-fit space-y-3">
             {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' || product.category === 'fotoalbum' ? (
               <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
                 <img
-                  src={product.images?.[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images?.[0]}
+                  src={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
                   alt={product.name}
                   className="w-full h-full object-cover"
+                  data-testid="product-main-image"
                 />
               </div>
             ) : (
@@ -138,13 +145,33 @@ const ProductDetail = () => {
                   <ProductPreview3D 
                     modelType={product.model_type}
                     color={colorHexMap[selectedColor] || '#FFFFFF'}
-                    productImage={product.images?.[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images?.[0]}
+                    productImage={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
                   />
                 </div>
-                <p className="text-center text-sm text-slate-400 mt-4">
+                <p className="text-center text-sm text-slate-400 mt-1">
                   Dra för att rotera • Scrolla för att zooma
                 </p>
               </>
+            )}
+            {product.images?.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1" data-testid="image-thumbnails">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                      selectedImageIndex === idx ? 'border-[#2a9d8f] ring-1 ring-[#2a9d8f]/30' : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                    data-testid={`thumbnail-${idx}`}
+                  >
+                    <img
+                      src={resolveImageUrl(img)}
+                      alt={`${product.name} ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
