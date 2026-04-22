@@ -127,7 +127,7 @@ const ProductDetail = () => {
             {product.model_type === 'nametag' || product.model_type === 'calendar' || product.category === 'namnskylt' || product.category === 'kalender' || product.category === 'fotoalbum' ? (
               <div className="aspect-square rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
                 <img
-                  src={product.images?.[0]}
+                  src={product.images?.[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images?.[0]}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -138,7 +138,7 @@ const ProductDetail = () => {
                   <ProductPreview3D 
                     modelType={product.model_type}
                     color={colorHexMap[selectedColor] || '#FFFFFF'}
-                    productImage={product.images?.[0]}
+                    productImage={product.images?.[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images?.[0]}
                   />
                 </div>
                 <p className="text-center text-sm text-slate-400 mt-4">

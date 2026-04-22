@@ -191,7 +191,7 @@ const ProductCard = ({ product, viewMode }) => {
       >
         <div className="w-32 h-32 shrink-0 overflow-hidden rounded-lg bg-slate-100">
           <img 
-            src={product.images[0]} 
+            src={product.images[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images[0]} 
             alt={product.name}
             className="w-full h-full object-cover"
           />
@@ -216,7 +216,7 @@ const ProductCard = ({ product, viewMode }) => {
     >
       <div className="aspect-[4/5] overflow-hidden bg-slate-100 rounded-lg relative">
         <img 
-          src={product.images[0]} 
+          src={product.images[0]?.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images[0]} 
           alt={product.name}
           className="product-image w-full h-full object-cover"
         />

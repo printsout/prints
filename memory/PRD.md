@@ -232,3 +232,4 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] **React-prestandafix**: `useMemo` för `sortedProducts` i Products.js
 - [x] **Oanvända variabler borttagna**: `catch (error)` → `catch` i Products.js, ProductDetail.js, AdminDashboard.js
 - [x] **Backend-validering**: upload-base64 avvisar URL-strängar och filer < 100 bytes
+- [x] **Admin bildhantering förbättrad** (2026-04-12): Lagt till bildförhandsgranskning (thumbnail) + filuppladdning i admin produktredigeraren. Relativa URL:er (`/api/uploads/...`) hanteras korrekt på admin, Products och ProductDetail-sidorna.

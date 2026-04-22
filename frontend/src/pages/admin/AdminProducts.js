@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase, Upload, Image } from 'lucide-react';
 
 // ─── Tag Input Component ──────────────────────────
 function TagInput({ tags, onChange, placeholder, testId }) {
@@ -186,6 +186,29 @@ const AdminProducts = () => {
     setFormData(prev => ({ ...prev, images: newImages.length > 0 ? newImages : [''] }));
   };
 
+  const handleImageUpload = async (index, file) => {
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Bara JPG, PNG eller WebP');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Max 10MB');
+      return;
+    }
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await api.post('/upload', formDataUpload, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
+      const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+      updateImage(index, url);
+      toast.success('Bild uppladdad');
+    } catch {
+      toast.error('Kunde inte ladda upp bilden');
+    }
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.category?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -257,11 +280,13 @@ const AdminProducts = () => {
             <div className="aspect-square bg-slate-100 relative">
               {product.images?.[0] ? (
                 <img 
-                  src={product.images[0]} 
+                  src={product.images[0].startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images[0]} 
                   alt={product.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
                 />
-              ) : (
+              ) : null}
+              {!product.images?.[0] && (
                 <div className="w-full h-full flex items-center justify-center">
                   <Package className="w-12 h-12 text-slate-300" />
                 </div>
@@ -495,22 +520,47 @@ const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Bilder (URL)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Bilder</label>
                 {formData.images.map((img, index) => (
-                  <div key={`img-${index}-${img.slice(0,10)}`} className="flex gap-2 mb-2">
-                    <Input
-                      value={img}
-                      onChange={(e) => updateImage(index, e.target.value)}
-                      placeholder="https://..."
-                    />
+                  <div key={`img-${index}-${img.slice(0,10)}`} className="flex gap-2 mb-3 items-start">
+                    {img && (
+                      <div className="w-16 h-16 rounded-lg border bg-slate-50 overflow-hidden shrink-0">
+                        <img
+                          src={img}
+                          alt={`Bild ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                          data-testid={`image-preview-${index}`}
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <Input
+                        value={img}
+                        onChange={(e) => updateImage(index, e.target.value)}
+                        placeholder="Klistra in bild-URL eller ladda upp..."
+                        data-testid={`image-url-${index}`}
+                      />
+                      <label className="inline-flex items-center gap-1.5 text-xs text-[#2a9d8f] cursor-pointer hover:underline">
+                        <Upload className="w-3.5 h-3.5" />
+                        Ladda upp bild
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(index, e.target.files?.[0])}
+                          data-testid={`image-upload-${index}`}
+                        />
+                      </label>
+                    </div>
                     {formData.images.length > 1 && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeImage(index)}>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeImage(index)} data-testid={`image-remove-${index}`}>
                         <X className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={addImageField}>
+                <Button type="button" variant="outline" size="sm" onClick={addImageField} data-testid="add-image-btn">
                   <Plus className="w-4 h-4 mr-1" /> Lägg till bild
                 </Button>
               </div>
