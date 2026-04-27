@@ -303,18 +303,117 @@ def _draw_card(c, x, y, card_details, template, color, logo_path=None):
     c.restoreState()
 
 
+def _draw_cut_marks(c_pdf, cx, cy):
+    """Draw cut marks around a card position."""
+    c_pdf.setStrokeColor(HexColor("#cbd5e1"))
+    c_pdf.setLineWidth(0.25)
+    mark = 3 * mm
+    for mx, my in [(cx, cy), (cx + CARD_W, cy), (cx, cy + CARD_H), (cx + CARD_W, cy + CARD_H)]:
+        c_pdf.line(mx - mark, my, mx - 1, my)
+        c_pdf.line(mx + 1, my, mx + mark, my)
+        c_pdf.line(mx, my - mark, mx, my - 1)
+        c_pdf.line(mx, my + 1, mx, my + mark)
+
+
+# ─── Back side renderers ───
+
+def _draw_back_logo_only(c, x, y, d, accent, logo_path):
+    """Back: just centered logo."""
+    mid_x = x + CARD_W / 2
+    mid_y = y + CARD_H / 2
+    if _draw_logo(c, logo_path, mid_x - 12 * mm, mid_y - 6 * mm, 24 * mm, 12 * mm, anchor="c"):
+        pass
+    else:
+        c.setFillColor(HexColor("#e2e8f0"))
+        c.setFont("Helvetica-Bold", 9)
+        c.drawCentredString(mid_x, mid_y - 3, d.get("company", ""))
+
+
+def _draw_back_logo_tagline(c, x, y, d, accent, logo_path, tagline=""):
+    """Back: logo + tagline text."""
+    mid_x = x + CARD_W / 2
+    _draw_logo(c, logo_path, mid_x - 12 * mm, y + CARD_H / 2, 24 * mm, 12 * mm, anchor="c")
+    if tagline:
+        c.setFillColor(HexColor("#64748b"))
+        c.setFont("Helvetica", 6.5)
+        c.drawCentredString(mid_x, y + CARD_H / 2 - 10 * mm, tagline)
+    # Bottom accent line
+    c.setFillColor(accent)
+    c.setFillAlpha(0.3)
+    c.rect(x + 10 * mm, y + 3 * mm, CARD_W - 20 * mm, 0.8, fill=1, stroke=0)
+    c.setFillAlpha(1)
+
+
+def _draw_back_solid_color(c, x, y, d, accent, logo_path):
+    """Back: solid accent color with inverted logo."""
+    c.setFillColor(accent)
+    c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=0)
+    if logo_path and os.path.exists(logo_path):
+        _draw_logo(c, logo_path, x + CARD_W / 2 - 12 * mm, y + CARD_H / 2 - 6 * mm, 24 * mm, 12 * mm, anchor="c")
+
+
+def _draw_back_minimal_info(c, x, y, d, accent, logo_path):
+    """Back: centered contact info."""
+    mid_x = x + CARD_W / 2
+    cy = y + CARD_H / 2 + 8 * mm
+    if d.get("company"):
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(mid_x, cy, d["company"])
+        cy -= 5 * mm
+    # Accent divider
+    c.setStrokeColor(accent)
+    c.setLineWidth(0.5)
+    c.line(mid_x - 5 * mm, cy, mid_x + 5 * mm, cy)
+    cy -= 5 * mm
+    # Contact lines
+    c.setFont("Helvetica", 6)
+    c.setFillColor(HexColor("#475569"))
+    for line in [d.get("phone"), d.get("email"), d.get("website"), d.get("address")]:
+        if line:
+            c.drawCentredString(mid_x, cy, line)
+            cy -= 3.2 * mm
+
+
+def _draw_card_back(c, x, y, card_details, back_style, color, logo_path, tagline=""):
+    """Draw a single back-side card at position (x, y)."""
+    accent = HexColor(color or "#2a9d8f")
+    d = {k: card_details.get(k, "") for k in
+         ("name", "title", "company", "phone", "email", "website", "address")}
+
+    c.saveState()
+    if back_style != "solid_color":
+        c.setFillColor(white)
+        c.setStrokeColor(HexColor("#e2e8f0"))
+        c.setLineWidth(0.5)
+        c.roundRect(x, y, CARD_W, CARD_H, 2 * mm, fill=1, stroke=1)
+
+    if back_style == "logo_tagline":
+        _draw_back_logo_tagline(c, x, y, d, accent, logo_path, tagline)
+    elif back_style == "solid_color":
+        _draw_back_solid_color(c, x, y, d, accent, logo_path)
+    elif back_style == "minimal_info":
+        _draw_back_minimal_info(c, x, y, d, accent, logo_path)
+    else:
+        _draw_back_logo_only(c, x, y, d, accent, logo_path)
+
+    c.restoreState()
+
+
 # ─── Public API ───
 
 def generate_businesscard_pdf(customization: dict, output_path: str) -> str:
     """
     Generate a printable PDF with business cards arranged on A4.
-    Fits 8 cards per A4 page (2 columns x 4 rows).
+    Page 1: Front side (8 cards). Page 2: Back side (8 cards).
     """
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     card_details = customization.get("card_details", {})
     template = customization.get("template") or card_details.get("template", "classic")
     color = customization.get("color") or card_details.get("color", "#2a9d8f")
+    back_style = customization.get("back_style", "logo_only")
+    back_tagline = customization.get("back_tagline", "")
 
     logo_path = None
     logo_url = customization.get("logo_url", "")
@@ -330,25 +429,32 @@ def generate_businesscard_pdf(customization: dict, output_path: str) -> str:
     x_start = (PAGE_W - cols * CARD_W - (cols - 1) * 4 * mm) / 2
     y_start = PAGE_H - MARGIN - CARD_H
 
+    # ─── Page 1: Front ───
     for row in range(rows):
         for col in range(cols):
             cx = x_start + col * (CARD_W + 4 * mm)
             cy = y_start - row * (CARD_H + 4 * mm)
             _draw_card(c_pdf, cx, cy, card_details, template, color, logo_path)
-
-            c_pdf.setStrokeColor(HexColor("#cbd5e1"))
-            c_pdf.setLineWidth(0.25)
-            mark = 3 * mm
-            for mx, my in [(cx, cy), (cx + CARD_W, cy), (cx, cy + CARD_H), (cx + CARD_W, cy + CARD_H)]:
-                c_pdf.line(mx - mark, my, mx - 1, my)
-                c_pdf.line(mx + 1, my, mx + mark, my)
-                c_pdf.line(mx, my - mark, mx, my - 1)
-                c_pdf.line(mx, my + 1, mx, my + mark)
+            _draw_cut_marks(c_pdf, cx, cy)
 
     c_pdf.setFont("Helvetica", 7)
     c_pdf.setFillColor(HexColor("#94a3b8"))
     c_pdf.drawCentredString(PAGE_W / 2, 5 * mm,
-        f"Visitkort — {card_details.get('name', '')} — 8 st per A4 — Klipp längs markeringarna")
+        f"Visitkort — {card_details.get('name', '')} — FRAMSIDA — 8 st per A4")
+
+    # ─── Page 2: Back ───
+    c_pdf.showPage()
+    for row in range(rows):
+        for col in range(cols):
+            cx = x_start + col * (CARD_W + 4 * mm)
+            cy = y_start - row * (CARD_H + 4 * mm)
+            _draw_card_back(c_pdf, cx, cy, card_details, back_style, color, logo_path, back_tagline)
+            _draw_cut_marks(c_pdf, cx, cy)
+
+    c_pdf.setFont("Helvetica", 7)
+    c_pdf.setFillColor(HexColor("#94a3b8"))
+    c_pdf.drawCentredString(PAGE_W / 2, 5 * mm,
+        f"Visitkort — {card_details.get('name', '')} — BAKSIDA — 8 st per A4")
 
     c_pdf.save()
     return output_path
