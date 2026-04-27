@@ -407,7 +407,7 @@ async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)
 
 
 @router.get("/orders/{order_id}/businesscard-pdf")
-async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_token)):
+async def download_businesscard_pdf(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
     """Generate and download a printable business card PDF from order data."""
     from businesscard_pdf import generate_businesscard_pdf
     from config import UPLOADS_DIR
@@ -415,10 +415,9 @@ async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_to
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     customization = None
     if order:
-        for item in order.get("items", []):
-            if item.get("customization", {}).get("type") == "businesscard":
-                customization = item["customization"]
-                break
+        bc_items = [i for i in order.get("items", []) if i.get("customization", {}).get("type") == "businesscard"]
+        if bc_items and item_index < len(bc_items):
+            customization = bc_items[item_index]["customization"]
     # Check B2B catalog_orders if not found
     if not customization:
         b2b_order = await db.catalog_orders.find_one({"order_id": order_id}, {"_id": 0})
@@ -445,7 +444,7 @@ async def download_businesscard_pdf(order_id: str, admin=Depends(verify_admin_to
 
     output_dir = Path("/tmp/businesscard_pdfs")
     output_dir.mkdir(exist_ok=True)
-    output_path = str(output_dir / f"visitkort_{order_id[:8]}.pdf")
+    output_path = str(output_dir / f"visitkort_{order_id[:8]}_{item_index}.pdf")
     generate_businesscard_pdf(customization, output_path)
     name = customization.get("card_details", {}).get("name", "visitkort")
     filename = f"visitkort_{name}_{order_id[:8]}.pdf"

@@ -150,7 +150,7 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
           <p className="text-xs text-slate-500 uppercase">Produkter</p>
           <div className="mt-2 space-y-3">
             {selectedOrder.items?.map((item, index) => (
-              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} toast={toast} orderId={selectedOrder.order_id} />
+              <OrderItemDetail key={item.product_id || `item-${index}`} item={item} itemIndex={index} allItems={selectedOrder.items} toast={toast} orderId={selectedOrder.order_id} />
             )) || <p className="text-sm text-slate-500">Inga produkter</p>}
           </div>
         </div>
@@ -234,7 +234,11 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
   );
 };
 
-const OrderItemDetail = ({ item, toast, orderId }) => {
+const OrderItemDetail = ({ item, itemIndex, allItems, toast, orderId }) => {
+  // Calculate businesscard-specific index for PDF generation
+  const bcIndex = item.customization?.type === 'businesscard'
+    ? allItems.slice(0, itemIndex).filter(i => i.customization?.type === 'businesscard').length
+    : 0;
   return (
     <div className="border border-slate-100 rounded-lg p-3">
       <div className="flex justify-between text-sm">
@@ -249,7 +253,7 @@ const OrderItemDetail = ({ item, toast, orderId }) => {
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
           {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} orderId={orderId} />}
-          {item.customization.type === 'businesscard' && <BusinesscardCustomization item={item} orderId={orderId} />}
+          {item.customization.type === 'businesscard' && <BusinesscardCustomization item={item} orderId={orderId} itemIndex={bcIndex} />}
           {item.customization.type === 'print_catalog' && <PrintCatalogCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'our_catalog' && <OurCatalogCustomization item={item} />}
           {!['nametag', 'photoalbum', 'calendar', 'design', 'catalog_design', 'businesscard', 'print_catalog', 'our_catalog'].includes(item.customization.type) && (
@@ -513,12 +517,12 @@ const CatalogDesignCustomization = ({ item, orderId }) => {
   );
 };
 
-const BusinesscardCustomization = ({ item, orderId }) => {
+const BusinesscardCustomization = ({ item, orderId, itemIndex = 0 }) => {
   const c = item.customization;
 
   const handleGeneratePdf = () => {
     const token = sessionStorage.getItem('adminToken');
-    const url = `${API_BASE}/api/admin/orders/${orderId}/businesscard-pdf`;
+    const url = `${API_BASE}/api/admin/orders/${orderId}/businesscard-pdf?item_index=${itemIndex}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('Kunde inte generera PDF');
