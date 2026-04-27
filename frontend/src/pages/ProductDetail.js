@@ -21,6 +21,7 @@ const ProductDetail = () => {
   const [adding, setAdding] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [show3D, setShow3D] = useState(false);
+  const [useColorImage, setUseColorImage] = useState(true);
   const has3D = product && !['nametag', 'calendar'].includes(product.model_type) && !['namnskylt', 'kalender', 'fotoalbum'].includes(product.category);
 
   useEffect(() => {
@@ -50,7 +51,7 @@ const ProductDetail = () => {
 
   // Get the image for the currently selected color (if available)
   const getActiveImage = () => {
-    if (selectedColor && product?.color_images?.[selectedColor]) {
+    if (useColorImage && selectedColor && product?.color_images?.[selectedColor]) {
       return resolveImageUrl(product.color_images[selectedColor]);
     }
     return resolveImageUrl(product?.images?.[selectedImageIndex] || product?.images?.[0]);
@@ -178,14 +179,14 @@ const ProductDetail = () => {
               {!show3D && product.images?.length > 1 && (
                 <>
                   <button
-                    onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : product.images.length - 1)}
+                    onClick={() => { setSelectedImageIndex(prev => prev > 0 ? prev - 1 : product.images.length - 1); setUseColorImage(false); }}
                     className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-transform hover:scale-105"
                     data-testid="prev-image"
                   >
                     <ChevronLeft className="w-5 h-5 text-slate-700" />
                   </button>
                   <button
-                    onClick={() => setSelectedImageIndex(prev => prev < product.images.length - 1 ? prev + 1 : 0)}
+                    onClick={() => { setSelectedImageIndex(prev => prev < product.images.length - 1 ? prev + 1 : 0); setUseColorImage(false); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center rotate-180 transition-transform hover:scale-105"
                     data-testid="next-image"
                   >
@@ -218,7 +219,7 @@ const ProductDetail = () => {
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedImageIndex(idx)}
+                    onClick={() => { setSelectedImageIndex(idx); setUseColorImage(false); }}
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                       selectedImageIndex === idx ? 'border-[#2a9d8f] ring-1 ring-[#2a9d8f]/30' : 'border-slate-200 hover:border-slate-300'
                     }`}
@@ -267,8 +268,7 @@ const ProductDetail = () => {
                   {product.colors.map((color) => (
                     <button
                       key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${
+                      onClick={() => { setSelectedColor(color); setUseColorImage(true); }}                      className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${
                         selectedColor === color 
                           ? 'border-primary scale-110' 
                           : 'border-slate-200 hover:border-slate-400'
