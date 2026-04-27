@@ -21,7 +21,7 @@ const ProductDetail = () => {
   const [adding, setAdding] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [show3D, setShow3D] = useState(false);
-  const [useColorImage, setUseColorImage] = useState(true);
+  const [useColorImage, setUseColorImage] = useState(false);
   const has3D = product && !['nametag', 'calendar'].includes(product.model_type) && !['namnskylt', 'kalender', 'fotoalbum'].includes(product.category);
 
   useEffect(() => {
