@@ -76,9 +76,14 @@ export function CartItemCard({ item, product, loading, onQuantityChange, onRemov
               </span>
             )}
             {item.customization.type === 'design' && (
-              <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mr-1">
-                Med egen design
-              </span>
+              <div className="space-y-1">
+                <span className="inline-block text-xs bg-primary/10 text-primary px-2 py-0.5 rounded mr-1">
+                  Med egen design
+                </span>
+                {item.customization.text && (
+                  <p className="text-xs text-slate-600">Text: <span className="font-medium">"{item.customization.text}"</span></p>
+                )}
+              </div>
             )}
             {item.customization.type === 'our_catalog' && (
               <span className="inline-block text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded mr-1">

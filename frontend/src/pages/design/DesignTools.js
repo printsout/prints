@@ -1,5 +1,5 @@
 import {
-  Upload, RotateCcw, Type, Trash2, Palette, Move, ZoomIn
+  Upload, RotateCcw, Type, Trash2, Palette, Move, ZoomIn, Download
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
