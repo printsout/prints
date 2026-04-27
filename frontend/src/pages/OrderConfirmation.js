@@ -8,6 +8,7 @@ import { useCart } from '../context/CartContext';
 const OrderConfirmation = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const freeOrderId = searchParams.get('order_id');
   const { clearCart } = useCart();
   
   const [status, setStatus] = useState('loading');
@@ -15,6 +16,14 @@ const OrderConfirmation = () => {
   const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
+    // Free order — already completed, no Stripe check needed
+    if (freeOrderId) {
+      setStatus('success');
+      setPaymentData({ payment_status: 'paid', amount_total: 0, currency: 'sek' });
+      try { clearCart(); } catch {}
+      return;
+    }
+
     if (!sessionId) {
       setStatus('error');
       return;
@@ -47,7 +56,7 @@ const OrderConfirmation = () => {
     };
 
     checkPaymentStatus();
-  }, [sessionId, attempts, clearCart]);
+  }, [sessionId, freeOrderId, attempts, clearCart]);
 
   const formatAmount = (amount) => {
     if (!amount) return '0';
