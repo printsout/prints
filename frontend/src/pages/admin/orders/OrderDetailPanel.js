@@ -436,20 +436,23 @@ const DesignCustomization = ({ item }) => {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, size, size);
 
-    // Draw customer image
+    // Draw customer image via blob to avoid CORS issues
     if (imgUrl) {
       try {
+        const response = await fetch(imgUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
-          img.src = imgUrl;
+          img.src = blobUrl;
         });
         const scale = Math.min(size / img.width, size / img.height);
         const w = img.width * scale;
         const h = img.height * scale;
         ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+        URL.revokeObjectURL(blobUrl);
       } catch {
         // image load failed
       }
@@ -464,7 +467,6 @@ const DesignCustomization = ({ item }) => {
       ctx.shadowColor = 'rgba(0,0,0,0.3)';
       ctx.shadowBlur = 4;
       ctx.shadowOffsetY = 2;
-      // Position just below center of image
       const textY = (size / 2) + (size * 0.3) + fontSize;
       ctx.fillText(c.text, size / 2, textY);
     }
