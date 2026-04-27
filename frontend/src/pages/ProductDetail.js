@@ -110,7 +110,23 @@ const ProductDetail = () => {
     'Beige': '#d4c4a8',
     'Marinblå': '#1e3a5f',
     'Naturvit': '#f5f5dc',
-    'Transparent': '#e5e5e5'
+    'Transparent': '#e5e5e5',
+    'Röd': '#dc2626',
+    'Blå': '#2563eb',
+    'Grön': '#16a34a',
+    'Rosa': '#ec4899',
+    'Gul': '#eab308',
+    'Orange': '#ea580c',
+    'Lila': '#7c3aed',
+    'Brun': '#78350f',
+    'Ljusgrå': '#d1d5db',
+    'Mörkgrå': '#374151',
+    'Khaki': '#a3956b',
+    'Olivgrön': '#4d5c2e',
+    'Bordeaux': '#722f37',
+    'Teal': '#2a9d8f',
+    'Vit bakgrund': '#FFFFFF',
+    'Färgglad bakgrund': '#f472b6',
   };
 
   return (
@@ -254,7 +270,7 @@ const ProductDetail = () => {
                       title={color}
                     >
                       {selectedColor === color && (
-                        <Check className={`w-4 h-4 ${color === 'Svart' || color === 'Marinblå' ? 'text-white' : 'text-slate-700'}`} />
+                        <Check className={`w-4 h-4 ${['Svart', 'Marinblå', 'Mörkgrå', 'Brun', 'Bordeaux', 'Olivgrön', 'Lila'].includes(color) ? 'text-white' : 'text-slate-700'}`} />
                       )}
                     </button>
                   ))}
