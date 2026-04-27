@@ -111,7 +111,10 @@ const Checkout = () => {
           phone: formData.phone
         }
       }, { headers });
-      if (response.data.checkout_url) {
+      if (response.data.free_order) {
+        toast.success('Beställning genomförd! (Gratis)');
+        navigate(`/order-confirmation?order_id=${response.data.order_id}`);
+      } else if (response.data.checkout_url) {
         setCheckoutUrl(response.data.checkout_url);
         try { window.location.assign(response.data.checkout_url); }
         catch { window.open(response.data.checkout_url, '_self'); }

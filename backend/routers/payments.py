@@ -23,8 +23,6 @@ async def _build_order_items(cart: dict):
         # Virtual/B2B products (print-*, our-catalog-*) don't exist in DB
         item_price = cart_item.get("price") or (product["price"] if product else 0)
         item_name = cart_item.get("name") or (product["name"] if product else pid)
-        if item_price <= 0 and not product:
-            continue
         total_amount += item_price * cart_item["quantity"]
         order_items.append(OrderItem(
             product_id=pid,
@@ -95,8 +93,9 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest, user
         raise HTTPException(status_code=400, detail="Varukorgen är tom")
 
     total_amount, order_items = await _build_order_items(cart)
-    if total_amount <= 0:
-        raise HTTPException(status_code=400, detail="Ogiltig totalsumma")
+
+    if not order_items:
+        raise HTTPException(status_code=400, detail="Inga giltiga artiklar i varukorgen")
 
     order = Order(
         user_id=user["user_id"] if user else None,
@@ -105,6 +104,20 @@ async def create_checkout(request: Request, checkout_data: CheckoutRequest, user
         total_amount=total_amount,
         shipping_address=checkout_data.shipping_address
     )
+
+    # Free orders (e.g. free catalog) — complete immediately without Stripe
+    if total_amount <= 0:
+        order_dict = order.model_dump()
+        order_dict["payment_status"] = "paid"
+        order_dict["status"] = "processing"
+        await db.orders.insert_one(order_dict)
+        order_dict.pop("_id", None)
+        await db.carts.delete_one({"session_id": checkout_data.cart_session_id})
+        try:
+            await send_order_confirmation(order_dict)
+        except Exception:
+            pass
+        return {"checkout_url": None, "free_order": True, "order_id": order_dict["order_id"]}
 
     return await _create_stripe_session(request, order, checkout_data, user, total_amount)
 
