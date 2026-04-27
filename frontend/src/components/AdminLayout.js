@@ -55,7 +55,7 @@ const AdminLayout = () => {
           {sidebarOpen && (
             <div className="flex items-center gap-2">
               <img 
-                src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" 
+                src="/logo.jpg" 
                 alt="Printsout" 
                 className="h-10 w-auto"
               />

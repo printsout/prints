@@ -112,7 +112,7 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="https://customer-assets.emergentagent.com/job_be645e3c-37b1-47f0-ae1a-5a2a36047627/artifacts/trb662lu_logo1.png" alt="Printsout" className="h-20 w-auto mx-auto mb-4" />
+          <img src="/logo.jpg" alt="Printsout" className="h-20 w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
           <p className="text-slate-400 mt-2">{STEP_DESCRIPTIONS[step]}</p>
         </div>
