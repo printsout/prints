@@ -56,17 +56,17 @@ def _draw_modern(c, x, y, d, accent, logo_path):
                       y + CARD_H - top_h / 2 - 4.5 * mm, 22 * mm, 9 * mm, anchor="c"):
         if d["company"]:
             c.setFillColor(white)
-            c.setFont("Helvetica-Bold", 8)
+            c.setFont("Helvetica-Bold", 40)
             c.drawCentredString(x + CARD_W / 2, y + CARD_H - top_h / 2 - 3, d["company"])
     bottom_h = CARD_H - top_h
     mid_x = x + CARD_W / 2
     c.setFillColor(HexColor("#1e293b"))
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawCentredString(mid_x, y + bottom_h - 8 * mm, d["name"])
     c.setFillColor(accent)
-    c.setFont("Helvetica", 7)
+    c.setFont("Helvetica", 35)
     c.drawCentredString(mid_x, y + bottom_h - 12 * mm, d["title"])
-    c.setFont("Helvetica", 6)
+    c.setFont("Helvetica", 30)
     c.setFillColor(HexColor("#475569"))
     _draw_contact_lines(c, [d["phone"], d["email"], d["website"]],
                         mid_x, y + bottom_h - 17 * mm, align="center")
@@ -80,17 +80,17 @@ def _draw_classic(c, x, y, d, accent, logo_path):
     if _draw_logo(c, logo_path, lx, y + CARD_H - 12 * mm, 20 * mm, 10 * mm, anchor="sw"):
         logo_bottom = y + CARD_H - 16 * mm
     c.setFillColor(HexColor("#1e293b"))
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawString(lx, logo_bottom, d["name"])
     c.setFillColor(accent)
-    c.setFont("Helvetica", 6.5)
+    c.setFont("Helvetica", 32.5)
     c.drawString(lx, logo_bottom - 4 * mm, d["title"])
     if d["company"]:
         c.setFillColor(HexColor("#64748b"))
-        c.setFont("Helvetica", 6)
+        c.setFont("Helvetica", 30)
         c.drawString(lx, logo_bottom - 8 * mm, d["company"])
     cy = y + 10 * mm
-    c.setFont("Helvetica", 6)
+    c.setFont("Helvetica", 30)
     c.setFillColor(HexColor("#475569"))
     lines = []
     if d["phone"] and d["email"]:
@@ -109,19 +109,19 @@ def _draw_minimal(c, x, y, d, accent, logo_path):
     c.setLineWidth(1)
     c.line(x + 5 * mm, y + 3 * mm, x + CARD_W - 5 * mm, y + 3 * mm)
     c.setFillColor(HexColor("#1e293b"))
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawString(x + 5 * mm, y + CARD_H - 10 * mm, d["name"])
     c.setFillColor(HexColor("#94a3b8"))
-    c.setFont("Helvetica", 6.5)
+    c.setFont("Helvetica", 32.5)
     c.drawString(x + 5 * mm, y + CARD_H - 14 * mm, d["title"])
     rx = x + CARD_W - 5 * mm
-    c.setFont("Helvetica", 6)
+    c.setFont("Helvetica", 30)
     c.setFillColor(HexColor("#475569"))
     _draw_contact_lines(c, [d["email"], d["phone"], d["website"]],
                         rx, y + CARD_H - 10 * mm, spacing=3.5 * mm, align="right")
     if d["company"]:
         c.setFillColor(HexColor("#64748b"))
-        c.setFont("Helvetica", 6)
+        c.setFont("Helvetica", 30)
         c.drawString(x + 5 * mm, y + 7 * mm, d["company"])
     _draw_logo(c, logo_path, rx - 20 * mm, y + 4 * mm, 18 * mm, 9 * mm, anchor="c")
 
@@ -136,19 +136,19 @@ def _draw_elegant(c, x, y, d, accent, logo_path):
     lx = x + 5 * mm
     _draw_logo(c, logo_path, lx, y + CARD_H - 11 * mm, 18 * mm, 8 * mm, anchor="sw")
     c.setFillColor(white)
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawString(lx, y + CARD_H - 17 * mm, d["name"])
     c.setFillColor(accent)
-    c.setFont("Helvetica", 7)
+    c.setFont("Helvetica", 35)
     c.drawString(lx, y + CARD_H - 21 * mm, d["title"])
     if d["company"]:
         c.setFillColor(HexColor("#94a3b8"))
-        c.setFont("Helvetica", 6)
+        c.setFont("Helvetica", 30)
         c.drawString(lx, y + CARD_H - 25 * mm, d["company"])
     c.setStrokeColor(accent)
     c.setLineWidth(0.5)
     c.line(lx, y + 14 * mm, lx + 10 * mm, y + 14 * mm)
-    c.setFont("Helvetica", 5.5)
+    c.setFont("Helvetica", 27.5)
     c.setFillColor(HexColor("#94a3b8"))
     _draw_contact_lines(c, [d["phone"], d["email"], d["website"]],
                         lx, y + 11 * mm, spacing=3 * mm)
@@ -164,13 +164,13 @@ def _draw_creative(c, x, y, d, accent, logo_path):
     c.setFillAlpha(1)
     lx = x + 5 * mm
     c.setFillColor(HexColor("#1e293b"))
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawString(lx, y + CARD_H - 10 * mm, d["name"])
     c.setFillColor(accent)
-    c.setFont("Helvetica", 7)
+    c.setFont("Helvetica", 35)
     c.drawString(lx, y + CARD_H - 14 * mm, d["title"])
     _draw_logo(c, logo_path, x + CARD_W - 24 * mm, y + CARD_H - 13 * mm, 18 * mm, 9 * mm, anchor="c")
-    c.setFont("Helvetica", 5.5)
+    c.setFont("Helvetica", 27.5)
     c.setFillColor(HexColor("#475569"))
     _draw_contact_lines(c, [d["phone"], d["email"]], lx, y + 10 * mm, spacing=3 * mm)
     _draw_contact_lines(c, [d["website"], d["address"]],
@@ -184,21 +184,21 @@ def _draw_corporate(c, x, y, d, accent, logo_path):
     if not _draw_logo(c, logo_path, x + panel_w / 2 - 10 * mm,
                       y + CARD_H / 2 - 5 * mm, 20 * mm, 10 * mm, anchor="c"):
         c.setFillColor(white)
-        c.setFont("Helvetica-Bold", 18)
+        c.setFont("Helvetica-Bold", 90)
         initial = (d["company"] or d["name"] or "A")[0].upper()
         c.drawCentredString(x + panel_w / 2, y + CARD_H / 2 - 3, initial)
     rx = x + panel_w + 4 * mm
     if d["company"]:
         c.setFillColor(accent)
-        c.setFont("Helvetica-Bold", 5.5)
+        c.setFont("Helvetica-Bold", 27.5)
         c.drawString(rx, y + CARD_H - 7 * mm, d["company"].upper())
     c.setFillColor(HexColor("#1e293b"))
-    c.setFont("Helvetica-Bold", 9)
+    c.setFont("Helvetica-Bold", 45)
     c.drawString(rx, y + CARD_H - 13 * mm, d["name"])
     c.setFillColor(HexColor("#64748b"))
-    c.setFont("Helvetica", 6)
+    c.setFont("Helvetica", 30)
     c.drawString(rx, y + CARD_H - 17 * mm, d["title"])
-    c.setFont("Helvetica", 5.5)
+    c.setFont("Helvetica", 27.5)
     c.setFillColor(HexColor("#475569"))
     _draw_contact_lines(c, [d["phone"], d["email"], d["website"]],
                         rx, y + 10 * mm, spacing=3 * mm)
@@ -214,21 +214,21 @@ def _draw_nature(c, x, y, d, accent, logo_path):
     lx = x + 5 * mm
     _draw_logo(c, logo_path, lx, y + CARD_H - 12 * mm, 18 * mm, 8 * mm, anchor="sw")
     c.setFillColor(HexColor("#14532d"))
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 50)
     c.drawString(lx, y + CARD_H - 18 * mm, d["name"])
     c.setFillColor(HexColor("#15803d"))
-    c.setFont("Helvetica", 7)
+    c.setFont("Helvetica", 35)
     c.drawString(lx, y + CARD_H - 22 * mm, d["title"])
     if d["company"]:
         c.setFillColor(HexColor("#16a34a"))
         c.setFillAlpha(0.7)
-        c.setFont("Helvetica", 6)
+        c.setFont("Helvetica", 30)
         c.drawString(lx, y + CARD_H - 26 * mm, d["company"])
         c.setFillAlpha(1)
     c.setStrokeColor(HexColor("#86efac"))
     c.setLineWidth(0.5)
     c.line(lx, y + 13 * mm, lx + 12 * mm, y + 13 * mm)
-    c.setFont("Helvetica", 5.5)
+    c.setFont("Helvetica", 27.5)
     c.setFillColor(HexColor("#166534"))
     c.setFillAlpha(0.6)
     _draw_contact_lines(c, [d["phone"], d["email"], d["website"]],
@@ -247,21 +247,21 @@ def _draw_tech(c, x, y, d, accent, logo_path):
     c.setFillAlpha(1)
     lx = x + 5 * mm
     c.setFillColor(white)
-    c.setFont("Courier-Bold", 10)
+    c.setFont("Courier-Bold", 50)
     c.drawString(lx, y + CARD_H - 10 * mm, d["name"])
     c.setFillColor(accent)
-    c.setFont("Courier", 7)
+    c.setFont("Courier", 35)
     c.drawString(lx, y + CARD_H - 14 * mm, d["title"])
     if d["company"]:
         c.setFillColor(HexColor("#64748b"))
-        c.setFont("Courier", 6)
+        c.setFont("Courier", 30)
         c.drawString(lx, y + CARD_H - 18 * mm, d["company"])
     _draw_logo(c, logo_path, x + CARD_W - 22 * mm, y + CARD_H - 12 * mm, 16 * mm, 8 * mm, anchor="c")
     c.setStrokeColor(accent)
     c.setLineWidth(0.7)
     c.line(lx, y + 13 * mm, x + CARD_W / 2, y + 13 * mm)
     cy = y + 10 * mm
-    c.setFont("Courier", 5.5)
+    c.setFont("Courier", 27.5)
     for line in [d["phone"], d["email"], d["website"]]:
         if line:
             c.setFillColor(accent)
@@ -325,7 +325,7 @@ def _draw_back_logo_only(c, x, y, d, accent, logo_path):
         pass
     else:
         c.setFillColor(HexColor("#e2e8f0"))
-        c.setFont("Helvetica-Bold", 9)
+        c.setFont("Helvetica-Bold", 45)
         c.drawCentredString(mid_x, mid_y - 3, d.get("company", ""))
 
 
@@ -335,7 +335,7 @@ def _draw_back_logo_tagline(c, x, y, d, accent, logo_path, tagline=""):
     _draw_logo(c, logo_path, mid_x - 12 * mm, y + CARD_H / 2, 24 * mm, 12 * mm, anchor="c")
     if tagline:
         c.setFillColor(HexColor("#64748b"))
-        c.setFont("Helvetica", 6.5)
+        c.setFont("Helvetica", 32.5)
         c.drawCentredString(mid_x, y + CARD_H / 2 - 10 * mm, tagline)
     # Bottom accent line
     c.setFillColor(accent)
@@ -358,7 +358,7 @@ def _draw_back_minimal_info(c, x, y, d, accent, logo_path):
     cy = y + CARD_H / 2 + 8 * mm
     if d.get("company"):
         c.setFillColor(HexColor("#1e293b"))
-        c.setFont("Helvetica-Bold", 8)
+        c.setFont("Helvetica-Bold", 40)
         c.drawCentredString(mid_x, cy, d["company"])
         cy -= 5 * mm
     # Accent divider
@@ -367,7 +367,7 @@ def _draw_back_minimal_info(c, x, y, d, accent, logo_path):
     c.line(mid_x - 5 * mm, cy, mid_x + 5 * mm, cy)
     cy -= 5 * mm
     # Contact lines
-    c.setFont("Helvetica", 6)
+    c.setFont("Helvetica", 30)
     c.setFillColor(HexColor("#475569"))
     for line in [d.get("phone"), d.get("email"), d.get("website"), d.get("address")]:
         if line:
