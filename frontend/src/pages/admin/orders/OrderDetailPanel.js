@@ -423,18 +423,58 @@ const CalendarCustomization = ({ item, orderId }) => {
 
 const DesignCustomization = ({ item }) => {
   const c = item.customization;
+  const imgUrl = c.uploaded_image_url ? (c.uploaded_image_url.startsWith('http') ? c.uploaded_image_url : `${API_BASE}${c.uploaded_image_url}`) : null;
+
+  const handleDownloadWithText = async () => {
+    const canvas = document.createElement('canvas');
+    const size = 1200;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // White background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+
+    // Draw customer image
+    if (imgUrl) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imgUrl;
+        });
+        const scale = Math.min(size / img.width, size / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      } catch {
+        // image load failed
+      }
+    }
+
+    // Draw text on top of image
+    if (c.text) {
+      const fontSize = Math.round(size * 0.06);
+      ctx.font = `bold ${fontSize}px ${c.text_font || 'Arial'}`;
+      ctx.fillStyle = c.text_color || '#000000';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 2;
+      ctx.fillText(c.text, size / 2, size - fontSize);
+    }
+
+    const link = document.createElement('a');
+    link.download = `design_${c.text || 'kund'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
   return (
     <div className="space-y-2">
-      {c.text && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <p className="text-xs font-medium text-amber-700 mb-1">Kundens text:</p>
-          <p className="text-lg font-bold text-slate-900" style={{ fontFamily: c.text_font || 'Arial', color: c.text_color || '#000' }}>
-            {c.text}
-          </p>
-        </div>
-      )}
-      {c.text_font && <p className="text-sm text-slate-600">Typsnitt: <span className="font-medium">{c.text_font}</span></p>}
-      {c.text_color && <p className="text-sm text-slate-600">Textfärg: <span className="inline-block w-4 h-4 rounded-full align-middle border mr-1" style={{backgroundColor: c.text_color}} /> {c.text_color}</p>}
       {c.color && <p className="text-sm text-slate-600">Produktfärg: <span className="font-medium">{c.color}</span></p>}
       {c.size && <p className="text-sm text-slate-600">Storlek: <span className="font-medium">{c.size}</span></p>}
       {c.placement_notes && (
@@ -443,8 +483,27 @@ const DesignCustomization = ({ item }) => {
           <p className="text-sm text-slate-700 italic">{c.placement_notes}</p>
         </div>
       )}
-      {c.uploaded_image_url && (
-        <ImagePreview url={c.uploaded_image_url} alt="Kunddesign" />
+
+      {/* Preview: image with text overlaid */}
+      {(imgUrl || c.text) && (
+        <div className="mt-3">
+          <p className="text-sm font-medium text-slate-700 mb-2">Kundens design:</p>
+          <div className="relative w-48 h-48 rounded-lg overflow-hidden border shadow-sm bg-white">
+            {imgUrl && <img src={imgUrl} alt="Kunddesign" className="w-full h-full object-cover" />}
+            {c.text && (
+              <div className="absolute bottom-2 left-0 right-0 text-center" style={{ fontFamily: c.text_font || 'Arial', color: c.text_color || '#000', fontSize: '1rem', fontWeight: 'bold', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+                {c.text}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleDownloadWithText}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 mt-2 rounded-lg bg-[#2a9d8f] hover:bg-[#238b7e] text-white text-sm font-medium transition-colors"
+            data-testid="download-design-with-text"
+          >
+            <Download className="w-4 h-4" /> Ladda ner (bild + text)
+          </button>
+        </div>
       )}
     </div>
   );
