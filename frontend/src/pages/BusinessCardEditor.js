@@ -91,7 +91,7 @@ function CardPreviewFront({ card, logo, template, color }) {
     <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ backgroundColor: '#1a1a2e' }}>
       <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10" style={{ background: `radial-gradient(circle, ${color}, transparent)`, transform: 'translate(30%, -30%)' }} />
       <div>
-        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain brightness-0 invert" />}
+        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain" />}
         <h3 className="text-sm font-bold text-white tracking-wide">{card.name || 'Förnamn Efternamn'}</h3>
         <p className="text-[10px] font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
         {card.company && <p className="text-[10px] text-slate-400 mt-0.5">{card.company}</p>}
@@ -163,7 +163,7 @@ function CardPreviewFront({ card, logo, template, color }) {
             <h3 className="text-sm font-bold text-white font-mono">{card.name || 'Förnamn Efternamn'}</h3>
             <p className="text-[10px] font-mono mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
           </div>
-          {logo && <img src={logo} alt="Logo" className="h-7 object-contain brightness-0 invert" />}
+          {logo && <img src={logo} alt="Logo" className="h-7 object-contain" />}
         </div>
         {card.company && <p className="text-[10px] text-slate-500 font-mono mt-1">{card.company}</p>}
       </div>
@@ -190,7 +190,7 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor 
     return (
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: bgColor }}>
         {logo ? (
-          <img src={logo} alt="Logo" className={`h-12 object-contain ${isLight ? '' : 'brightness-0 invert'}`} />
+          <img src={logo} alt="Logo" className="h-12 object-contain" />
         ) : (
           <p className={`text-lg font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{card.company || ''}</p>
         )}
