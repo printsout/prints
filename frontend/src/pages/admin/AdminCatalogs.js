@@ -20,8 +20,8 @@ const AdminCatalogs = () => {
   const getAuthHeaders = () => ({ Authorization: `Bearer ${token}` });
 
   const [formData, setFormData] = useState({
-    name: '', description: '', category: '', price: 0,
-    image_url: '', sort_order: 0, visible: true, catalog_type: 'physical'
+    name: '', description: '', features: '', category: '', price: 0,
+    images: [''], sort_order: 0, visible: true, catalog_type: 'physical'
   });
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const AdminCatalogs = () => {
   const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', category: '', price: 0, image_url: '', sort_order: 0, visible: true, catalog_type: 'physical' });
+    setFormData({ name: '', description: '', features: '', category: '', price: 0, images: [''], sort_order: 0, visible: true, catalog_type: 'physical' });
     setEditingItem(null);
     setShowForm(false);
   };
@@ -55,9 +55,10 @@ const AdminCatalogs = () => {
     setFormData({
       name: item.name || '',
       description: item.description || '',
+      features: (item.features || []).join('\n'),
       category: item.category || '',
       price: item.price || 0,
-      image_url: item.image_url || '',
+      images: item.images?.length ? [...item.images] : (item.image_url ? [item.image_url] : ['']),
       sort_order: item.sort_order || 0,
       visible: item.visible !== false,
       catalog_type: item.catalog_type || 'physical',
@@ -66,28 +67,42 @@ const AdminCatalogs = () => {
     setShowForm(true);
   };
 
-  const handleImageUpload = async (file) => {
+  const handleImageUpload = async (file, index) => {
     if (!file) return;
     try {
       const fd = new FormData();
       fd.append('file', file);
       const res = await api.post('/upload', fd, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
-      setFormData(prev => ({ ...prev, image_url: `${backendUrl}${res.data.url}` }));
+      const url = `${backendUrl}${res.data.url}`;
+      setFormData(prev => {
+        const newImages = [...prev.images];
+        newImages[index] = url;
+        return { ...prev, images: newImages };
+      });
       toast.success('Bild uppladdad');
     } catch {
       toast.error('Kunde inte ladda upp bilden');
     }
   };
 
+  const addImageSlot = () => setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+  const removeImage = (index) => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+
   const handleSave = async () => {
     if (!formData.name.trim()) { toast.error('Namn krävs'); return; }
+    const payload = {
+      ...formData,
+      images: formData.images.filter(img => img.trim()),
+      image_url: formData.images.find(img => img.trim()) || '',
+      features: formData.features.split('\n').filter(f => f.trim()),
+    };
     try {
       if (editingItem) {
-        const res = await api.put(`/admin/catalog-items/${editingItem.item_id}`, formData, { headers: getAuthHeaders() });
+        const res = await api.put(`/admin/catalog-items/${editingItem.item_id}`, payload, { headers: getAuthHeaders() });
         setItems(prev => prev.map(i => i.item_id === editingItem.item_id ? res.data : i));
         toast.success('Artikel uppdaterad');
       } else {
-        const res = await api.post('/admin/catalog-items', formData, { headers: getAuthHeaders() });
+        const res = await api.post('/admin/catalog-items', payload, { headers: getAuthHeaders() });
         setItems(prev => [...prev, res.data]);
         toast.success('Artikel tillagd');
       }
@@ -189,10 +204,10 @@ const AdminCatalogs = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredItems.map(item => (
-                <div key={item.item_id} className={`bg-white rounded-xl border overflow-hidden group ${!item.visible ? 'opacity-60' : ''}`} data-testid={`catalog-item-${item.item_id}`}>
+                <div key={item.item_id} className={`bg-white rounded-xl border overflow-hidden group ${!item.visible ? 'opacity-50 grayscale' : ''}`} data-testid={`catalog-item-${item.item_id}`}>
                   <div className="aspect-[4/3] bg-slate-100 relative">
-                    {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    {(item.images?.[0] || item.image_url) ? (
+                      <img src={item.images?.[0] || item.image_url} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><BookOpen className="w-10 h-10 text-slate-300" /></div>
                     )}
@@ -251,24 +266,31 @@ const AdminCatalogs = () => {
                     </div>
                   </div>
 
-                  {/* Image */}
+                  {/* Images — multiple */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Produktbild</label>
-                    {formData.image_url ? (
-                      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-slate-100 mb-2">
-                        <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
-                        <button onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Produktbilder</label>
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2 items-center">
+                        {img ? (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0 border">
+                            <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                          </div>
+                        ) : null}
+                        <label className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-lg py-3 cursor-pointer bg-white group text-sm text-slate-500">
+                          <Upload className="w-4 h-4 group-hover:text-[#2a9d8f]" />
+                          {img ? 'Byt bild' : 'Ladda upp bild'}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0], idx)} />
+                        </label>
+                        {formData.images.length > 1 && (
+                          <button type="button" onClick={() => removeImage(idx)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 shrink-0">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      <label className="flex items-center justify-center gap-2 w-full border-2 border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-xl p-6 cursor-pointer bg-white group">
-                        <Upload className="w-5 h-5 text-slate-400 group-hover:text-[#2a9d8f]" />
-                        <span className="text-sm text-slate-500">Ladda upp bild</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0])} data-testid="catalog-image-upload" />
-                      </label>
-                    )}
+                    ))}
+                    <button type="button" onClick={addImageSlot} className="text-sm text-[#2a9d8f] hover:underline flex items-center gap-1 mt-1">
+                      <Plus className="w-3.5 h-3.5" /> Lägg till fler bilder
+                    </button>
                   </div>
 
                   {/* Name + Category */}
@@ -289,9 +311,21 @@ const AdminCatalogs = () => {
                     <textarea
                       value={formData.description}
                       onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Kort beskrivning av produkten..."
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d8f] min-h-[80px] resize-none"
+                      placeholder="Beskriv produkten i detalj — material, mått, användning..."
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d8f] min-h-[100px] resize-y"
                       data-testid="item-description"
+                    />
+                  </div>
+
+                  {/* Features / bullet points */}
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Egenskaper (en per rad)</label>
+                    <textarea
+                      value={formData.features}
+                      onChange={e => setFormData(prev => ({ ...prev, features: e.target.value }))}
+                      placeholder={"Högkvalitativt tryck\nDiskmaskinssäker\nFler storlekar"}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2a9d8f] min-h-[80px] resize-y"
+                      data-testid="item-features"
                     />
                   </div>
 
@@ -307,12 +341,17 @@ const AdminCatalogs = () => {
                     </div>
                   </div>
 
-                  {/* Visible toggle */}
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={formData.visible} onChange={e => setFormData(prev => ({ ...prev, visible: e.target.checked }))}
-                      className="w-4 h-4 rounded border-slate-300 text-[#2a9d8f] focus:ring-[#2a9d8f]" data-testid="item-visible" />
-                    <span className="text-sm text-slate-700">Synlig i katalogen</span>
-                  </label>
+                  {/* Visible toggle — prominent */}
+                  <div className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${formData.visible ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+                    onClick={() => setFormData(prev => ({ ...prev, visible: !prev.visible }))}>
+                    <div className="flex items-center gap-2">
+                      {formData.visible ? <Eye className="w-4 h-4 text-green-600" /> : <EyeOff className="w-4 h-4 text-red-500" />}
+                      <span className="text-sm font-medium">{formData.visible ? 'Synlig i katalogen' : 'Dold — visas inte for kunder'}</span>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${formData.visible ? 'bg-green-500 justify-end' : 'bg-red-400 justify-start'}`}>
+                      <div className="w-5 h-5 rounded-full bg-white shadow" />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">

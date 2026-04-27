@@ -777,11 +777,13 @@ async def get_catalog_items(catalog_type: str = None, admin=Depends(verify_admin
 async def create_catalog_item(data: dict, admin=Depends(verify_admin_token)):
     item = {
         "item_id": str(uuid.uuid4()),
-        "catalog_type": data.get("catalog_type", "physical"),  # physical or digital
+        "catalog_type": data.get("catalog_type", "physical"),
         "name": data.get("name", ""),
         "description": data.get("description", ""),
+        "features": data.get("features", []),
         "category": data.get("category", ""),
         "price": data.get("price", 0),
+        "images": data.get("images", []),
         "image_url": data.get("image_url", ""),
         "sort_order": data.get("sort_order", 0),
         "visible": data.get("visible", True),
@@ -794,7 +796,7 @@ async def create_catalog_item(data: dict, admin=Depends(verify_admin_token)):
 @router.put("/catalog-items/{item_id}")
 async def update_catalog_item(item_id: str, data: dict, admin=Depends(verify_admin_token)):
     update_fields = {}
-    for key in ["name", "description", "category", "price", "image_url", "sort_order", "visible", "catalog_type"]:
+    for key in ["name", "description", "features", "category", "price", "images", "image_url", "sort_order", "visible", "catalog_type"]:
         if key in data:
             update_fields[key] = data[key]
     if not update_fields:
