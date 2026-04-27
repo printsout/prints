@@ -46,7 +46,7 @@ function CardPreviewFront({ card, logo, template, color }) {
     <div className="w-full h-full flex flex-col justify-between p-5 bg-white relative overflow-hidden">
       <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: color }} />
       <div className="pl-4">
-        {logo && <img src={logo} alt="Logo" className="h-8 mb-3 object-contain" />}
+        {logo && <img src={logo} alt="Logo" className="h-8 mb-3 object-contain rounded-lg" />}
         <h3 className="text-base font-bold text-slate-900 leading-tight">{card.name || 'Förnamn Efternamn'}</h3>
         <p className="text-xs font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
         {card.company && <p className="text-xs text-slate-500 mt-0.5">{card.company}</p>}
@@ -61,7 +61,7 @@ function CardPreviewFront({ card, logo, template, color }) {
   const renderModern = () => (
     <div className="w-full h-full flex flex-col relative overflow-hidden bg-white">
       <div className="h-[38%] flex items-center justify-center" style={{ backgroundColor: color }}>
-        {logo ? <img src={logo} alt="Logo" className="h-8 object-contain" /> : card.company && <p className="text-sm font-bold text-white tracking-wide">{card.company}</p>}
+        {logo ? <img src={logo} alt="Logo" className="h-8 object-contain rounded-lg" /> : card.company && <p className="text-sm font-bold text-white tracking-wide">{card.company}</p>}
       </div>
       <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
         <h3 className="text-sm font-bold text-slate-900">{card.name || 'Förnamn Efternamn'}</h3>
@@ -82,7 +82,7 @@ function CardPreviewFront({ card, logo, template, color }) {
       </div>
       <div className="border-l border-slate-200 pl-4 ml-4 space-y-0.5 text-[9px] text-slate-500 text-right">
         {card.phone && <p>{card.phone}</p>}{card.email && <p>{card.email}</p>}{card.website && <p>{card.website}</p>}
-        {logo && <img src={logo} alt="Logo" className="h-5 ml-auto mt-1 object-contain" />}
+        {logo && <img src={logo} alt="Logo" className="h-5 ml-auto mt-1 object-contain rounded" />}
       </div>
     </div>
   );
@@ -91,7 +91,7 @@ function CardPreviewFront({ card, logo, template, color }) {
     <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ backgroundColor: '#1a1a2e' }}>
       <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10" style={{ background: `radial-gradient(circle, ${color}, transparent)`, transform: 'translate(30%, -30%)' }} />
       <div>
-        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain" />}
+        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain rounded-lg" />}
         <h3 className="text-sm font-bold text-white tracking-wide">{card.name || 'Förnamn Efternamn'}</h3>
         <p className="text-[10px] font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
         {card.company && <p className="text-[10px] text-slate-400 mt-0.5">{card.company}</p>}
@@ -113,7 +113,7 @@ function CardPreviewFront({ card, logo, template, color }) {
             <h3 className="text-sm font-bold text-slate-900">{card.name || 'Förnamn Efternamn'}</h3>
             <p className="text-[10px] font-medium mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
           </div>
-          {logo && <img src={logo} alt="Logo" className="h-8 object-contain" />}
+          {logo && <img src={logo} alt="Logo" className="h-8 object-contain rounded-lg" />}
         </div>
         <div className="flex justify-between items-end">
           <div className="space-y-0.5 text-[9px] text-slate-500">{card.phone && <p>{card.phone}</p>}{card.email && <p>{card.email}</p>}</div>
@@ -126,7 +126,7 @@ function CardPreviewFront({ card, logo, template, color }) {
   const renderCorporate = () => (
     <div className="w-full h-full flex bg-white overflow-hidden">
       <div className="w-[35%] flex items-center justify-center" style={{ backgroundColor: color }}>
-        {logo ? <img src={logo} alt="Logo" className="w-16 h-16 object-contain" /> : <span className="text-white text-lg font-bold">{(card.company || 'AB')[0]}</span>}
+        {logo ? <img src={logo} alt="Logo" className="w-16 h-16 object-contain rounded-xl" /> : <span className="text-white text-lg font-bold">{(card.company || 'AB')[0]}</span>}
       </div>
       <div className="flex-1 p-4 flex flex-col justify-between">
         <div>
@@ -142,7 +142,7 @@ function CardPreviewFront({ card, logo, template, color }) {
   const renderNature = () => (
     <div className="w-full h-full flex flex-col justify-between p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7, #f0fdf4)' }}>
       <div>
-        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain" />}
+        {logo && <img src={logo} alt="Logo" className="h-7 mb-2 object-contain rounded-lg" />}
         <h3 className="text-sm font-bold text-green-900">{card.name || 'Förnamn Efternamn'}</h3>
         <p className="text-[10px] font-medium text-green-700 mt-0.5">{card.title || 'Titel'}</p>
         {card.company && <p className="text-[10px] text-green-600/70 mt-0.5">{card.company}</p>}
@@ -163,7 +163,7 @@ function CardPreviewFront({ card, logo, template, color }) {
             <h3 className="text-sm font-bold text-white font-mono">{card.name || 'Förnamn Efternamn'}</h3>
             <p className="text-[10px] font-mono mt-0.5" style={{ color }}>{card.title || 'Titel'}</p>
           </div>
-          {logo && <img src={logo} alt="Logo" className="h-7 object-contain" />}
+          {logo && <img src={logo} alt="Logo" className="h-7 object-contain rounded-lg" />}
         </div>
         {card.company && <p className="text-[10px] text-slate-500 font-mono mt-1">{card.company}</p>}
       </div>
@@ -190,7 +190,7 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor 
     return (
       <div className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: bgColor }}>
         {logo ? (
-          <img src={logo} alt="Logo" className="h-12 object-contain" />
+          <img src={logo} alt="Logo" className="h-12 object-contain rounded-lg" />
         ) : (
           <p className={`text-lg font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{card.company || ''}</p>
         )}
@@ -200,7 +200,7 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor 
   if (backStyle === 'logo_tagline') {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-white p-6 relative">
-        {logo ? <img src={logo} alt="Logo" className="h-10 mb-2 object-contain" /> : <p className="text-sm font-bold text-slate-300 mb-2">{card.company || 'LOGOTYP'}</p>}
+        {logo ? <img src={logo} alt="Logo" className="h-10 mb-2 object-contain rounded-lg" /> : <p className="text-sm font-bold text-slate-300 mb-2">{card.company || 'LOGOTYP'}</p>}
         {backTagline && <p className="text-[10px] text-slate-500 text-center">{backTagline}</p>}
         <div className="absolute bottom-3 left-4 right-4 h-0.5 rounded" style={{ backgroundColor: color, opacity: 0.3 }} />
       </div>
@@ -229,7 +229,7 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor 
   return (
     <div className="w-full h-full flex items-center justify-center bg-white">
       {logo ? (
-        <img src={logo} alt="Logo" className="h-12 object-contain" />
+        <img src={logo} alt="Logo" className="h-12 object-contain rounded-lg" />
       ) : (
         <div className="text-center">
           <p className="text-sm font-bold text-slate-300">{card.company || 'LOGOTYP'}</p>
