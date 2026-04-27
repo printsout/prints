@@ -424,17 +424,29 @@ const CalendarCustomization = ({ item, orderId }) => {
 const DesignCustomization = ({ item }) => {
   const c = item.customization;
   return (
-    <>
-      {c.text && <p>Text: <strong>{c.text}</strong></p>}
-      {c.text_font && <p>Typsnitt: {c.text_font}</p>}
-      {c.text_color && <p>Textfärg: <span style={{color: c.text_color}}>{c.text_color}</span></p>}
-      {c.color && <p>Produktfärg: {c.color}</p>}
-      {c.size && <p>Storlek: {c.size}</p>}
-      {c.placement_notes && <p>Placeringsönskemål: <em>{c.placement_notes}</em></p>}
+    <div className="space-y-2">
+      {c.text && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-xs font-medium text-amber-700 mb-1">Kundens text:</p>
+          <p className="text-lg font-bold text-slate-900" style={{ fontFamily: c.text_font || 'Arial', color: c.text_color || '#000' }}>
+            {c.text}
+          </p>
+        </div>
+      )}
+      {c.text_font && <p className="text-sm text-slate-600">Typsnitt: <span className="font-medium">{c.text_font}</span></p>}
+      {c.text_color && <p className="text-sm text-slate-600">Textfärg: <span className="inline-block w-4 h-4 rounded-full align-middle border mr-1" style={{backgroundColor: c.text_color}} /> {c.text_color}</p>}
+      {c.color && <p className="text-sm text-slate-600">Produktfärg: <span className="font-medium">{c.color}</span></p>}
+      {c.size && <p className="text-sm text-slate-600">Storlek: <span className="font-medium">{c.size}</span></p>}
+      {c.placement_notes && (
+        <div className="bg-slate-50 border rounded-lg p-3">
+          <p className="text-xs font-medium text-slate-500 mb-1">Placeringsönskemål:</p>
+          <p className="text-sm text-slate-700 italic">{c.placement_notes}</p>
+        </div>
+      )}
       {c.uploaded_image_url && (
         <ImagePreview url={c.uploaded_image_url} alt="Kunddesign" />
       )}
-    </>
+    </div>
   );
 };
 
@@ -646,13 +658,37 @@ const OurCatalogCustomization = ({ item }) => {
 
 const ImagePreview = ({ url, alt }) => {
   const imgUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = url.split('/').pop() || 'kundbild.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(imgUrl, '_blank');
+    }
+  };
+
   return (
-    <div className="mt-2">
-      <p className="mb-1 font-medium">Kundens bild:</p>
-      <img src={imgUrl} alt={alt} className="w-20 h-20 object-cover rounded border" />
-      <a href={imgUrl} download target="_blank" rel="noreferrer" className="flex items-center gap-1 mt-1 text-[#2a9d8f] hover:underline">
-        <Download className="w-3 h-3" /> Ladda ner
-      </a>
+    <div className="mt-3">
+      <p className="mb-1.5 text-sm font-medium text-slate-700">Kundens bild:</p>
+      <div className="flex items-end gap-3">
+        <img src={imgUrl} alt={alt} className="w-24 h-24 object-cover rounded-lg border shadow-sm" />
+        <button
+          onClick={handleDownload}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2a9d8f] hover:bg-[#238b7e] text-white text-sm font-medium transition-colors"
+          data-testid="download-customer-image"
+        >
+          <Download className="w-4 h-4" /> Ladda ner bild
+        </button>
+      </div>
     </div>
   );
 };
