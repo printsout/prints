@@ -455,7 +455,7 @@ const DesignCustomization = ({ item }) => {
       }
     }
 
-    // Draw text on top of image
+    // Draw text just below the image
     if (c.text) {
       const fontSize = Math.round(size * 0.06);
       ctx.font = `bold ${fontSize}px ${c.text_font || 'Arial'}`;
@@ -464,7 +464,9 @@ const DesignCustomization = ({ item }) => {
       ctx.shadowColor = 'rgba(0,0,0,0.3)';
       ctx.shadowBlur = 4;
       ctx.shadowOffsetY = 2;
-      ctx.fillText(c.text, size / 2, size - fontSize);
+      // Position just below center of image
+      const textY = (size / 2) + (size * 0.3) + fontSize;
+      ctx.fillText(c.text, size / 2, textY);
     }
 
     const link = document.createElement('a');
@@ -491,7 +493,7 @@ const DesignCustomization = ({ item }) => {
           <div className="relative w-48 h-48 rounded-lg overflow-hidden border shadow-sm bg-white">
             {imgUrl && <img src={imgUrl} alt="Kunddesign" className="w-full h-full object-cover" />}
             {c.text && (
-              <div className="absolute bottom-2 left-0 right-0 text-center" style={{ fontFamily: c.text_font || 'Arial', color: c.text_color || '#000', fontSize: '1rem', fontWeight: 'bold', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+              <div className="absolute bottom-[15%] left-0 right-0 text-center" style={{ fontFamily: c.text_font || 'Arial', color: c.text_color || '#000', fontSize: '1rem', fontWeight: 'bold', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
                 {c.text}
               </div>
             )}
