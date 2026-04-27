@@ -30,8 +30,14 @@ const COLORS = [
 const BACK_STYLES = [
   { id: 'logo_only', name: 'Bara logotyp', desc: 'Centrerad logotyp' },
   { id: 'logo_tagline', name: 'Logotyp + slogan', desc: 'Logo med text' },
-  { id: 'solid_color', name: 'Enfärgad', desc: 'Accentfärg' },
-  { id: 'minimal_info', name: 'Kontaktinfo', desc: 'Enkel text' },
+  { id: 'solid_color', name: 'Enfärgad', desc: 'Valfri bakgrundsfärg' },
+  { id: 'minimal_info', name: 'Kontaktinfo', desc: 'Kontaktuppgifter' },
+];
+
+const BACK_COLORS = [
+  '#2a9d8f', '#264653', '#e76f51', '#e63946', '#457b9d',
+  '#6d6875', '#1d3557', '#000000', '#1a1a2e', '#0f172a',
+  '#14532d', '#7c3aed', '#be185d', '#b45309', '#ffffff',
 ];
 
 /* ───── Front Preview ───── */
@@ -176,34 +182,46 @@ function CardPreviewFront({ card, logo, template, color }) {
 }
 
 /* ───── Back Preview ───── */
-function CardPreviewBack({ card, logo, backStyle, color, backTagline }) {
+function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor }) {
+  const bgColor = backColor || color;
+
   if (backStyle === 'solid_color') {
+    const isLight = ['#ffffff', '#f0fdf4', '#dcfce7'].includes(bgColor?.toLowerCase());
     return (
-      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: color }}>
-        {logo && <img src={logo} alt="Logo" className="h-10 object-contain brightness-0 invert" />}
+      <div className="w-full h-full flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: bgColor }}>
+        {logo ? (
+          <img src={logo} alt="Logo" className={`h-12 object-contain ${isLight ? '' : 'brightness-0 invert'}`} />
+        ) : (
+          <p className={`text-lg font-bold ${isLight ? 'text-slate-800' : 'text-white/80'}`}>{card.company || ''}</p>
+        )}
       </div>
     );
   }
   if (backStyle === 'logo_tagline') {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-white p-6">
-        {logo && <img src={logo} alt="Logo" className="h-10 mb-3 object-contain" />}
-        {backTagline && <p className="text-[10px] text-slate-500 text-center mt-1">{backTagline}</p>}
-        <div className="absolute bottom-3 left-0 right-0 h-1" style={{ backgroundColor: color, opacity: 0.3 }} />
+      <div className="w-full h-full flex flex-col items-center justify-center bg-white p-6 relative">
+        {logo ? <img src={logo} alt="Logo" className="h-10 mb-2 object-contain" /> : <p className="text-sm font-bold text-slate-300 mb-2">{card.company || 'LOGOTYP'}</p>}
+        {backTagline && <p className="text-[10px] text-slate-500 text-center">{backTagline}</p>}
+        <div className="absolute bottom-3 left-4 right-4 h-0.5 rounded" style={{ backgroundColor: color, opacity: 0.3 }} />
       </div>
     );
   }
   if (backStyle === 'minimal_info') {
+    const hasInfo = card.phone || card.email || card.website || card.address;
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-white p-5 text-center">
         {card.company && <p className="text-xs font-bold text-slate-900 mb-1">{card.company}</p>}
         <div className="w-8 h-px my-2" style={{ backgroundColor: color }} />
-        <div className="space-y-0.5 text-[9px] text-slate-500">
-          {card.phone && <p>{card.phone}</p>}
-          {card.email && <p>{card.email}</p>}
-          {card.website && <p>{card.website}</p>}
-          {card.address && <p>{card.address}</p>}
-        </div>
+        {hasInfo ? (
+          <div className="space-y-0.5 text-[9px] text-slate-500">
+            {card.phone && <p>{card.phone}</p>}
+            {card.email && <p>{card.email}</p>}
+            {card.website && <p>{card.website}</p>}
+            {card.address && <p>{card.address}</p>}
+          </div>
+        ) : (
+          <p className="text-[9px] text-slate-300 italic">Fyll i kontaktinfo på framsidan</p>
+        )}
       </div>
     );
   }
@@ -222,7 +240,7 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline }) {
 }
 
 /* ───── Main Editor ───── */
-export default function BusinessCardEditor({ card, setCard, logo, setLogo, template, setTemplate, color, setColor, backStyle, setBackStyle, backTagline, setBackTagline }) {
+export default function BusinessCardEditor({ card, setCard, logo, setLogo, template, setTemplate, color, setColor, backStyle, setBackStyle, backTagline, setBackTagline, backColor, setBackColor }) {
   const logoInputRef = useRef(null);
   const [activeSide, setActiveSide] = useState('front');
 
@@ -262,7 +280,7 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
           {activeSide === 'front' ? (
             <CardPreviewFront card={card} logo={logo} template={template} color={color} />
           ) : (
-            <CardPreviewBack card={card} logo={logo} backStyle={backStyle} color={color} backTagline={backTagline} />
+            <CardPreviewBack card={card} logo={logo} backStyle={backStyle} color={color} backTagline={backTagline} backColor={backColor} />
           )}
         </div>
       </div>
@@ -390,6 +408,24 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
             </div>
           </div>
 
+          {backStyle === 'solid_color' && (
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-3">Bakgrundsfärg</label>
+              <div className="flex flex-wrap gap-2" data-testid="back-color-grid">
+                {BACK_COLORS.map(c => (
+                  <button key={c} type="button" onClick={() => setBackColor(c)}
+                    className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all ${
+                      (backColor || color) === c ? 'border-slate-900 scale-110' : 'border-transparent hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: c, boxShadow: c === '#ffffff' ? 'inset 0 0 0 1px #e2e8f0' : 'none' }}
+                    data-testid={`back-color-${c}`}>
+                    {(backColor || color) === c && <Check className={`w-4 h-4 ${c === '#ffffff' ? 'text-slate-800' : 'text-white'}`} />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {backStyle === 'logo_tagline' && (
             <div>
               <label className="block text-xs text-slate-500 mb-1">Slogan / Tagline</label>
@@ -403,9 +439,11 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
             </div>
           )}
 
-          <p className="text-xs text-slate-400">
-            Baksidan använder samma accentfärg och logotyp som framsidan.
-          </p>
+          {backStyle === 'minimal_info' && (
+            <p className="text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
+              Kontaktuppgifterna hämtas automatiskt från framsidans formulär (telefon, e-post, webbsida, adress). Fyll i dessa under "Framsida".
+            </p>
+          )}
         </div>
       )}
     </div>

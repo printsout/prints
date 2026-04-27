@@ -414,6 +414,7 @@ def generate_businesscard_pdf(customization: dict, output_path: str) -> str:
     color = customization.get("color") or card_details.get("color", "#2a9d8f")
     back_style = customization.get("back_style", "logo_only")
     back_tagline = customization.get("back_tagline", "")
+    back_color = customization.get("back_color", "") or color
 
     logo_path = None
     logo_url = customization.get("logo_url", "")
@@ -448,7 +449,7 @@ def generate_businesscard_pdf(customization: dict, output_path: str) -> str:
         for col in range(cols):
             cx = x_start + col * (CARD_W + 4 * mm)
             cy = y_start - row * (CARD_H + 4 * mm)
-            _draw_card_back(c_pdf, cx, cy, card_details, back_style, color, logo_path, back_tagline)
+            _draw_card_back(c_pdf, cx, cy, card_details, back_style, back_color, logo_path, back_tagline)
             _draw_cut_marks(c_pdf, cx, cy)
 
     c_pdf.setFont("Helvetica", 7)

@@ -90,6 +90,7 @@ const BusinessCatalog = () => {
   const [cardColor, setCardColor] = useState('#2a9d8f');
   const [backStyle, setBackStyle] = useState('logo_only');
   const [backTagline, setBackTagline] = useState('');
+  const [backColor, setBackColor] = useState('');
 
   // Shared
   const [quantity, setQuantity] = useState(1);
@@ -213,6 +214,7 @@ const BusinessCatalog = () => {
           logo_url: logoUrl,
           back_style: backStyle,
           back_tagline: backTagline,
+          back_color: backColor || cardColor,
           pdf_url: pdfUrl,
           original_filename: cardPdfFile?.name || null,
         },
@@ -485,6 +487,7 @@ const BusinessCatalog = () => {
                         color={cardColor} setColor={setCardColor}
                         backStyle={backStyle} setBackStyle={setBackStyle}
                         backTagline={backTagline} setBackTagline={setBackTagline}
+                        backColor={backColor} setBackColor={setBackColor}
                       />
                       {card.name.trim() && (
                         <button
@@ -508,6 +511,7 @@ const BusinessCatalog = () => {
                                 logo_url: logoUrl,
                                 back_style: backStyle,
                                 back_tagline: backTagline,
+                                back_color: backColor || cardColor,
                               }, { responseType: 'blob' });
                               const url = URL.createObjectURL(res.data);
                               const a = document.createElement('a');
