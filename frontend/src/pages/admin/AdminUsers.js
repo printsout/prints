@@ -18,7 +18,7 @@ const AdminUsers = () => {
     try {
       const response = await api.get('/admin/users', { headers: getAuthHeaders() });
       setUsers(response.data.users || []);
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte hämta användare');
     } finally {
       setLoading(false);
@@ -33,7 +33,7 @@ const AdminUsers = () => {
     try {
       const response = await api.get(`/admin/users/${userId}`, { headers: getAuthHeaders() });
       setUserDetails(response.data);
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte hämta användardetaljer');
     }
   };
@@ -54,7 +54,7 @@ const AdminUsers = () => {
         setSelectedUser(null);
         setUserDetails(null);
       }
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte radera användare');
     }
   };

@@ -93,7 +93,9 @@ const AdminOrders = () => {
           quantity: o.quantity || 1,
           price: o.total_price || o.price || 0,
           customization: {
-            type: o.order_type === 'businesscard' ? 'businesscard' : o.order_type === 'print' ? 'print_catalog' : 'our_catalog',
+            type: o.order_type === 'businesscard' ? 'businesscard'
+              : o.order_type === 'print' ? 'print_catalog'
+              : 'our_catalog',
             company_name: o.company_name,
             contact_person: o.contact_person,
             original_filename: o.original_filename,
@@ -145,7 +147,7 @@ const AdminOrders = () => {
       if (selectedOrder?.order_id === orderId) setSelectedOrder(null);
       fetchOrders();
       toast.success('Beställning borttagen');
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte ta bort beställningen');
     }
   };
@@ -412,8 +414,10 @@ const AdminOrders = () => {
                       <td className="px-4 py-4">
                         {(() => {
                           const label = getOrderTypeLabel(order);
+                          const b2bLabel = order.order_type === 'businesscard' ? 'Visitkort'
+                            : order.order_type === 'print' ? 'Utskrift' : 'Katalog';
                           return label === 'B2B'
-                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700"><Briefcase className="w-3 h-3" />{order._source === 'b2b' ? (order.order_type === 'businesscard' ? 'Visitkort' : order.order_type === 'print' ? 'Utskrift' : 'Katalog') : 'B2B'}</span>
+                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700"><Briefcase className="w-3 h-3" />{order._source === 'b2b' ? b2bLabel : 'B2B'}</span>
                             : <span className="text-xs text-slate-500">Webbshop</span>;
                         })()}
                       </td>

@@ -43,7 +43,7 @@ const AdminSettings = () => {
     try {
       const response = await api.get('/admin/settings', { headers: getAuthHeaders() });
       setSettings(prev => ({ ...prev, ...response.data }));
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte hämta inställningar');
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ const AdminSettings = () => {
         tax_enabled: response.data.tax_enabled ?? true,
         tax_rate: response.data.tax_rate ?? 25,
       });
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte hämta leveransinställningar');
     }
   }, [getAuthHeaders]);
@@ -71,7 +71,7 @@ const AdminSettings = () => {
     try {
       const response = await api.get('/admin/discount-codes', { headers: getAuthHeaders() });
       setDiscountCodes(response.data);
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte hämta rabattkoder');
     }
   }, [getAuthHeaders]);
@@ -80,8 +80,8 @@ const AdminSettings = () => {
     try {
       const res = await api.get('/admin/2fa-status', { headers: getAuthHeaders() });
       setTwoFAEnabled(res.data.enabled);
-    } catch (error) {
-      console.error('2FA status fetch failed:', error);
+    } catch (e) {
+      console.error('2FA status fetch failed:', e);
     }
   }, [getAuthHeaders]);
 
@@ -100,7 +100,7 @@ const AdminSettings = () => {
       delete merged.type;
       await api.put('/admin/payment-settings', merged, { headers: getAuthHeaders() });
       toast.success('Inställningar sparade');
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte spara inställningar');
     } finally {
       setSavingShipping(false);
@@ -112,8 +112,8 @@ const AdminSettings = () => {
       await api.post('/admin/discount-codes', codeData, { headers: getAuthHeaders() });
       toast.success(`Rabattkod "${codeData.code}" skapad!`);
       fetchDiscountCodes();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Kunde inte skapa rabattkod');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Kunde inte skapa rabattkod');
     }
   };
 
@@ -122,7 +122,7 @@ const AdminSettings = () => {
       await api.put(`/admin/discount-codes/${code}`, { active: !currentActive }, { headers: getAuthHeaders() });
       fetchDiscountCodes();
       toast.success(`Kod "${code}" ${!currentActive ? 'aktiverad' : 'inaktiverad'}`);
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte uppdatera koden');
     }
   };
@@ -132,7 +132,7 @@ const AdminSettings = () => {
       await api.delete(`/admin/discount-codes/${code}`, { headers: getAuthHeaders() });
       fetchDiscountCodes();
       toast.success(`Kod "${code}" raderad`);
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte radera koden');
     }
   };
@@ -146,8 +146,8 @@ const AdminSettings = () => {
         message: emailMessage,
       }, { headers: getAuthHeaders() });
       toast.success(`${res.data.message}${res.data.failed_count > 0 ? ` (${res.data.failed_count} misslyckades)` : ''}`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Kunde inte skicka e-post');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Kunde inte skicka e-post');
     } finally {
       setSendingEmail(null);
     }
@@ -159,7 +159,7 @@ const AdminSettings = () => {
     try {
       await api.put('/admin/settings', settings, { headers: getAuthHeaders() });
       toast.success('Inställningar sparade');
-    } catch (error) {
+    } catch {
       toast.error('Kunde inte spara inställningar');
     } finally {
       setSaving(false);
