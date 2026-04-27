@@ -48,6 +48,14 @@ const ProductDetail = () => {
     return url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${url}` : url;
   };
 
+  // Get the image for the currently selected color (if available)
+  const getActiveImage = () => {
+    if (selectedColor && product?.color_images?.[selectedColor]) {
+      return resolveImageUrl(product.color_images[selectedColor]);
+    }
+    return resolveImageUrl(product?.images?.[selectedImageIndex] || product?.images?.[0]);
+  };
+
   const handleAddToCart = async () => {
     setAdding(true);
     try {
@@ -155,11 +163,11 @@ const ProductDetail = () => {
                   <ProductPreview3D 
                     modelType={product.model_type}
                     color={colorHexMap[selectedColor] || '#FFFFFF'}
-                    productImage={resolveImageUrl(product.images?.[0])}
+                    productImage={getActiveImage()}
                   />
                 ) : (
                   <img
-                    src={resolveImageUrl(product.images?.[selectedImageIndex] || product.images?.[0])}
+                    src={getActiveImage()}
                     alt={product.name}
                     className="w-full h-full object-cover"
                     data-testid="product-main-image"

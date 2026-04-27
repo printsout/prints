@@ -86,6 +86,7 @@ const AdminProducts = () => {
     sizes: [],
     model_type: 'mug',
     quantity_prices: [],
+    color_images: {},
   });
 
   const fetchProducts = useCallback(async () => {
@@ -152,6 +153,7 @@ const AdminProducts = () => {
       sizes: product.sizes || [],
       model_type: product.model_type,
       quantity_prices: product.quantity_prices || [],
+      color_images: product.color_images || {},
     });
     setShowModal(true);
   };
@@ -168,6 +170,7 @@ const AdminProducts = () => {
       sizes: [],
       model_type: 'mug',
       quantity_prices: [],
+      color_images: {},
     });
   };
 
@@ -535,6 +538,51 @@ const AdminProducts = () => {
                   testId="color"
                 />
               </div>
+
+              {/* Color-specific images */}
+              {formData.colors.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <span className="flex items-center gap-1.5"><Image className="w-4 h-4" /> Bild per färg</span>
+                  </label>
+                  <p className="text-xs text-slate-400 mb-3">Ladda upp en bild för varje färg — visas när kunden väljer färgen</p>
+                  <div className="space-y-2">
+                    {formData.colors.map(color => (
+                      <div key={color} className="flex items-center gap-3 bg-slate-50 rounded-lg p-2" data-testid={`color-image-${color}`}>
+                        <span className="text-sm font-medium text-slate-700 w-24 shrink-0">{color}</span>
+                        {formData.color_images[color] ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <img src={formData.color_images[color]} alt={color} className="w-10 h-10 rounded object-cover border" />
+                            <span className="text-xs text-slate-400 truncate flex-1">{formData.color_images[color].split('/').pop()}</span>
+                            <button type="button" onClick={() => setFormData(prev => {
+                              const ci = { ...prev.color_images };
+                              delete ci[color];
+                              return { ...prev, color_images: ci };
+                            })} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex-1 flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-[#2a9d8f] rounded-lg py-2 cursor-pointer text-xs text-slate-400 hover:text-[#2a9d8f]">
+                            <Upload className="w-3.5 h-3.5" /> Ladda upp
+                            <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                const res = await api.post('/upload', fd, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
+                                const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+                                setFormData(prev => ({ ...prev, color_images: { ...prev.color_images, [color]: url } }));
+                              } catch { toast.error('Uppladdning misslyckades'); }
+                            }} />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
