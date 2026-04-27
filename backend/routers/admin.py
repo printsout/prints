@@ -761,3 +761,53 @@ async def get_tax_report(admin=Depends(verify_admin_token)):
         grand_net += net
         months.append({"month": m["_id"], "order_count": m["order_count"], "total_sales": round(total, 2), "vat_amount": vat, "net_amount": net})
     return {"tax_rate": TAX_RATE * 100, "months": months, "summary": {"total_sales": round(grand_total, 2), "total_vat": round(grand_vat, 2), "total_net": round(grand_net, 2), "total_orders": sum(month["order_count"] for month in months)}}
+
+
+# ─── Catalog Content Management ───
+
+@router.get("/catalog-items")
+async def get_catalog_items(catalog_type: str = None, admin=Depends(verify_admin_token)):
+    query = {}
+    if catalog_type:
+        query["catalog_type"] = catalog_type
+    items = await db.catalog_items.find(query, {"_id": 0}).sort("sort_order", 1).to_list(500)
+    return items
+
+@router.post("/catalog-items")
+async def create_catalog_item(data: dict, admin=Depends(verify_admin_token)):
+    item = {
+        "item_id": str(uuid.uuid4()),
+        "catalog_type": data.get("catalog_type", "physical"),  # physical or digital
+        "name": data.get("name", ""),
+        "description": data.get("description", ""),
+        "category": data.get("category", ""),
+        "price": data.get("price", 0),
+        "image_url": data.get("image_url", ""),
+        "sort_order": data.get("sort_order", 0),
+        "visible": data.get("visible", True),
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    await db.catalog_items.insert_one(item)
+    item.pop("_id", None)
+    return item
+
+@router.put("/catalog-items/{item_id}")
+async def update_catalog_item(item_id: str, data: dict, admin=Depends(verify_admin_token)):
+    update_fields = {}
+    for key in ["name", "description", "category", "price", "image_url", "sort_order", "visible", "catalog_type"]:
+        if key in data:
+            update_fields[key] = data[key]
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="Inga fält att uppdatera")
+    result = await db.catalog_items.update_one({"item_id": item_id}, {"$set": update_fields})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Artikeln hittades inte")
+    updated = await db.catalog_items.find_one({"item_id": item_id}, {"_id": 0})
+    return updated
+
+@router.delete("/catalog-items/{item_id}")
+async def delete_catalog_item(item_id: str, admin=Depends(verify_admin_token)):
+    result = await db.catalog_items.delete_one({"item_id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Artikeln hittades inte")
+    return {"status": "deleted"}

@@ -10,6 +10,17 @@ import uuid
 router = APIRouter(prefix="/catalog", tags=["Catalog"])
 
 
+@router.get("/items")
+async def get_public_catalog_items(catalog_type: str = None):
+    """Public endpoint — get visible catalog items."""
+    query = {"visible": True}
+    if catalog_type:
+        query["catalog_type"] = catalog_type
+    items = await db.catalog_items.find(query, {"_id": 0}).sort("sort_order", 1).to_list(500)
+    return items
+
+
+
 class OurCatalogRequest(BaseModel):
     company_name: str
     contact_person: str
