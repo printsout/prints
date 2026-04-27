@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
 
 const AdminCatalogs = () => {
-  const { token } = useAdmin();
+  const { adminToken, getAuthHeaders: adminAuthHeaders } = useAdmin();
   const [activeView, setActiveView] = useState('items');
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
@@ -17,7 +17,7 @@ const AdminCatalogs = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const getAuthHeaders = () => ({ Authorization: `Bearer ${token}` });
+  const getAuthHeaders = () => adminAuthHeaders();
 
   const [formData, setFormData] = useState({
     name: '', description: '', features: '', category: '', price: 0,
@@ -41,7 +41,7 @@ const AdminCatalogs = () => {
       }
     };
     fetchData();
-  }, [token]);
+  }, [adminToken]);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
