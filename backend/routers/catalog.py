@@ -354,7 +354,8 @@ async def preview_businesscard_pdf(data: dict):
     uid = str(uuid.uuid4())[:8]
     name = card_details.get("name", "visitkort").replace(" ", "_")
     output_path = str(output_dir / f"visitkort_{name}_{uid}.pdf")
-    generate_businesscard_pdf(customization, output_path)
+    font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    generate_businesscard_pdf(customization, output_path, font_settings)
 
     from fastapi.responses import FileResponse
     filename = f"visitkort_{name}.pdf"

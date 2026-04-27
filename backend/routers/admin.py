@@ -445,7 +445,8 @@ async def download_businesscard_pdf(order_id: str, item_index: int = 0, admin=De
     output_dir = Path("/tmp/businesscard_pdfs")
     output_dir.mkdir(exist_ok=True)
     output_path = str(output_dir / f"visitkort_{order_id[:8]}_{item_index}.pdf")
-    generate_businesscard_pdf(customization, output_path)
+    font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    generate_businesscard_pdf(customization, output_path, font_settings)
     name = customization.get("card_details", {}).get("name", "visitkort")
     filename = f"visitkort_{name}_{order_id[:8]}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
@@ -813,3 +814,32 @@ async def delete_catalog_item(item_id: str, admin=Depends(verify_admin_token)):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Artikeln hittades inte")
     return {"status": "deleted"}
+
+
+# ─── Business Card Font Settings ───
+
+DEFAULT_CARD_FONTS = {
+    "name_size": 10,
+    "title_size": 7,
+    "company_size": 6,
+    "contact_size": 6,
+    "icon_size": 5.5,
+}
+
+@router.get("/businesscard-settings")
+async def get_businesscard_settings(admin=Depends(verify_admin_token)):
+    settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    return settings or {"type": "businesscard_fonts", **DEFAULT_CARD_FONTS}
+
+@router.put("/businesscard-settings")
+async def update_businesscard_settings(data: dict, admin=Depends(verify_admin_token)):
+    allowed = ["name_size", "title_size", "company_size", "contact_size", "icon_size"]
+    update = {k: float(v) for k, v in data.items() if k in allowed}
+    update["type"] = "businesscard_fonts"
+    await db.site_settings.update_one(
+        {"type": "businesscard_fonts"},
+        {"$set": update},
+        upsert=True
+    )
+    settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    return settings
