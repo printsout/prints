@@ -129,18 +129,35 @@ const BusinessCatalog = () => {
   const handleOurCatalog = async (e) => {
     e.preventDefault();
     if (!selectedCatalogType) { toast.error('Välj en katalogtyp'); return; }
+
+    // Digital catalog — download directly
+    if (selectedCatalogType === 'digital') {
+      setSubmitting(true);
+      try {
+        toast.info('Hämtar katalog...');
+        const res = await api.get('/catalog/download-pdf', { responseType: 'blob' });
+        const url = URL.createObjectURL(res.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'PrintsOut_Produktkatalog.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Katalog nedladdad!');
+      } catch { toast.error('Kunde inte ladda ner katalogen'); }
+      finally { setSubmitting(false); }
+      return;
+    }
+
+    // Physical catalog — add to cart
     setSubmitting(true);
     try {
       await addToCart({
-        product_id: `our-catalog-${selectedCatalogType}`,
-        name: selectedCatalogType === 'physical' ? 'Produktkatalog (Fysisk)' : 'Produktkatalog (Digital PDF)',
+        product_id: 'our-catalog-physical',
+        name: 'Produktkatalog (Fysisk)',
         price: 0,
-        quantity: selectedCatalogType === 'physical' ? quantity : 1,
+        quantity: quantity,
         image: null,
-        customization: {
-          type: 'our_catalog',
-          catalog_type: selectedCatalogType,
-        },
+        customization: { type: 'our_catalog', catalog_type: 'physical' },
       });
       toast.success('Katalog tillagd i varukorgen!');
       navigate('/varukorg');
@@ -649,13 +666,17 @@ const BusinessCatalog = () => {
             </div>
           )}
 
-          {/* Submit - Lägg i varukorgen (hide for catalog design mode) */}
+          {/* Submit button */}
           {!(activeTab === 'print' && printService === 'catalog' && catalogSource === 'design') && (
             <div className="bg-white rounded-2xl border border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
               <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
                 disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
-                {submitting ? 'Sparar...' : <><ShoppingCart className="w-4 h-4 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>}
+                {submitting ? 'Hämtar...' : (
+                  activeTab === 'our' && selectedCatalogType === 'digital'
+                    ? <><Download className="w-4 h-4 mr-2" />Ladda ner katalog (PDF)</>
+                    : <><ShoppingCart className="w-4 h-4 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>
+                )}
               </Button>
             </div>
           )}

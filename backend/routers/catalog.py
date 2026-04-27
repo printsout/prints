@@ -20,6 +20,142 @@ async def get_public_catalog_items(catalog_type: str = None):
     return items
 
 
+@router.get("/download-pdf")
+async def download_catalog_pdf():
+    """Generate and return a PDF catalog of all visible products."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.lib.colors import HexColor
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from reportlab.lib.utils import ImageReader
+    from fastapi.responses import FileResponse
+    import os
+
+    items = await db.catalog_items.find({"visible": True}, {"_id": 0}).sort("sort_order", 1).to_list(500)
+
+    output_dir = UPLOADS_DIR.parent / "tmp_pdfs"
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / "printsout_katalog.pdf")
+
+    PAGE_W, PAGE_H = A4
+    c = pdf_canvas.Canvas(output_path, pagesize=A4)
+
+    # Title page
+    c.setFillColor(HexColor("#1e293b"))
+    c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+    c.setFillColor(HexColor("#2a9d8f"))
+    c.setFont("Helvetica-Bold", 36)
+    c.drawCentredString(PAGE_W / 2, PAGE_H / 2 + 20, "PrintsOut")
+    c.setFillColor(HexColor("#94a3b8"))
+    c.setFont("Helvetica", 14)
+    c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 10, "Produktkatalog")
+    c.setFont("Helvetica", 10)
+    c.drawCentredString(PAGE_W / 2, PAGE_H / 2 - 30, "Kvalitet i Varje Utskrift")
+    c.showPage()
+
+    # Product pages (2 per page)
+    margin = 20 * mm
+    col_w = (PAGE_W - margin * 2) / 2
+    items_on_page = 0
+
+    for idx, item in enumerate(items):
+        if items_on_page == 0:
+            # Header
+            c.setFillColor(HexColor("#f8fafc"))
+            c.rect(0, PAGE_H - 15 * mm, PAGE_W, 15 * mm, fill=1, stroke=0)
+            c.setFillColor(HexColor("#2a9d8f"))
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(margin, PAGE_H - 10 * mm, "PrintsOut Produktkatalog")
+            c.setFillColor(HexColor("#94a3b8"))
+            c.setFont("Helvetica", 8)
+            c.drawRightString(PAGE_W - margin, PAGE_H - 10 * mm, f"Sida {(idx // 4) + 2}")
+
+        col = items_on_page % 2
+        row = items_on_page // 2
+        x = margin + col * col_w
+        y = PAGE_H - 25 * mm - row * 120 * mm
+
+        # Product card
+        c.setFillColor(HexColor("#1e293b"))
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(x + 2 * mm, y - 5 * mm, item.get("name", ""))
+
+        c.setFillColor(HexColor("#2a9d8f"))
+        c.setFont("Helvetica-Bold", 10)
+        price = item.get("price", 0)
+        c.drawString(x + 2 * mm, y - 11 * mm, f"{price} kr" if price > 0 else "Gratis")
+
+        if item.get("category"):
+            c.setFillColor(HexColor("#64748b"))
+            c.setFont("Helvetica", 8)
+            c.drawString(x + 2 * mm, y - 16 * mm, item["category"])
+
+        # Description
+        desc = item.get("description", "")
+        if desc:
+            c.setFillColor(HexColor("#475569"))
+            c.setFont("Helvetica", 8)
+            # Simple word wrap
+            words = desc.split()
+            line = ""
+            ly = y - 22 * mm
+            for word in words:
+                if c.stringWidth(line + " " + word, "Helvetica", 8) > col_w - 10 * mm:
+                    c.drawString(x + 2 * mm, ly, line)
+                    ly -= 3.5 * mm
+                    line = word
+                    if ly < y - 50 * mm:
+                        break
+                else:
+                    line = (line + " " + word).strip()
+            if line:
+                c.drawString(x + 2 * mm, ly, line)
+
+        # Features
+        features = item.get("features", [])
+        if features:
+            fy = y - 55 * mm
+            c.setFont("Helvetica", 7)
+            c.setFillColor(HexColor("#475569"))
+            for feat in features[:4]:
+                c.drawString(x + 4 * mm, fy, f"• {feat}")
+                fy -= 3 * mm
+
+        # Image
+        images = item.get("images", [])
+        img_url = images[0] if images else item.get("image_url", "")
+        if img_url:
+            try:
+                # Resolve local uploads
+                if "/api/uploads/" in img_url:
+                    filename = img_url.split("/")[-1]
+                    local_path = UPLOADS_DIR / filename
+                    if local_path.exists():
+                        c.drawImage(ImageReader(str(local_path)),
+                                    x + 2 * mm, y - 110 * mm, col_w - 10 * mm, 45 * mm,
+                                    preserveAspectRatio=True, anchor="nw", mask="auto")
+            except Exception:
+                pass
+
+        items_on_page += 1
+        if items_on_page >= 4:
+            c.showPage()
+            items_on_page = 0
+
+    if items_on_page > 0:
+        c.showPage()
+
+    c.save()
+
+    if not os.path.exists(output_path):
+        raise HTTPException(status_code=500, detail="Kunde inte generera katalog")
+
+    return FileResponse(output_path, media_type="application/pdf",
+                        filename="PrintsOut_Produktkatalog.pdf",
+                        headers={"Content-Disposition": 'attachment; filename="PrintsOut_Produktkatalog.pdf"'})
+
+
+
 
 class OurCatalogRequest(BaseModel):
     company_name: str
