@@ -402,12 +402,29 @@ const AdminProducts = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
-                  <Input
+                  <Select
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    placeholder="t.ex. mugg, tshirt"
-                    required
-                  />
+                    onValueChange={(value) => {
+                      const categoryToModel = { mugg: 'mug', tshirt: 'tshirt', hoodie: 'hoodie', poster: 'poster', mobilskal: 'phonecase', tygkasse: 'totebag', kalender: 'calendar', namnskylt: 'nametag', fotoalbum: 'poster', foretag: 'businesscard' };
+                      setFormData(prev => ({ ...prev, category: value, model_type: categoryToModel[value] || prev.model_type }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Välj kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mugg">Muggar</SelectItem>
+                      <SelectItem value="tshirt">T-shirts</SelectItem>
+                      <SelectItem value="hoodie">Hoodies</SelectItem>
+                      <SelectItem value="poster">Posters</SelectItem>
+                      <SelectItem value="mobilskal">Mobilskal</SelectItem>
+                      <SelectItem value="tygkasse">Tygkassar</SelectItem>
+                      <SelectItem value="kalender">Kalendrar</SelectItem>
+                      <SelectItem value="namnskylt">Namnlappar</SelectItem>
+                      <SelectItem value="fotoalbum">Fotoalbum</SelectItem>
+                      <SelectItem value="foretag">Företag (B2B)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -433,30 +450,6 @@ const AdminProducts = () => {
                     step="0.01"
                     required
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Produkttyp</label>
-                  <Select 
-                    value={formData.model_type} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, model_type: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mug">Mugg</SelectItem>
-                      <SelectItem value="tshirt">T-shirt</SelectItem>
-                      <SelectItem value="hoodie">Hoodie</SelectItem>
-                      <SelectItem value="poster">Poster</SelectItem>
-                      <SelectItem value="phonecase">Mobilskal</SelectItem>
-                      <SelectItem value="totebag">Tygkasse</SelectItem>
-                      <SelectItem value="calendar">Kalender</SelectItem>
-                      <SelectItem value="nametag">Namnskylt</SelectItem>
-                      <SelectItem value="businesscard">Visitkort</SelectItem>
-                      <SelectItem value="catalog_print">Katalogutskrift</SelectItem>
-                      <SelectItem value="catalog_design">Katalogdesign</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
