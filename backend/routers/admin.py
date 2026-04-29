@@ -538,14 +538,20 @@ async def admin_get_products(admin=Depends(verify_admin_token)):
 
 @router.post("/products")
 async def create_product(product_data: AdminProductCreate, admin=Depends(verify_admin_token)):
-    product = Product(**product_data.model_dump())
+    data = product_data.model_dump()
+    if data.get("category"):
+        data["category"] = data["category"].strip().lower()
+    product = Product(**data)
     await db.products.insert_one(product.model_dump())
     await db.admin_logs.insert_one({"action": "create_product", "product_id": product.product_id, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
     return {"message": "Produkt skapad", "product_id": product.product_id}
 
 @router.put("/products/{product_id}")
 async def update_product(product_id: str, product_data: AdminProductCreate, admin=Depends(verify_admin_token)):
-    result = await db.products.update_one({"product_id": product_id}, {"$set": product_data.model_dump()})
+    data = product_data.model_dump()
+    if data.get("category"):
+        data["category"] = data["category"].strip().lower()
+    result = await db.products.update_one({"product_id": product_id}, {"$set": data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Produkt hittades inte")
     await db.admin_logs.insert_one({"action": "update_product", "product_id": product_id, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
