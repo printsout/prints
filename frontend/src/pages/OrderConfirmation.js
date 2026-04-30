@@ -20,7 +20,7 @@ const OrderConfirmation = () => {
     if (freeOrderId) {
       setStatus('success');
       setPaymentData({ payment_status: 'paid', amount_total: 0, currency: 'sek' });
-      try { clearCart(); } catch {}
+      try { clearCart(); } catch (err) { console.error('clearCart failed after free order:', err); }
       return;
     }
 

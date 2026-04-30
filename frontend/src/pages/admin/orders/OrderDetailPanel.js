@@ -453,8 +453,8 @@ const DesignCustomization = ({ item }) => {
         const h = img.height * scale;
         ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
         URL.revokeObjectURL(blobUrl);
-      } catch {
-        // image load failed
+      } catch (err) {
+        console.error('Failed to load custom design image for canvas:', err);
       }
     }
 
