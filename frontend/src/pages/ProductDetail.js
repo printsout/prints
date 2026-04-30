@@ -373,16 +373,6 @@ const ProductDetail = () => {
                     </div>
                   </div>
                 )}
-                {selectedPrintSize && (() => {
-                  const quality = selectedPrintQuality || 'Standard';
-                  const priceEntry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && (p.quality || 'Standard') === quality);
-                  return priceEntry ? (
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="text-sm text-slate-600">{selectedPrintSize}{hasQualities ? ` — ${quality}` : ''}</span>
-                      <span className="text-lg font-bold text-[#2a9d8f]">{priceEntry.price} kr</span>
-                    </div>
-                  ) : null;
-                })()}
               </div>
             )}
 
