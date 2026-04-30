@@ -343,19 +343,14 @@ const ProductDetail = () => {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Storlek</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {product.available_sizes.map(size => {
-                      const quality = selectedPrintQuality || 'Standard';
-                      const priceEntry = product.size_quality_prices?.find(p => p.size === size && (p.quality || 'Standard') === quality);
-                      return (
-                        <button key={size} onClick={() => setSelectedPrintSize(size)}
-                          className={`flex items-center justify-between py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
-                            selectedPrintSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                          }`} data-testid={`print-size-${size}`}>
-                          <span>{size}</span>
-                          {priceEntry && <span className="text-xs font-semibold">{priceEntry.price} kr</span>}
-                        </button>
-                      );
-                    })}
+                    {product.available_sizes.map(size => (
+                      <button key={size} onClick={() => setSelectedPrintSize(size)}
+                        className={`py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
+                          selectedPrintSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`} data-testid={`print-size-${size}`}>
+                        {size}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 {hasQualities && (
