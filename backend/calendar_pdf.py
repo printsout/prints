@@ -78,32 +78,27 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
     month_num = month_index + 1
     month_name = MONTHS_SV[month_index]
 
-    # 50/50 split: top half = image, bottom half = calendar grid
-    img_h = PAGE_H * 0.50
-    cal_h = PAGE_H * 0.50
+    # Layout: image top 40%, calendar bottom 60% — calendar is visually dominant
+    img_h = PAGE_H * 0.40
+    cal_h = PAGE_H * 0.60
 
     # ── Image area ────────────────────────────────────────────────
     if image_path and os.path.exists(image_path):
         try:
             img = ImageReader(image_path)
             iw, ih = img.getSize()
-            # Scale to fill width
-            scale = PAGE_W / iw
+            # Cover mode: fill the image area entirely (may crop)
+            scale = max(PAGE_W / iw, img_h / ih)
+            draw_w = iw * scale
             draw_h = ih * scale
-            # Clip to image area and center vertically
+            x_pos = (PAGE_W - draw_w) / 2
+            y_pos = cal_h + (img_h - draw_h) / 2
+            # Clip to the image zone so any overflow is hidden
             c.saveState()
             p = c.beginPath()
             p.rect(0, cal_h, PAGE_W, img_h)
             c.clipPath(p, stroke=0)
-            if draw_h >= img_h:
-                # Image taller than area — center vertically
-                y_pos = cal_h + (img_h - draw_h) / 2
-            else:
-                # Image shorter than area — center with gray padding
-                c.setFillColor(HexColor("#f1f5f9"))
-                c.rect(0, cal_h, PAGE_W, img_h, fill=1, stroke=0)
-                y_pos = cal_h + (img_h - draw_h) / 2
-            c.drawImage(img, 0, y_pos, PAGE_W, draw_h)
+            c.drawImage(img, x_pos, y_pos, draw_w, draw_h)
             # Draw text overlay if present
             _draw_text_overlay(c, month_data, cal_h, img_h)
             c.restoreState()
