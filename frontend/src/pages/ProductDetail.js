@@ -432,8 +432,8 @@ const ProductDetail = () => {
             {product.long_description && (
               <details className="border border-slate-200 rounded-xl overflow-hidden group" data-testid="product-long-description">
                 <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors list-none">
-                  <span className="font-medium text-slate-800">Mer information om produkten</span>
-                  <ChevronDown className="w-5 h-5 text-slate-400 transition-transform group-open:rotate-180" />
+                  <span className="text-xl font-bold text-slate-900">Om Produkten</span>
+                  <ChevronDown className="w-6 h-6 text-slate-400 transition-transform group-open:rotate-180" />
                 </summary>
                 <div className="px-5 pb-5 pt-1 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap border-t border-slate-100">
                   {product.long_description}
