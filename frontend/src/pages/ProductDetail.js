@@ -22,7 +22,13 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [show3D, setShow3D] = useState(false);
   const [useColorImage, setUseColorImage] = useState(false);
+  const [printPricing, setPrintPricing] = useState(null);
+  const [selectedPrintSize, setSelectedPrintSize] = useState('');
+  const [selectedPrintQuality, setSelectedPrintQuality] = useState('');
   const has3D = product && !['nametag', 'calendar'].includes(product.model_type) && !['namnskylt', 'kalender', 'fotoalbum'].includes(product.category);
+
+  // Check if this is a photo print product
+  const isPhotoPrint = product && (product.model_type === 'poster' || product.category === 'poster');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -44,6 +50,19 @@ const ProductDetail = () => {
     fetchProduct();
   }, [productId]);
 
+  // Fetch photo print pricing
+  useEffect(() => {
+    if (isPhotoPrint) {
+      api.get('/catalog/photo-print-pricing')
+        .then(res => {
+          setPrintPricing(res.data);
+          if (res.data.sizes?.length) setSelectedPrintSize(res.data.sizes[0]);
+          if (res.data.qualities?.length) setSelectedPrintQuality(res.data.qualities[0]);
+        })
+        .catch(() => {});
+    }
+  }, [isPhotoPrint]);
+
   const resolveImageUrl = (url) => {
     if (!url) return '';
     return url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${url}` : url;
@@ -60,12 +79,20 @@ const ProductDetail = () => {
   const handleAddToCart = async () => {
     setAdding(true);
     try {
-      await addToCart({
+      const cartItem = {
         product_id: product.product_id,
         quantity,
         color: selectedColor || null,
         size: selectedSize || null
-      });
+      };
+      // Add photo print options if applicable
+      if (isPhotoPrint && selectedPrintSize && selectedPrintQuality) {
+        const priceEntry = printPricing?.prices?.find(p => p.size === selectedPrintSize && p.quality === selectedPrintQuality);
+        cartItem.print_size = selectedPrintSize;
+        cartItem.print_quality = selectedPrintQuality;
+        if (priceEntry) cartItem.price = priceEntry.price;
+      }
+      await addToCart(cartItem);
       toast.success('Tillagd i varukorgen!', {
         action: {
           label: 'Visa varukorg',
@@ -302,6 +329,49 @@ const ProductDetail = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* Photo Print Size & Quality selector */}
+            {isPhotoPrint && printPricing && printPricing.sizes?.length > 0 && (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-xl border" data-testid="photo-print-options">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Storlek</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {printPricing.sizes.map(size => (
+                      <button key={size} onClick={() => setSelectedPrintSize(size)}
+                        className={`py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
+                          selectedPrintSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`} data-testid={`print-size-${size}`}>
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {printPricing.qualities?.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Kvalitet</label>
+                    <div className="flex flex-wrap gap-2">
+                      {printPricing.qualities.map(q => (
+                        <button key={q} onClick={() => setSelectedPrintQuality(q)}
+                          className={`py-2 px-4 rounded-lg text-sm font-medium border-2 transition-all ${
+                            selectedPrintQuality === q ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`} data-testid={`print-quality-${q}`}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedPrintSize && selectedPrintQuality && (() => {
+                  const priceEntry = printPricing.prices?.find(p => p.size === selectedPrintSize && p.quality === selectedPrintQuality);
+                  return priceEntry ? (
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-sm text-slate-600">{selectedPrintSize} — {selectedPrintQuality}</span>
+                      <span className="text-lg font-bold text-[#2a9d8f]">{priceEntry.price} kr</span>
+                    </div>
+                  ) : null;
+                })()}
               </div>
             )}
 

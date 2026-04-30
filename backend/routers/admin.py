@@ -849,3 +849,34 @@ async def update_businesscard_settings(data: dict, admin=Depends(verify_admin_to
     )
     settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
     return settings
+
+
+# ─── Photo Print Pricing Settings ───
+
+@router.get("/photo-print-settings")
+async def get_photo_print_settings(admin=Depends(verify_admin_token)):
+    settings = await db.site_settings.find_one({"type": "photo_print_pricing"}, {"_id": 0})
+    if not settings:
+        settings = {
+            "type": "photo_print_pricing",
+            "sizes": [],
+            "qualities": [],
+            "prices": [],
+        }
+    return settings
+
+@router.put("/photo-print-settings")
+async def update_photo_print_settings(data: dict, admin=Depends(verify_admin_token)):
+    update = {
+        "type": "photo_print_pricing",
+        "sizes": data.get("sizes", []),
+        "qualities": data.get("qualities", []),
+        "prices": data.get("prices", []),
+    }
+    await db.site_settings.update_one(
+        {"type": "photo_print_pricing"},
+        {"$set": update},
+        upsert=True
+    )
+    settings = await db.site_settings.find_one({"type": "photo_print_pricing"}, {"_id": 0})
+    return settings

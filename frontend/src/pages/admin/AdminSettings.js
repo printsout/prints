@@ -44,6 +44,14 @@ const AdminSettings = () => {
   });
   const [savingFonts, setSavingFonts] = useState(false);
 
+  // Photo print pricing
+  const [printSizes, setPrintSizes] = useState([]);
+  const [printQualities, setPrintQualities] = useState([]);
+  const [printPrices, setPrintPrices] = useState([]);
+  const [savingPrint, setSavingPrint] = useState(false);
+  const [newSize, setNewSize] = useState('');
+  const [newQuality, setNewQuality] = useState('');
+
   const fetchSettings = useCallback(async () => {
     try {
       const response = await api.get('/admin/settings', { headers: getAuthHeaders() });
@@ -98,6 +106,14 @@ const AdminSettings = () => {
     // Fetch businesscard font settings
     api.get('/admin/businesscard-settings', { headers: getAuthHeaders() })
       .then(res => setCardFonts(prev => ({ ...prev, ...res.data })))
+      .catch(() => {});
+    // Fetch photo print pricing
+    api.get('/admin/photo-print-settings', { headers: getAuthHeaders() })
+      .then(res => {
+        setPrintSizes(res.data.sizes || []);
+        setPrintQualities(res.data.qualities || []);
+        setPrintPrices(res.data.prices || []);
+      })
       .catch(() => {});
   }, [fetchSettings, fetchShippingSettings, fetchDiscountCodes, fetch2FAStatus, getAuthHeaders]);
 
@@ -416,6 +432,126 @@ const AdminSettings = () => {
         <div className="flex justify-end mt-6">
           <Button onClick={handleSaveCardFonts} disabled={savingFonts} className="bg-[#2a9d8f] hover:bg-[#238b7e]" data-testid="save-card-fonts">
             {savingFonts ? 'Sparar...' : 'Spara textstorlekar'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Fotoutskrift prissättning */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="photo-print-settings">
+        <h2 className="text-lg font-semibold text-slate-900 mb-2">Fotoutskrift — Storlekar, Kvalitet & Priser</h2>
+        <p className="text-sm text-slate-500 mb-6">Lägg till storlekar och kvalitetsnivåer. Ange pris för varje kombination.</p>
+
+        {/* Sizes */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Storlekar</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {printSizes.map((s, i) => (
+              <span key={i} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
+                {s}
+                <button onClick={() => {
+                  const newSizes = printSizes.filter((_, idx) => idx !== i);
+                  setPrintSizes(newSizes);
+                  setPrintPrices(printPrices.filter(p => p.size !== s));
+                }} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input value={newSize} onChange={e => setNewSize(e.target.value)} placeholder="T.ex. 10x15cm" className="max-w-[200px]" data-testid="new-size-input" />
+            <Button type="button" variant="outline" size="sm" onClick={() => {
+              if (newSize.trim() && !printSizes.includes(newSize.trim())) {
+                setPrintSizes([...printSizes, newSize.trim()]);
+                setNewSize('');
+              }
+            }} data-testid="add-size-btn">Lägg till</Button>
+          </div>
+        </div>
+
+        {/* Qualities */}
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-slate-700 mb-2">Kvalitetsnivåer</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {printQualities.map((q, i) => (
+              <span key={i} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
+                {q}
+                <button onClick={() => {
+                  const newQuals = printQualities.filter((_, idx) => idx !== i);
+                  setPrintQualities(newQuals);
+                  setPrintPrices(printPrices.filter(p => p.quality !== q));
+                }} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input value={newQuality} onChange={e => setNewQuality(e.target.value)} placeholder="T.ex. Standard" className="max-w-[200px]" data-testid="new-quality-input" />
+            <Button type="button" variant="outline" size="sm" onClick={() => {
+              if (newQuality.trim() && !printQualities.includes(newQuality.trim())) {
+                setPrintQualities([...printQualities, newQuality.trim()]);
+                setNewQuality('');
+              }
+            }} data-testid="add-quality-btn">Lägg till</Button>
+          </div>
+        </div>
+
+        {/* Price matrix */}
+        {printSizes.length > 0 && printQualities.length > 0 && (
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Priser (kr)</label>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border border-slate-200 px-3 py-2 bg-slate-50 text-left font-medium">Storlek</th>
+                    {printQualities.map(q => (
+                      <th key={q} className="border border-slate-200 px-3 py-2 bg-slate-50 text-center font-medium">{q}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {printSizes.map(size => (
+                    <tr key={size}>
+                      <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700">{size}</td>
+                      {printQualities.map(quality => {
+                        const existing = printPrices.find(p => p.size === size && p.quality === quality);
+                        return (
+                          <td key={quality} className="border border-slate-200 px-1 py-1">
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={existing?.price || ''}
+                              onChange={e => {
+                                const price = parseFloat(e.target.value) || 0;
+                                setPrintPrices(prev => {
+                                  const filtered = prev.filter(p => !(p.size === size && p.quality === quality));
+                                  return [...filtered, { size, quality, price }];
+                                });
+                              }}
+                              placeholder="0"
+                              className="w-full px-2 py-1 text-center rounded border-0 focus:ring-1 focus:ring-[#2a9d8f] text-sm"
+                              data-testid={`price-${size}-${quality}`}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button onClick={async () => {
+            setSavingPrint(true);
+            try {
+              await api.put('/admin/photo-print-settings', { sizes: printSizes, qualities: printQualities, prices: printPrices }, { headers: getAuthHeaders() });
+              toast.success('Fotoutskriftsinställningar sparade');
+            } catch { toast.error('Kunde inte spara'); }
+            finally { setSavingPrint(false); }
+          }} disabled={savingPrint} className="bg-[#2a9d8f] hover:bg-[#238b7e]" data-testid="save-print-settings">
+            {savingPrint ? 'Sparar...' : 'Spara priser'}
           </Button>
         </div>
       </div>

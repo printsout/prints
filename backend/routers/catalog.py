@@ -20,6 +20,16 @@ async def get_public_catalog_items(catalog_type: str = None):
     return items
 
 
+
+@router.get("/photo-print-pricing")
+async def get_photo_print_pricing():
+    """Public endpoint for photo print sizes, qualities and prices."""
+    settings = await db.site_settings.find_one({"type": "photo_print_pricing"}, {"_id": 0})
+    if not settings:
+        return {"sizes": [], "qualities": [], "prices": []}
+    return {"sizes": settings.get("sizes", []), "qualities": settings.get("qualities", []), "prices": settings.get("prices", [])}
+
+
 @router.get("/download-pdf")
 async def download_catalog_pdf():
     """Generate and return a PDF catalog of all visible products."""
