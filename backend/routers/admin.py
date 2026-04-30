@@ -398,10 +398,11 @@ async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)
     customization = calendar_item["customization"]
     year = customization.get("year", 2026)
     months = customization.get("months", [])
+    layout = customization.get("layout", "standard")
     output_dir = Path("/tmp/calendar_pdfs")
     output_dir.mkdir(exist_ok=True)
     output_path = str(output_dir / f"kalender_{order_id[:8]}.pdf")
-    generate_calendar_pdf(year, months, output_path)
+    generate_calendar_pdf(year, months, output_path, layout)
     filename = f"kalender_{year}_{order_id[:8]}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 

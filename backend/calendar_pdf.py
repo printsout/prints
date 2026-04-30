@@ -68,14 +68,19 @@ def _draw_text_overlay(c, month_data, cal_h, img_h):
     c.restoreState()
 
 
-def _draw_month_page(c, year: int, month_index: int, image_path: str = None, month_data: dict = None):
-    """Draw a single calendar month page."""
+def _draw_month_page(c, year: int, month_index: int, image_path: str = None, month_data: dict = None, layout: str = "standard"):
+    """Draw a single calendar month page.
+    
+    layout: "standard" (60% image, 40% grid) or "family" (35% image, 65% grid with corner numbers and writable cells)
+    """
     month_num = month_index + 1
     month_name = MONTHS_SV[month_index]
 
-    # Layout: image top 60%, calendar bottom 40%
-    img_h = PAGE_H * 0.60
-    cal_h = PAGE_H * 0.40
+    is_family = layout == "family"
+    # Family layout: smaller image, bigger writable grid
+    img_ratio = 0.35 if is_family else 0.60
+    img_h = PAGE_H * img_ratio
+    cal_h = PAGE_H * (1 - img_ratio)
 
     # ── Image area ────────────────────────────────────────────────
     if image_path and os.path.exists(image_path):
@@ -147,8 +152,6 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
     grid_h = grid_top  # from 0 to grid_top
     row_h = grid_h / max(rows, 1)
 
-    c.setFont("Helvetica", 11)
-
     for row_idx, week in enumerate(month_days):
         row_y = grid_top - (row_idx + 1) * row_h
 
@@ -167,8 +170,6 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
         for col_idx, day in enumerate(week):
             if day == 0:
                 continue
-            x = col_idx * col_w + col_w / 2
-            y = row_y + row_h / 2 - 2
 
             # Weekend days (Sat=5, Sun=6) in red
             if col_idx >= 5:
@@ -176,8 +177,18 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
             else:
                 c.setFillColor(DAY_TEXT)
 
-            c.setFont("Helvetica", 11)
-            c.drawCentredString(x, y, str(day))
+            if is_family:
+                # Family layout: number in top-left corner, rest of cell empty for writing
+                c.setFont("Helvetica-Bold", 11)
+                x = col_idx * col_w + 3 * mm
+                y = row_y + row_h - 5 * mm
+                c.drawString(x, y, str(day))
+            else:
+                # Standard layout: centered number
+                c.setFont("Helvetica", 11)
+                x = col_idx * col_w + col_w / 2
+                y = row_y + row_h / 2 - 2
+                c.drawCentredString(x, y, str(day))
 
     # Vertical grid lines
     c.setStrokeColor(GRID_LINE)
@@ -191,7 +202,7 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
     c.rect(0, 0, PAGE_W, grid_top, fill=0, stroke=1)
 
 
-def generate_calendar_pdf(year: int, months_data: list, output_path: str):
+def generate_calendar_pdf(year: int, months_data: list, output_path: str, layout: str = "standard"):
     """
     Generate a full 12-month calendar PDF.
 
@@ -199,6 +210,7 @@ def generate_calendar_pdf(year: int, months_data: list, output_path: str):
         year: The calendar year
         months_data: List of 12 dicts with keys: month, hasImage, image_url
         output_path: Where to save the PDF
+        layout: "standard" or "family" (larger writable cells with corner numbers)
     """
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     c = canvas.Canvas(output_path, pagesize=A4)
@@ -219,7 +231,7 @@ def generate_calendar_pdf(year: int, months_data: list, output_path: str):
                 if candidate.exists():
                     image_path = str(candidate)
 
-        _draw_month_page(c, year, i, image_path, month_data)
+        _draw_month_page(c, year, i, image_path, month_data, layout)
 
     c.save()
     return output_path

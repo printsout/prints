@@ -262,7 +262,8 @@ const CalendarEditor = () => {
         }
         uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl, text: m.text || '', textPos: m.textPos || { x: 50, y: 85 }, textColor: m.textColor || '#FFFFFF', fontSize: m.fontSize || 24 });
       }
-      const res = await api.post('/calendar/generate-pdf', { year: selectedYear, months: uploadedMonths }, { responseType: 'blob' });
+      const layout = product?.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
+      const res = await api.post('/calendar/generate-pdf', { year: selectedYear, months: uploadedMonths, layout }, { responseType: 'blob' });
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;
@@ -317,6 +318,7 @@ const CalendarEditor = () => {
 
       // Use the first uploaded image as the cart thumbnail
       const firstImage = uploadedMonths.find(m => m.image_url)?.image_url;
+      const calendarLayout = product.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
 
       const itemData = {
         product_id: product.product_id,
@@ -329,6 +331,7 @@ const CalendarEditor = () => {
           type: 'calendar',
           year: selectedYear,
           size: selectedSize,
+          layout: calendarLayout,
           images_count: getUploadedCount(),
           months: uploadedMonths,
           cover_image_url: firstImage,

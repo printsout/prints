@@ -81,11 +81,12 @@ async def generate_calendar_pdf_endpoint(request: Request):
     data = await request.json()
     year = data.get("year", 2026)
     months = data.get("months", [])
+    layout = data.get("layout", "standard")
     pdf_id = str(uuid.uuid4())[:8]
     output_dir = Path("/tmp/calendar_pdfs")
     output_dir.mkdir(exist_ok=True)
     output_path = str(output_dir / f"kalender_{year}_{pdf_id}.pdf")
-    generate_calendar_pdf(year, months, output_path)
+    generate_calendar_pdf(year, months, output_path, layout)
     filename = f"kalender_{year}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
