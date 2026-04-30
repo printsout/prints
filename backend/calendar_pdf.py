@@ -71,16 +71,16 @@ def _draw_text_overlay(c, month_data, cal_h, img_h):
 def _draw_month_page(c, year: int, month_index: int, image_path: str = None, month_data: dict = None, layout: str = "standard"):
     """Draw a single calendar month page.
     
-    layout: "standard" (60% image, 40% grid) or "family" (35% image, 65% grid with corner numbers and writable cells)
+    Layout: image top 50%, calendar grid bottom 50% with date numbers in
+    the top-left corner of each cell to leave space for handwritten notes.
+    The `layout` argument is kept for backward compatibility.
     """
     month_num = month_index + 1
     month_name = MONTHS_SV[month_index]
 
-    is_family = layout == "family"
-    # Family layout: smaller image, bigger writable grid
-    img_ratio = 0.35 if is_family else 0.60
-    img_h = PAGE_H * img_ratio
-    cal_h = PAGE_H * (1 - img_ratio)
+    # 50/50 split: top half = image, bottom half = calendar grid
+    img_h = PAGE_H * 0.50
+    cal_h = PAGE_H * 0.50
 
     # ── Image area ────────────────────────────────────────────────
     if image_path and os.path.exists(image_path):
@@ -177,18 +177,11 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
             else:
                 c.setFillColor(DAY_TEXT)
 
-            if is_family:
-                # Family layout: number in top-left corner, rest of cell empty for writing
-                c.setFont("Helvetica-Bold", 11)
-                x = col_idx * col_w + 3 * mm
-                y = row_y + row_h - 5 * mm
-                c.drawString(x, y, str(day))
-            else:
-                # Standard layout: centered number
-                c.setFont("Helvetica", 11)
-                x = col_idx * col_w + col_w / 2
-                y = row_y + row_h / 2 - 2
-                c.drawCentredString(x, y, str(day))
+            # Number in top-left corner of cell — leaves room for notes
+            c.setFont("Helvetica-Bold", 11)
+            x = col_idx * col_w + 3 * mm
+            y = row_y + row_h - 5 * mm
+            c.drawString(x, y, str(day))
 
     # Vertical grid lines
     c.setStrokeColor(GRID_LINE)
