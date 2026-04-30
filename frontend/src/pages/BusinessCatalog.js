@@ -91,6 +91,7 @@ const BusinessCatalog = () => {
   const [backStyle, setBackStyle] = useState('logo_only');
   const [backTagline, setBackTagline] = useState('');
   const [backColor, setBackColor] = useState('');
+  const [fontSizes, setFontSizes] = useState({ name: 10, title: 7, company: 6, contact: 6, icon: 5.5 });
 
   // Shared
   const [quantity, setQuantity] = useState(1);
@@ -109,6 +110,10 @@ const BusinessCatalog = () => {
     if (c.template) setCardTemplate(c.template);
     if (c.color) setCardColor(c.color);
     if (c.logo_url) setLogo(c.logo_url);
+    if (c.back_style) setBackStyle(c.back_style);
+    if (c.back_tagline) setBackTagline(c.back_tagline);
+    if (c.back_color) setBackColor(c.back_color);
+    if (c.font_sizes) setFontSizes(c.font_sizes);
     setQuantity(cartItem.quantity || 1);
   }, [editCartItemId, cart.items]);
 
@@ -232,6 +237,7 @@ const BusinessCatalog = () => {
           back_style: backStyle,
           back_tagline: backTagline,
           back_color: backColor || cardColor,
+          font_sizes: fontSizes,
           pdf_url: pdfUrl,
           original_filename: cardPdfFile?.name || null,
         },
@@ -505,6 +511,7 @@ const BusinessCatalog = () => {
                         backStyle={backStyle} setBackStyle={setBackStyle}
                         backTagline={backTagline} setBackTagline={setBackTagline}
                         backColor={backColor} setBackColor={setBackColor}
+                        fontSizes={fontSizes} setFontSizes={setFontSizes}
                       />
                       {card.name.trim() && (
                         <button
@@ -529,6 +536,7 @@ const BusinessCatalog = () => {
                                 back_style: backStyle,
                                 back_tagline: backTagline,
                                 back_color: backColor || cardColor,
+                                font_sizes: fontSizes,
                               }, { responseType: 'blob' });
                               const url = URL.createObjectURL(res.data);
                               const a = document.createElement('a');

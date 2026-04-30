@@ -446,7 +446,18 @@ async def download_businesscard_pdf(order_id: str, item_index: int = 0, admin=De
     output_dir = Path("/tmp/businesscard_pdfs")
     output_dir.mkdir(exist_ok=True)
     output_path = str(output_dir / f"visitkort_{order_id[:8]}_{item_index}.pdf")
-    font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    # Prefer per-card font_sizes from the customer's editor; fallback to global admin defaults
+    cust_fonts = customization.get("font_sizes")
+    if cust_fonts:
+        font_settings = {
+            "name_size": cust_fonts.get("name"),
+            "title_size": cust_fonts.get("title"),
+            "company_size": cust_fonts.get("company"),
+            "contact_size": cust_fonts.get("contact"),
+            "icon_size": cust_fonts.get("icon"),
+        }
+    else:
+        font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
     generate_businesscard_pdf(customization, output_path, font_settings)
     name = customization.get("card_details", {}).get("name", "visitkort")
     filename = f"visitkort_{name}_{order_id[:8]}.pdf"

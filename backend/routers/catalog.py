@@ -344,6 +344,7 @@ async def preview_businesscard_pdf(data: dict):
     template = data.get("template", "classic")
     color = data.get("color", "#2a9d8f")
     logo_url = data.get("logo_url", "")
+    font_sizes = data.get("font_sizes")  # optional per-card font sizes from editor
 
     # Resolve logo from uploads
     if logo_url:
@@ -357,6 +358,10 @@ async def preview_businesscard_pdf(data: dict):
         "template": template,
         "color": color,
         "logo_url": logo_url,
+        "back_style": data.get("back_style", "logo_only"),
+        "back_tagline": data.get("back_tagline", ""),
+        "back_color": data.get("back_color", ""),
+        "font_sizes": font_sizes,
     }
 
     output_dir = UPLOADS_DIR.parent / "tmp_pdfs"
@@ -364,7 +369,17 @@ async def preview_businesscard_pdf(data: dict):
     uid = str(uuid.uuid4())[:8]
     name = card_details.get("name", "visitkort").replace(" ", "_")
     output_path = str(output_dir / f"visitkort_{name}_{uid}.pdf")
-    font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
+    # Build font_settings from per-card values if provided, otherwise fall back to admin defaults
+    if font_sizes:
+        font_settings = {
+            "name_size": font_sizes.get("name"),
+            "title_size": font_sizes.get("title"),
+            "company_size": font_sizes.get("company"),
+            "contact_size": font_sizes.get("contact"),
+            "icon_size": font_sizes.get("icon"),
+        }
+    else:
+        font_settings = await db.site_settings.find_one({"type": "businesscard_fonts"}, {"_id": 0})
     generate_businesscard_pdf(customization, output_path, font_settings)
 
     from fastapi.responses import FileResponse

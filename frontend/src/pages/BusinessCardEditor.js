@@ -240,9 +240,11 @@ function CardPreviewBack({ card, logo, backStyle, color, backTagline, backColor 
 }
 
 /* ───── Main Editor ───── */
-export default function BusinessCardEditor({ card, setCard, logo, setLogo, template, setTemplate, color, setColor, backStyle, setBackStyle, backTagline, setBackTagline, backColor, setBackColor }) {
+export default function BusinessCardEditor({ card, setCard, logo, setLogo, template, setTemplate, color, setColor, backStyle, setBackStyle, backTagline, setBackTagline, backColor, setBackColor, fontSizes, setFontSizes }) {
   const logoInputRef = useRef(null);
   const [activeSide, setActiveSide] = useState('front');
+  const fonts = fontSizes || { name: 10, title: 7, company: 6, contact: 6, icon: 5.5 };
+  const updateFont = (key, val) => setFontSizes && setFontSizes(prev => ({ ...(prev || fonts), [key]: parseFloat(val) }));
 
   const updateCard = (field, value) => setCard(prev => ({ ...prev, [field]: value }));
 
@@ -388,6 +390,41 @@ export default function BusinessCardEditor({ card, setCard, logo, setLogo, templ
               </div>
             </div>
           </div>
+
+          {/* Text sizes (advanced) */}
+          {setFontSizes && (
+            <details className="bg-slate-50 rounded-lg border border-slate-200 p-4" data-testid="card-font-settings">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#2a9d8f]" />
+                Textstorlekar i PDF
+                <span className="text-xs font-normal text-slate-400 ml-auto">(avancerat)</span>
+              </summary>
+              <p className="text-xs text-slate-500 mt-3 mb-4">Justera textstorlekarna för utskriftsfilen (PDF). Standard fungerar för de flesta.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[
+                  { key: 'name', label: 'Namn', defaultVal: 10 },
+                  { key: 'title', label: 'Titel', defaultVal: 7 },
+                  { key: 'company', label: 'Företag', defaultVal: 6 },
+                  { key: 'contact', label: 'Kontaktinfo', defaultVal: 6 },
+                  { key: 'icon', label: 'Ikoner', defaultVal: 5.5 },
+                ].map(({ key, label, defaultVal }) => (
+                  <div key={key}>
+                    <label className="block text-xs text-slate-500 mb-1">{label} <span className="text-slate-300">(std: {defaultVal}pt)</span></label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range" min="4" max="20" step="0.5"
+                        value={fonts[key] ?? defaultVal}
+                        onChange={e => updateFont(key, e.target.value)}
+                        className="flex-1 accent-[#2a9d8f]"
+                        data-testid={`font-${key}`}
+                      />
+                      <span className="text-xs font-mono font-bold text-slate-700 w-10 text-right">{fonts[key] ?? defaultVal}pt</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </>
       ) : (
         /* ─── Back side editor ─── */
