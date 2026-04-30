@@ -39,11 +39,6 @@ const AdminSettings = () => {
 
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 
-  const [cardFonts, setCardFonts] = useState({
-    name_size: 10, title_size: 7, company_size: 6, contact_size: 6, icon_size: 5.5
-  });
-  const [savingFonts, setSavingFonts] = useState(false);
-
   // Photo print pricing
   const [printSizes, setPrintSizes] = useState([]);
   const [printQualities, setPrintQualities] = useState([]);
@@ -103,10 +98,6 @@ const AdminSettings = () => {
     fetchShippingSettings();
     fetchDiscountCodes();
     fetch2FAStatus();
-    // Fetch businesscard font settings
-    api.get('/admin/businesscard-settings', { headers: getAuthHeaders() })
-      .then(res => setCardFonts(prev => ({ ...prev, ...res.data })))
-      .catch(() => {});
     // Fetch photo print pricing
     api.get('/admin/photo-print-settings', { headers: getAuthHeaders() })
       .then(res => {
@@ -188,18 +179,6 @@ const AdminSettings = () => {
       toast.error('Kunde inte spara inställningar');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSaveCardFonts = async () => {
-    setSavingFonts(true);
-    try {
-      await api.put('/admin/businesscard-settings', cardFonts, { headers: getAuthHeaders() });
-      toast.success('Visitkortsinställningar sparade');
-    } catch {
-      toast.error('Kunde inte spara');
-    } finally {
-      setSavingFonts(false);
     }
   };
 
@@ -398,43 +377,6 @@ const AdminSettings = () => {
           </Button>
         </div>
       </form>
-
-      {/* Visitkort textstorlekar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="card-font-settings">
-        <h2 className="text-lg font-semibold text-slate-900 mb-2">Visitkort — Textstorlekar (PDF)</h2>
-        <p className="text-sm text-slate-500 mb-6">Justera textstorlekarna som används i genererade visitkorts-PDF:er. Standard är 6–10pt.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { key: 'name_size', label: 'Namn', defaultVal: 10 },
-            { key: 'title_size', label: 'Titel', defaultVal: 7 },
-            { key: 'company_size', label: 'Företag', defaultVal: 6 },
-            { key: 'contact_size', label: 'Kontaktinfo', defaultVal: 6 },
-            { key: 'icon_size', label: 'Ikoner/prefix', defaultVal: 5.5 },
-          ].map(({ key, label, defaultVal }) => (
-            <div key={key}>
-              <label className="block text-xs text-slate-500 mb-1">{label} <span className="text-slate-300">(std: {defaultVal}pt)</span></label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="4"
-                  max="30"
-                  step="0.5"
-                  value={cardFonts[key] || defaultVal}
-                  onChange={e => setCardFonts(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
-                  className="flex-1 accent-[#2a9d8f]"
-                  data-testid={`font-${key}`}
-                />
-                <span className="text-sm font-mono font-bold text-slate-700 w-10 text-right">{cardFonts[key] || defaultVal}pt</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end mt-6">
-          <Button onClick={handleSaveCardFonts} disabled={savingFonts} className="bg-[#2a9d8f] hover:bg-[#238b7e]" data-testid="save-card-fonts">
-            {savingFonts ? 'Sparar...' : 'Spara textstorlekar'}
-          </Button>
-        </div>
-      </div>
 
       {/* Fotoutskrift prissättning */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-testid="photo-print-settings">

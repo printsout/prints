@@ -107,6 +107,70 @@ function SizeAddInput({ existingSizes, onAdd }) {
   );
 }
 
+// ─── Business Card PDF Font Settings ──────────────────────────
+const BC_FONT_FIELDS = [
+  { key: 'name_size', label: 'Namn', defaultVal: 10 },
+  { key: 'title_size', label: 'Titel', defaultVal: 7 },
+  { key: 'company_size', label: 'Företag', defaultVal: 6 },
+  { key: 'contact_size', label: 'Kontaktinfo', defaultVal: 6 },
+  { key: 'icon_size', label: 'Ikoner/prefix', defaultVal: 5.5 },
+];
+
+function BusinessCardFontSettings() {
+  const { getAuthHeaders } = useAdmin();
+  const [cardFonts, setCardFonts] = useState({
+    name_size: 10, title_size: 7, company_size: 6, contact_size: 6, icon_size: 5.5
+  });
+  const [savingFonts, setSavingFonts] = useState(false);
+
+  useEffect(() => {
+    api.get('/admin/businesscard-settings', { headers: getAuthHeaders() })
+      .then(res => setCardFonts(prev => ({ ...prev, ...res.data })))
+      .catch(() => {});
+  }, [getAuthHeaders]);
+
+  const handleSave = async () => {
+    setSavingFonts(true);
+    try {
+      await api.put('/admin/businesscard-settings', cardFonts, { headers: getAuthHeaders() });
+      toast.success('Visitkortsinställningar sparade');
+    } catch {
+      toast.error('Kunde inte spara');
+    } finally {
+      setSavingFonts(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4" data-testid="card-font-settings">
+      <h3 className="text-sm font-semibold text-slate-900 mb-1">Textstorlekar (PDF)</h3>
+      <p className="text-xs text-slate-500 mb-4">Justera textstorlekarna i genererade visitkorts-PDF:er. Standard är 6–10pt.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {BC_FONT_FIELDS.map(({ key, label, defaultVal }) => (
+          <div key={key}>
+            <label className="block text-xs text-slate-500 mb-1">{label} <span className="text-slate-300">(std: {defaultVal}pt)</span></label>
+            <div className="flex items-center gap-2">
+              <input
+                type="range" min="4" max="30" step="0.5"
+                value={cardFonts[key] || defaultVal}
+                onChange={e => setCardFonts(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
+                className="flex-1 accent-[#2a9d8f]"
+                data-testid={`font-${key}`}
+              />
+              <span className="text-sm font-mono font-bold text-slate-700 w-10 text-right">{cardFonts[key] || defaultVal}pt</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end mt-4">
+        <Button type="button" onClick={handleSave} disabled={savingFonts} size="sm" className="bg-[#2a9d8f] hover:bg-[#238b7e]" data-testid="save-card-fonts">
+          {savingFonts ? 'Sparar...' : 'Spara textstorlekar'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const AdminProducts = () => {
   const { getAuthHeaders } = useAdmin();
   const [products, setProducts] = useState([]);
@@ -580,6 +644,11 @@ const AdminProducts = () => {
                     <Plus className="w-4 h-4 mr-1" /> Lägg till prissteg
                   </Button>
                 </div>
+              )}
+
+              {/* Business card PDF font sizes — only for visitkort */}
+              {formData.model_type === 'businesscard' && (
+                <BusinessCardFontSettings />
               )}
 
               {/* Quality (paper/material) — adds a price column per size */}
