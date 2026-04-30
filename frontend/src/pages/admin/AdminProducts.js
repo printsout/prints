@@ -87,6 +87,9 @@ const AdminProducts = () => {
     model_type: 'mug',
     quantity_prices: [],
     color_images: {},
+    size_quality_prices: [],
+    available_sizes: [],
+    available_qualities: [],
   });
 
   const fetchProducts = useCallback(async () => {
@@ -154,6 +157,9 @@ const AdminProducts = () => {
       model_type: product.model_type,
       quantity_prices: product.quantity_prices || [],
       color_images: product.color_images || {},
+      size_quality_prices: product.size_quality_prices || [],
+      available_sizes: product.available_sizes || [],
+      available_qualities: product.available_qualities || [],
     });
     setShowModal(true);
   };
@@ -171,6 +177,9 @@ const AdminProducts = () => {
       model_type: 'mug',
       quantity_prices: [],
       color_images: {},
+      size_quality_prices: [],
+      available_sizes: [],
+      available_qualities: [],
     });
   };
 
@@ -519,6 +528,99 @@ const AdminProducts = () => {
                   </Button>
                 </div>
               )}
+
+              {/* Size/Quality/Price per product */}
+              <div className="border rounded-xl p-4 space-y-4" data-testid="size-quality-section">
+                <label className="block text-sm font-medium text-slate-700">
+                  <span className="flex items-center gap-1.5"><Ruler className="w-4 h-4" /> Storlekar & Kvalitet — Priser</span>
+                </label>
+
+                {/* Sizes */}
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Storlekar</p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {formData.available_sizes.map((s, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-xs text-slate-700">
+                        {s}
+                        <button type="button" onClick={() => {
+                          const newSizes = formData.available_sizes.filter((_, idx) => idx !== i);
+                          setFormData(prev => ({ ...prev, available_sizes: newSizes, size_quality_prices: prev.size_quality_prices.filter(p => p.size !== s) }));
+                        }} className="text-red-400 hover:text-red-600">&times;</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input placeholder="T.ex. 10x15cm" className="max-w-[160px] h-8 text-sm" data-testid="new-prod-size"
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const v = e.target.value.trim(); if (v && !formData.available_sizes.includes(v)) { setFormData(prev => ({ ...prev, available_sizes: [...prev.available_sizes, v] })); e.target.value = ''; } } }}
+                    />
+                  </div>
+                </div>
+
+                {/* Qualities */}
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Kvalitetsnivåer</p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {formData.available_qualities.map((q, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-xs text-slate-700">
+                        {q}
+                        <button type="button" onClick={() => {
+                          const newQuals = formData.available_qualities.filter((_, idx) => idx !== i);
+                          setFormData(prev => ({ ...prev, available_qualities: newQuals, size_quality_prices: prev.size_quality_prices.filter(p => p.quality !== q) }));
+                        }} className="text-red-400 hover:text-red-600">&times;</button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input placeholder="T.ex. Standard" className="max-w-[160px] h-8 text-sm" data-testid="new-prod-quality"
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const v = e.target.value.trim(); if (v && !formData.available_qualities.includes(v)) { setFormData(prev => ({ ...prev, available_qualities: [...prev.available_qualities, v] })); e.target.value = ''; } } }}
+                    />
+                  </div>
+                </div>
+
+                {/* Price matrix */}
+                {formData.available_sizes.length > 0 && formData.available_qualities.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1.5">Pris (kr) per kombination</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-xs">
+                        <thead>
+                          <tr>
+                            <th className="border border-slate-200 px-2 py-1 bg-slate-50 text-left">Storlek</th>
+                            {formData.available_qualities.map(q => (
+                              <th key={q} className="border border-slate-200 px-2 py-1 bg-slate-50 text-center">{q}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.available_sizes.map(size => (
+                            <tr key={size}>
+                              <td className="border border-slate-200 px-2 py-1 font-medium">{size}</td>
+                              {formData.available_qualities.map(quality => {
+                                const existing = formData.size_quality_prices.find(p => p.size === size && p.quality === quality);
+                                return (
+                                  <td key={quality} className="border border-slate-200 px-1 py-0.5">
+                                    <input type="number" min="0" step="1" value={existing?.price || ''}
+                                      onChange={e => {
+                                        const price = parseFloat(e.target.value) || 0;
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          size_quality_prices: [...prev.size_quality_prices.filter(p => !(p.size === size && p.quality === quality)), { size, quality, price }]
+                                        }));
+                                      }}
+                                      placeholder="0"
+                                      className="w-full px-1 py-0.5 text-center rounded border-0 focus:ring-1 focus:ring-[#2a9d8f] text-xs"
+                                    />
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
