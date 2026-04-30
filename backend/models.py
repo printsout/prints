@@ -30,6 +30,7 @@ class Product(BaseModel):
     name: str
     category: str
     description: str
+    long_description: Optional[str] = None
     price: float
     images: List[str]
     colors: List[str] = []
@@ -114,6 +115,7 @@ class AdminProductCreate(BaseModel):
     name: str
     category: str
     description: str
+    long_description: Optional[str] = None
     price: float
     images: List[str]
     colors: List[str] = []

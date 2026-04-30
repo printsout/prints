@@ -119,6 +119,7 @@ const AdminProducts = () => {
     name: '',
     category: '',
     description: '',
+    long_description: '',
     price: '',
     images: [''],
     colors: [],
@@ -213,6 +214,7 @@ const AdminProducts = () => {
       name: product.name,
       category: product.category,
       description: product.description,
+      long_description: product.long_description || '',
       price: product.price.toString(),
       images: product.images.length > 0 ? product.images : [''],
       colors: product.colors || [],
@@ -233,6 +235,7 @@ const AdminProducts = () => {
       name: '',
       category: '',
       description: '',
+      long_description: '',
       price: '',
       images: [''],
       colors: [],
@@ -519,13 +522,26 @@ const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Beskrivning</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Kort beskrivning <span className="text-slate-400 text-xs font-normal">(visas under produktrubriken)</span></label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full p-3 border border-slate-300 rounded-lg resize-none"
                   rows={3}
                   required
+                  data-testid="product-short-description"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Detaljerad beskrivning <span className="text-slate-400 text-xs font-normal">(expanderbar sektion på produktsidan — valfritt)</span></label>
+                <textarea
+                  value={formData.long_description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, long_description: e.target.value }))}
+                  className="w-full p-3 border border-slate-300 rounded-lg resize-y"
+                  rows={5}
+                  placeholder="Material, storlek, skötselråd, leverans, garantier ..."
+                  data-testid="product-long-description"
                 />
               </div>
 
