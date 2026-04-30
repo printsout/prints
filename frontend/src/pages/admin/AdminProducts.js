@@ -149,8 +149,12 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Keep legacy sizes in sync with new available_sizes (for cart/editor compatibility)
+    const syncedSizes = formData.available_sizes.length > 0 ? formData.available_sizes : formData.sizes;
+    
     const productData = {
       ...formData,
+      sizes: syncedSizes,
       price: parseFloat(formData.price),
       images: formData.images.filter(img => img.trim() !== '')
     };
@@ -185,6 +189,16 @@ const AdminProducts = () => {
 
   const openEditModal = (product) => {
     setEditingProduct(product);
+    // Auto-migrate legacy sizes to new available_sizes/size_quality_prices on open
+    const legacySizes = product.sizes || [];
+    const existingNewSizes = product.available_sizes || [];
+    const existingSqp = product.size_quality_prices || [];
+    let migratedSizes = existingNewSizes;
+    let migratedSqp = existingSqp;
+    if (legacySizes.length > 0 && existingNewSizes.length === 0 && existingSqp.length === 0) {
+      migratedSizes = legacySizes;
+      migratedSqp = legacySizes.map(s => ({ size: s, quality: 'Standard', price: product.price || 0 }));
+    }
     setFormData({
       name: product.name,
       category: product.category,
@@ -196,8 +210,8 @@ const AdminProducts = () => {
       model_type: product.model_type,
       quantity_prices: product.quantity_prices || [],
       color_images: product.color_images || {},
-      size_quality_prices: product.size_quality_prices || [],
-      available_sizes: product.available_sizes || [],
+      size_quality_prices: migratedSqp,
+      available_sizes: migratedSizes,
       available_qualities: product.available_qualities || [],
     });
     setShowModal(true);
@@ -670,18 +684,6 @@ const AdminProducts = () => {
                   </div>
                 </div>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  <span className="flex items-center gap-1.5"><Ruler className="w-4 h-4" /> Storlekar</span>
-                </label>
-                <TagInput
-                  tags={formData.sizes}
-                  onChange={(sizes) => setFormData(prev => ({ ...prev, sizes }))}
-                  placeholder="Skriv storlek + Enter"
-                  testId="size"
-                />
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Produktbilder</label>

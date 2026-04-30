@@ -104,14 +104,15 @@ const ProductDetail = () => {
   };
 
   const handleDesign = () => {
+    const sizeForEditor = hasAdminSizePricing ? selectedPrintSize : selectedSize;
     if (product?.model_type === 'calendar' || product?.category === 'kalender') {
-      navigate(`/kalender/${productId}`, { state: { size: selectedSize } });
+      navigate(`/kalender/${productId}`, { state: { size: sizeForEditor } });
     } else if (product?.model_type === 'nametag' || product?.category === 'namnskylt') {
-      navigate(`/namnskylt/${productId}`, { state: { size: selectedSize } });
+      navigate(`/namnskylt/${productId}`, { state: { size: sizeForEditor } });
     } else if (product?.category === 'fotoalbum') {
-      navigate(`/fotoalbum/${productId}`, { state: { size: selectedSize } });
+      navigate(`/fotoalbum/${productId}`, { state: { size: sizeForEditor } });
     } else {
-      navigate(`/design/${productId}`, { state: { color: selectedColor, size: selectedSize } });
+      navigate(`/design/${productId}`, { state: { color: selectedColor, size: sizeForEditor } });
     }
   };
 
@@ -317,8 +318,8 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Size Selection */}
-            {product.sizes?.length > 0 && (
+            {/* Size Selection (legacy dropdown — hidden when new size pricing is set) */}
+            {product.sizes?.length > 0 && !hasAdminSizePricing && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">
                   Storlek
