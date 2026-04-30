@@ -582,49 +582,116 @@ const AdminProducts = () => {
                 </div>
               )}
 
-              {/* Size/Price per product — simple list like color images */}
+              {/* Quality (paper/material) — adds a price column per size */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <span className="flex items-center gap-1.5"><Ruler className="w-4 h-4" /> Kvaliteter (papper/material)</span>
+                </label>
+                <p className="text-xs text-slate-400 mb-2">Valfritt — t.ex. Standard, Premium, Canvas. Varje storlek får ett pris per kvalitet.</p>
+                <TagInput
+                  tags={formData.available_qualities}
+                  onChange={(newQualities) => {
+                    setFormData(prev => {
+                      const oldQualities = prev.available_qualities;
+                      const sizes = prev.available_sizes;
+                      // Rebuild size_quality_prices to match the new qualities × sizes grid
+                      let nextPrices = [...prev.size_quality_prices];
+                      const effectiveOld = oldQualities.length > 0 ? oldQualities : ['Standard'];
+                      const effectiveNew = newQualities.length > 0 ? newQualities : ['Standard'];
+                      // Remove entries with qualities no longer present
+                      nextPrices = nextPrices.filter(p => effectiveNew.includes(p.quality));
+                      // Add missing entries for each size × new quality
+                      for (const s of sizes) {
+                        for (const q of effectiveNew) {
+                          if (!nextPrices.some(p => p.size === s && p.quality === q)) {
+                            // Default price = inherit from old quality price (if any) or product price
+                            const fallback = (nextPrices.find(p => p.size === s)?.price)
+                              ?? (prev.size_quality_prices.find(p => p.size === s && effectiveOld.includes(p.quality))?.price)
+                              ?? (parseFloat(prev.price) || 0);
+                            nextPrices.push({ size: s, quality: q, price: fallback });
+                          }
+                        }
+                      }
+                      return { ...prev, available_qualities: newQualities, size_quality_prices: nextPrices };
+                    });
+                  }}
+                  placeholder="T.ex. Standard, Premium, Canvas + Enter"
+                  testId="quality"
+                />
+              </div>
+
+              {/* Size/Price per product — grouped by size, with one row per quality */}
               <div data-testid="size-quality-section">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   <span className="flex items-center gap-1.5"><Ruler className="w-4 h-4" /> Storlekar & Priser</span>
                 </label>
-                <p className="text-xs text-slate-400 mb-3">Lägg till storlekar — priset visas för kunden vid val av storlek</p>
-                <div className="space-y-2">
-                  {formData.size_quality_prices.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
-                      <span className="text-sm font-medium text-slate-700 w-28 shrink-0">{item.size}</span>
-                      <div className="flex items-center gap-1 flex-1">
-                        <Input
-                          type="number" min="0" step="1"
-                          value={item.price || ''}
-                          onChange={e => {
-                            const newPrices = [...formData.size_quality_prices];
-                            newPrices[idx] = { ...newPrices[idx], price: parseFloat(e.target.value) || 0 };
-                            setFormData(prev => ({ ...prev, size_quality_prices: newPrices }));
-                          }}
-                          placeholder="0"
-                          className="h-9 text-sm"
-                        />
-                        <span className="text-sm text-slate-500 shrink-0">kr</span>
+                <p className="text-xs text-slate-400 mb-3">Lägg till storlekar — varje rad är ett pris för en specifik storlek (och kvalitet om sådana finns)</p>
+                <div className="space-y-3">
+                  {formData.available_sizes.map((sizeName) => {
+                    const qualities = formData.available_qualities.length > 0 ? formData.available_qualities : ['Standard'];
+                    const showQualityLabel = formData.available_qualities.length > 0;
+                    return (
+                      <div key={sizeName} className="bg-slate-50 rounded-lg p-3" data-testid={`size-block-${sizeName}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-slate-700">{sizeName}</span>
+                          <button type="button" onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              available_sizes: prev.available_sizes.filter(s => s !== sizeName),
+                              size_quality_prices: prev.size_quality_prices.filter(p => p.size !== sizeName)
+                            }));
+                          }} className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 shrink-0" data-testid={`remove-size-${sizeName}`}>
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-1.5">
+                          {qualities.map(q => {
+                            const entry = formData.size_quality_prices.find(p => p.size === sizeName && p.quality === q);
+                            return (
+                              <div key={`${sizeName}-${q}`} className="flex items-center gap-2">
+                                {showQualityLabel && <span className="text-xs text-slate-500 w-24 shrink-0">{q}</span>}
+                                <div className="flex items-center gap-1 flex-1">
+                                  <Input
+                                    type="number" min="0" step="1"
+                                    value={entry?.price ?? ''}
+                                    onChange={e => {
+                                      const newPrice = parseFloat(e.target.value) || 0;
+                                      setFormData(prev => {
+                                        const next = [...prev.size_quality_prices];
+                                        const existingIdx = next.findIndex(p => p.size === sizeName && p.quality === q);
+                                        if (existingIdx >= 0) {
+                                          next[existingIdx] = { ...next[existingIdx], price: newPrice };
+                                        } else {
+                                          next.push({ size: sizeName, quality: q, price: newPrice });
+                                        }
+                                        return { ...prev, size_quality_prices: next };
+                                      });
+                                    }}
+                                    placeholder="0"
+                                    className="h-9 text-sm"
+                                    data-testid={`price-${sizeName}-${q}`}
+                                  />
+                                  <span className="text-sm text-slate-500 shrink-0">kr</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <button type="button" onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          size_quality_prices: prev.size_quality_prices.filter((_, i) => i !== idx),
-                          available_sizes: prev.available_sizes.filter(s => s !== item.size)
-                        }));
-                      }} className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 shrink-0">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <SizeAddInput
                   existingSizes={formData.available_sizes}
-                  onAdd={(v) => setFormData(prev => ({
-                    ...prev,
-                    available_sizes: [...prev.available_sizes, v],
-                    size_quality_prices: [...prev.size_quality_prices, { size: v, quality: 'Standard', price: 0 }]
-                  }))}
+                  onAdd={(v) => setFormData(prev => {
+                    const qualities = prev.available_qualities.length > 0 ? prev.available_qualities : ['Standard'];
+                    const newEntries = qualities.map(q => ({ size: v, quality: q, price: parseFloat(prev.price) || 0 }));
+                    return {
+                      ...prev,
+                      available_sizes: [...prev.available_sizes, v],
+                      size_quality_prices: [...prev.size_quality_prices, ...newEntries]
+                    };
+                  })}
                 />
               </div>
 
