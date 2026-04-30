@@ -6,6 +6,8 @@ from datetime import datetime
 
 import resend
 
+from database import db
+
 logger = logging.getLogger(__name__)
 
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')

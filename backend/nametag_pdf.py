@@ -2,7 +2,10 @@
 Nametag PDF Generator — v2
 Renders nametag stickers using actual lucide-react SVG icon paths.
 """
-import json, math, os, re
+import json
+import math
+import os
+import re
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor, white, black
@@ -159,11 +162,9 @@ def _arc_to_bezier(cx, cy, rx, ry, start_angle, delta_angle):
     alpha = delta_angle / 2.0
     cos_a = math.cos(alpha)
     sin_a = math.sin(alpha)
-    if abs(cos_a) < 1e-10:
+    if abs(cos_a) < 1e-10 or abs(sin_a) < 1e-10:
         return []
-    cot_a = cos_a / sin_a
-    k = (4.0 - cos_a) / 3.0 if abs(cos_a) > 1e-10 else 1.0
-    
+
     p1x = cx + rx * math.cos(start_angle)
     p1y = cy + ry * math.sin(start_angle)
     p4x = cx + rx * math.cos(start_angle + delta_angle)
@@ -468,7 +469,6 @@ def generate_nametag_pdf(customization: dict, output_path: str):
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     c_pdf = canvas.Canvas(output_path, pagesize=A4)
 
-    total_stickers = COLS * ROWS * 2  # 2 pages
     sticker_count = 0
 
     for page in range(2):

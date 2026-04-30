@@ -445,12 +445,11 @@ const AdminSettings = () => {
         <div className="mb-5">
           <label className="block text-sm font-medium text-slate-700 mb-2">Storlekar</label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {printSizes.map((s, i) => (
-              <span key={i} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
+            {printSizes.map((s) => (
+              <span key={`size-${s}`} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
                 {s}
                 <button onClick={() => {
-                  const newSizes = printSizes.filter((_, idx) => idx !== i);
-                  setPrintSizes(newSizes);
+                  setPrintSizes(printSizes.filter(x => x !== s));
                   setPrintPrices(printPrices.filter(p => p.size !== s));
                 }} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
               </span>
@@ -471,12 +470,11 @@ const AdminSettings = () => {
         <div className="mb-5">
           <label className="block text-sm font-medium text-slate-700 mb-2">Kvalitetsnivåer</label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {printQualities.map((q, i) => (
-              <span key={i} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
+            {printQualities.map((q) => (
+              <span key={`quality-${q}`} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
                 {q}
                 <button onClick={() => {
-                  const newQuals = printQualities.filter((_, idx) => idx !== i);
-                  setPrintQualities(newQuals);
+                  setPrintQualities(printQualities.filter(x => x !== q));
                   setPrintPrices(printPrices.filter(p => p.quality !== q));
                 }} className="ml-1 text-red-400 hover:text-red-600">&times;</button>
               </span>

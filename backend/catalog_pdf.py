@@ -333,7 +333,6 @@ def _draw_text_page(c, page, theme):
 
 # ─── Back Cover ─────────────────────────────────────────
 def _draw_backcover(c, page, theme, company_logo):
-    color = _hex(theme.get("primaryColor", "#2a9d8f"))
     font = theme.get("font", "Helvetica")
 
     c.setFillColor(white)

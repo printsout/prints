@@ -76,7 +76,6 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
     # Layout: image top 60%, calendar bottom 40%
     img_h = PAGE_H * 0.60
     cal_h = PAGE_H * 0.40
-    cal_y_start = cal_h  # bottom of calendar area is 0, top is cal_h
 
     # ── Image area ────────────────────────────────────────────────
     if image_path and os.path.exists(image_path):

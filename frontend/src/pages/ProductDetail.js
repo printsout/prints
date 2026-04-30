@@ -243,7 +243,7 @@ const ProductDetail = () => {
               <div className="flex gap-2 overflow-x-auto pb-1" data-testid="image-thumbnails">
                 {product.images.map((img, idx) => (
                   <button
-                    key={idx}
+                    key={`${img}-${idx}`}
                     onClick={() => { setSelectedImageIndex(idx); setUseColorImage(false); }}
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                       selectedImageIndex === idx ? 'border-[#2a9d8f] ring-1 ring-[#2a9d8f]/30' : 'border-slate-200 hover:border-slate-300'

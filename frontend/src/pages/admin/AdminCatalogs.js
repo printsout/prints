@@ -270,7 +270,7 @@ const AdminCatalogs = () => {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Produktbilder</label>
                     {formData.images.map((img, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2 items-center">
+                      <div key={img || `empty-slot-${idx}`} className="flex gap-2 mb-2 items-center">
                         {img ? (
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 shrink-0 border">
                             <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
