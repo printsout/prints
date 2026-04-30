@@ -548,11 +548,28 @@ async def admin_get_products(admin=Depends(verify_admin_token)):
     products = await db.products.find({}, {"_id": 0}).to_list(100)
     return {"products": products, "total": len(products)}
 
+DEFAULT_LONG_DESCRIPTION = """Material och kvalitet:
+• Professionellt tryck med långvarig hållbarhet
+• Producerat med hög kvalitetsstandard
+
+Leverans:
+• 2-5 arbetsdagar
+• Säkert paketerat
+
+Garantier:
+• 14 dagars öppet köp
+• Nöjd kund-garanti
+
+Skötsel:
+• Hanteras varsamt för bästa hållbarhet"""
+
 @router.post("/products")
 async def create_product(product_data: AdminProductCreate, admin=Depends(verify_admin_token)):
     data = product_data.model_dump()
     if data.get("category"):
         data["category"] = data["category"].strip().lower()
+    if not data.get("long_description"):
+        data["long_description"] = DEFAULT_LONG_DESCRIPTION
     product = Product(**data)
     await db.products.insert_one(product.model_dump())
     await db.admin_logs.insert_one({"action": "create_product", "product_id": product.product_id, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
