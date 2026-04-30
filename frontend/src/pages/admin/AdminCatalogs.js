@@ -29,8 +29,8 @@ const AdminCatalogs = () => {
       setLoading(true);
       try {
         const [ordersRes, itemsRes] = await Promise.all([
-          api.get('/catalog/orders', { headers: getAuthHeaders() }).catch(() => ({ data: [] })),
-          api.get('/admin/catalog-items', { headers: getAuthHeaders() }),
+          api.get('/catalog/orders', { headers: adminAuthHeaders() }).catch(() => ({ data: [] })),
+          api.get('/admin/catalog-items', { headers: adminAuthHeaders() }),
         ]);
         setOrders(ordersRes.data);
         setItems(itemsRes.data);
@@ -41,7 +41,7 @@ const AdminCatalogs = () => {
       }
     };
     fetchData();
-  }, [adminToken]);
+  }, [adminAuthHeaders]);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
