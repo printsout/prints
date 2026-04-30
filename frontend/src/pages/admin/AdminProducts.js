@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase, Upload, Image } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase, Upload, Image, Eye, EyeOff } from 'lucide-react';
 
 // ─── Tag Input Component ──────────────────────────
 function TagInput({ tags, onChange, placeholder, testId }) {
@@ -184,6 +184,16 @@ const AdminProducts = () => {
       fetchProducts();
     } catch (error) {
       toast.error('Kunde inte radera produkt');
+    }
+  };
+
+  const handleToggleVisibility = async (productId, isHidden) => {
+    try {
+      await api.patch(`/admin/products/${productId}/visibility`, {}, { headers: getAuthHeaders() });
+      toast.success(isHidden ? 'Produkten är nu synlig för kunder' : 'Produkten är nu gömd för kunder');
+      fetchProducts();
+    } catch {
+      toast.error('Kunde inte ändra synlighet');
     }
   };
 
@@ -369,8 +379,13 @@ const AdminProducts = () => {
         {filteredProducts.map((product) => (
           <div 
             key={product.product_id}
-            className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group"
+            className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group relative ${product.hidden ? 'opacity-60' : ''}`}
           >
+            {product.hidden && (
+              <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-slate-700 text-white shadow" data-testid={`hidden-badge-${product.product_id}`}>
+                <EyeOff className="w-3 h-3" /> GÖMD
+              </span>
+            )}
             <div className="aspect-square bg-slate-100 relative">
               {product.images?.[0] ? (
                 <img 
@@ -390,13 +405,26 @@ const AdminProducts = () => {
                   variant="secondary" 
                   size="sm"
                   onClick={() => openEditModal(product)}
+                  data-testid={`edit-product-${product.product_id}`}
+                  title="Redigera"
                 >
                   <Edit className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleToggleVisibility(product.product_id, product.hidden)}
+                  data-testid={`toggle-visibility-${product.product_id}`}
+                  title={product.hidden ? 'Visa för kunder' : 'Göm för kunder'}
+                >
+                  {product.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </Button>
                 <Button 
                   variant="destructive" 
                   size="sm"
                   onClick={() => handleDelete(product.product_id)}
+                  data-testid={`delete-product-${product.product_id}`}
+                  title="Radera"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

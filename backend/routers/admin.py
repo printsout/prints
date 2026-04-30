@@ -577,6 +577,23 @@ async def delete_product(product_id: str, admin=Depends(verify_admin_token)):
     await db.admin_logs.insert_one({"action": "delete_product", "product_id": product_id, "admin_email": admin.get("email"), "timestamp": datetime.now(timezone.utc).isoformat()})
     return {"message": "Produkt raderad"}
 
+@router.patch("/products/{product_id}/visibility")
+async def toggle_product_visibility(product_id: str, admin=Depends(verify_admin_token)):
+    """Toggle a product's visibility (hidden/visible) for customers."""
+    product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Produkt hittades inte")
+    new_hidden = not product.get("hidden", False)
+    await db.products.update_one({"product_id": product_id}, {"$set": {"hidden": new_hidden}})
+    await db.admin_logs.insert_one({
+        "action": "toggle_product_visibility",
+        "product_id": product_id,
+        "hidden": new_hidden,
+        "admin_email": admin.get("email"),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"product_id": product_id, "hidden": new_hidden}
+
 
 # ─── Settings ───────────────────────────────────────
 

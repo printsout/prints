@@ -40,6 +40,7 @@ class Product(BaseModel):
     available_sizes: Optional[List[str]] = None
     available_qualities: Optional[List[str]] = None
     size_quality_prices: Optional[List[dict]] = None
+    hidden: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class DiscountCode(BaseModel):
@@ -123,6 +124,7 @@ class AdminProductCreate(BaseModel):
     available_sizes: Optional[List[str]] = None
     available_qualities: Optional[List[str]] = None
     size_quality_prices: Optional[List[dict]] = None
+    hidden: Optional[bool] = False
 
 class AdminOrderUpdate(BaseModel):
     status: Optional[str] = None

@@ -9,7 +9,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 @router.get("/", response_model=List[Product])
 @router.get("", response_model=List[Product])
 async def get_products(category: Optional[str] = None):
-    query = {}
+    query = {"hidden": {"$ne": True}}
     if category:
         query["category"] = {"$regex": f"^{category}$", "$options": "i"}
     products = await db.products.find(query, {"_id": 0}).to_list(100)
@@ -17,10 +17,10 @@ async def get_products(category: Optional[str] = None):
 
 @router.get("/categories")
 async def get_categories():
-    """Build categories dynamically from products in DB."""
-    # Get all distinct categories from products (excluding 'foretag')
+    """Build categories dynamically from non-hidden products in DB."""
+    # Get all distinct categories from visible products (excluding 'foretag')
     products = await db.products.find(
-        {"category": {"$ne": "foretag"}},
+        {"category": {"$ne": "foretag"}, "hidden": {"$ne": True}},
         {"_id": 0, "category": 1}
     ).to_list(1000)
 
@@ -48,6 +48,6 @@ async def get_categories():
 @router.get("/{product_id}", response_model=Product)
 async def get_product(product_id: str):
     product = await db.products.find_one({"product_id": product_id}, {"_id": 0})
-    if not product:
+    if not product or product.get("hidden"):
         raise HTTPException(status_code=404, detail="Produkt hittades inte")
     return Product(**product)
