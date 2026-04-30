@@ -68,6 +68,45 @@ function TagInput({ tags, onChange, placeholder, testId }) {
   );
 }
 
+// ─── Size + Price Add Input ──────────────────────────
+function SizeAddInput({ existingSizes, onAdd }) {
+  const [value, setValue] = useState('');
+  const submit = () => {
+    const v = value.trim();
+    if (v && !existingSizes.includes(v)) {
+      onAdd(v);
+      setValue('');
+    }
+  };
+  return (
+    <div className="flex gap-2 mt-3">
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder="T.ex. 10x15cm, A4, 50x70cm"
+        className="h-9 text-sm flex-1"
+        data-testid="new-prod-size"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={submit}
+        className="h-9 shrink-0"
+        data-testid="add-size-btn"
+      >
+        <Plus className="w-4 h-4 mr-1" /> Lägg till
+      </Button>
+    </div>
+  );
+}
+
 const AdminProducts = () => {
   const { getAuthHeaders } = useAdmin();
   const [products, setProducts] = useState([]);
@@ -565,25 +604,14 @@ const AdminProducts = () => {
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <Input placeholder="T.ex. 10x15cm, A4, 50x70cm" className="h-9 text-sm" data-testid="new-prod-size"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const v = e.target.value.trim();
-                        if (v && !formData.available_sizes.includes(v)) {
-                          setFormData(prev => ({
-                            ...prev,
-                            available_sizes: [...prev.available_sizes, v],
-                            size_quality_prices: [...prev.size_quality_prices, { size: v, quality: 'Standard', price: 0 }]
-                          }));
-                          e.target.value = '';
-                        }
-                      }
-                    }}
-                  />
-                  <span className="text-xs text-slate-400 self-center shrink-0">Tryck Enter</span>
-                </div>
+                <SizeAddInput
+                  existingSizes={formData.available_sizes}
+                  onAdd={(v) => setFormData(prev => ({
+                    ...prev,
+                    available_sizes: [...prev.available_sizes, v],
+                    size_quality_prices: [...prev.size_quality_prices, { size: v, quality: 'Standard', price: 0 }]
+                  }))}
+                />
               </div>
 
               <div>

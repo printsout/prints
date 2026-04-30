@@ -26,8 +26,9 @@ const ProductDetail = () => {
   const [selectedPrintQuality, setSelectedPrintQuality] = useState('');
   const has3D = product && !['nametag', 'calendar'].includes(product.model_type) && !['namnskylt', 'kalender', 'fotoalbum'].includes(product.category);
 
-  // Check if this product has size/quality pricing
-  const isPhotoPrint = product && (product.available_sizes?.length > 0 && product.available_qualities?.length > 0);
+  // Show admin-managed Size = Price selector when sizes are configured
+  const hasAdminSizePricing = product?.available_sizes?.length > 0 && product?.size_quality_prices?.length > 0;
+  const hasQualities = product?.available_qualities?.length > 0;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -51,11 +52,12 @@ const ProductDetail = () => {
 
   // Set default print size/quality from product
   useEffect(() => {
-    if (isPhotoPrint && product) {
+    if (hasAdminSizePricing && product) {
       if (product.available_sizes?.length) setSelectedPrintSize(product.available_sizes[0]);
       if (product.available_qualities?.length) setSelectedPrintQuality(product.available_qualities[0]);
+      else setSelectedPrintQuality('Standard');
     }
-  }, [isPhotoPrint, product]);
+  }, [hasAdminSizePricing, product]);
 
   const resolveImageUrl = (url) => {
     if (!url) return '';
@@ -80,10 +82,11 @@ const ProductDetail = () => {
         size: selectedSize || null
       };
       // Add photo print options if applicable
-      if (isPhotoPrint && selectedPrintSize && selectedPrintQuality) {
-        const priceEntry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && p.quality === selectedPrintQuality);
+      if (hasAdminSizePricing && selectedPrintSize) {
+        const quality = selectedPrintQuality || 'Standard';
+        const priceEntry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && (p.quality || 'Standard') === quality);
         cartItem.print_size = selectedPrintSize;
-        cartItem.print_quality = selectedPrintQuality;
+        cartItem.print_quality = quality;
         if (priceEntry) cartItem.price = priceEntry.price;
       }
       await addToCart(cartItem);
@@ -271,7 +274,14 @@ const ProductDetail = () => {
                 {product.name}
               </h1>
               <p className="text-2xl font-semibold text-primary mt-4" data-testid="product-price">
-                {product.price} kr
+                {(() => {
+                  if (hasAdminSizePricing && selectedPrintSize) {
+                    const quality = selectedPrintQuality || 'Standard';
+                    const entry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && (p.quality || 'Standard') === quality);
+                    if (entry) return `${entry.price} kr`;
+                  }
+                  return `${product.price} kr`;
+                })()}
               </p>
             </div>
 
@@ -327,22 +337,27 @@ const ProductDetail = () => {
             )}
 
             {/* Photo Print Size & Quality selector */}
-            {isPhotoPrint && (
+            {hasAdminSizePricing && (
               <div className="space-y-4 p-4 bg-slate-50 rounded-xl border" data-testid="photo-print-options">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Storlek</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {product.available_sizes.map(size => (
-                      <button key={size} onClick={() => setSelectedPrintSize(size)}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
-                          selectedPrintSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                        }`} data-testid={`print-size-${size}`}>
-                        {size}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {product.available_sizes.map(size => {
+                      const quality = selectedPrintQuality || 'Standard';
+                      const priceEntry = product.size_quality_prices?.find(p => p.size === size && (p.quality || 'Standard') === quality);
+                      return (
+                        <button key={size} onClick={() => setSelectedPrintSize(size)}
+                          className={`flex items-center justify-between py-2 px-3 rounded-lg text-sm font-medium border-2 transition-all ${
+                            selectedPrintSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/10 text-[#2a9d8f]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`} data-testid={`print-size-${size}`}>
+                          <span>{size}</span>
+                          {priceEntry && <span className="text-xs font-semibold">{priceEntry.price} kr</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-                {product.available_qualities?.length > 0 && (
+                {hasQualities && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">Kvalitet</label>
                     <div className="flex flex-wrap gap-2">
@@ -357,11 +372,12 @@ const ProductDetail = () => {
                     </div>
                   </div>
                 )}
-                {selectedPrintSize && selectedPrintQuality && (() => {
-                  const priceEntry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && p.quality === selectedPrintQuality);
+                {selectedPrintSize && (() => {
+                  const quality = selectedPrintQuality || 'Standard';
+                  const priceEntry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && (p.quality || 'Standard') === quality);
                   return priceEntry ? (
                     <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="text-sm text-slate-600">{selectedPrintSize} — {selectedPrintQuality}</span>
+                      <span className="text-sm text-slate-600">{selectedPrintSize}{hasQualities ? ` — ${quality}` : ''}</span>
                       <span className="text-lg font-bold text-[#2a9d8f]">{priceEntry.price} kr</span>
                     </div>
                   ) : null;
