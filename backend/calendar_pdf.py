@@ -213,11 +213,8 @@ def generate_calendar_pdf(year: int, months_data: list, output_path: str, layout
             month_data = months_data[i]
             img_url = month_data.get("image_url")
             if img_url:
-                # Extract filename from URL path like /api/uploads/abc.jpg
-                filename = img_url.split("/")[-1]
-                candidate = UPLOADS_DIR / filename
-                if candidate.exists():
-                    image_path = str(candidate)
+                from storage import fetch_to_tempfile
+                image_path = fetch_to_tempfile(img_url, suffix=".jpg")
 
         _draw_month_page(c, year, i, image_path, month_data, layout)
 

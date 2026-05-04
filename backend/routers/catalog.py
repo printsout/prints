@@ -5,6 +5,7 @@ from typing import Optional
 from database import db
 from datetime import datetime, timezone
 from config import UPLOADS_DIR
+from storage import store_file, fetch_bytes
 import uuid
 
 router = APIRouter(prefix="/catalog", tags=["Catalog"])
@@ -136,14 +137,12 @@ async def download_catalog_pdf():
         img_url = images[0] if images else item.get("image_url", "")
         if img_url:
             try:
-                # Resolve local uploads
-                if "/api/uploads/" in img_url:
-                    filename = img_url.split("/")[-1]
-                    local_path = UPLOADS_DIR / filename
-                    if local_path.exists():
-                        c.drawImage(ImageReader(str(local_path)),
-                                    x + 2 * mm, y - 110 * mm, col_w - 10 * mm, 45 * mm,
-                                    preserveAspectRatio=True, anchor="nw", mask="auto")
+                from storage import fetch_image_reader
+                reader = fetch_image_reader(img_url)
+                if reader is not None:
+                    c.drawImage(reader,
+                                x + 2 * mm, y - 110 * mm, col_w - 10 * mm, 45 * mm,
+                                preserveAspectRatio=True, anchor="nw", mask="auto")
             except Exception:
                 pass
 
@@ -220,9 +219,7 @@ async def order_print_catalog(
         raise HTTPException(status_code=400, detail="Max filstorlek: 50MB")
 
     filename = f"catalog_{uuid.uuid4()}.pdf"
-    filepath = UPLOADS_DIR / filename
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    pdf_url = store_file(filename, contents, "application/pdf")
 
     order_data = {
         "order_id": str(uuid.uuid4()),
@@ -237,7 +234,7 @@ async def order_print_catalog(
         "quantity": quantity,
         "message": message,
         "pdf_filename": filename,
-        "pdf_url": f"/api/uploads/{filename}",
+        "pdf_url": pdf_url,
         "original_filename": pdf_file.filename,
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -255,10 +252,8 @@ async def _save_upload(file: UploadFile, prefix: str, max_mb: int) -> tuple:
         raise HTTPException(status_code=400, detail=f"Max filstorlek: {max_mb}MB")
     ext = file.filename.rsplit('.', 1)[-1] if '.' in (file.filename or '') else 'bin'
     filename = f"{prefix}_{uuid.uuid4()}.{ext}"
-    filepath = UPLOADS_DIR / filename
-    with open(filepath, "wb") as f:
-        f.write(contents)
-    return f"/api/uploads/{filename}", file.filename
+    url = store_file(filename, contents, file.content_type or "application/octet-stream")
+    return url, file.filename
 
 
 @router.post("/order/businesscard")
@@ -346,11 +341,10 @@ async def preview_businesscard_pdf(data: dict):
     logo_url = data.get("logo_url", "")
     font_sizes = data.get("font_sizes")  # optional per-card font sizes from editor
 
-    # Resolve logo from uploads
+    # Validate logo is reachable (local or R2)
     if logo_url:
-        filename = logo_url.split("/")[-1]
-        candidate = UPLOADS_DIR / filename
-        if not (candidate.exists() and candidate.stat().st_size > 100):
+        logo_bytes = fetch_bytes(logo_url)
+        if not logo_bytes or len(logo_bytes) < 100:
             logo_url = ""
 
     customization = {

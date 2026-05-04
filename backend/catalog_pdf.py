@@ -22,28 +22,9 @@ def _hex(color_str):
 
 
 def _fetch_image(url):
-    """Fetch image from local uploads or URL."""
-    if not url:
-        return None
-    try:
-        if url.startswith("/api/uploads/") or url.startswith("/uploads/"):
-            filename = url.split("/")[-1]
-            local = UPLOADS_DIR / filename
-            if local.exists():
-                return ImageReader(str(local))
-        if url.startswith("http"):
-            resp = requests.get(url, timeout=10)
-            resp.raise_for_status()
-            return ImageReader(BytesIO(resp.content))
-        if url.startswith("data:"):
-            import base64
-            header, data = url.split(",", 1)
-            return ImageReader(BytesIO(base64.b64decode(data)))
-        if os.path.exists(url):
-            return ImageReader(url)
-    except Exception:
-        pass
-    return None
+    """Fetch image from local uploads, R2, URL, data-uri or path."""
+    from storage import fetch_image_reader
+    return fetch_image_reader(url)
 
 
 def _draw_image_adjusted(c, img, x, y, w, h, settings=None):

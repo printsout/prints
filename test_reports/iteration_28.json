@@ -1,0 +1,47 @@
+{
+  "summary": "R2 storage migration verified — uploads land in Cloudflare R2 bucket (printsout-uploads), NOT on local disk. GET /api/uploads/{filename} correctly proxies binary content from R2 with proper content-type. PDFs (calendar, business card preview, catalog order print, businesscard PDF order) all integrate with R2 via storage helpers. 12/12 backend tests passing after fixing one variable-shadowing bug in /api/catalog/businesscard/preview-pdf.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_r2_storage.py",
+    "/app/test_reports/pytest/pytest_r2_storage.xml"
+  ],
+  "action_items": [
+    "Validate the variable-rename fix in routers/catalog.py preview-pdf (already applied by test agent — see RCA below).",
+    "Optional: schedule periodic GC of orphaned R2 objects from cancelled/abandoned orders (out of scope for this migration)."
+  ],
+  "critical_code_review_comments": [
+    "FIXED by test agent: routers/catalog.py preview_businesscard_pdf shadowed the request-body parameter `data: dict` with `data = fetch_bytes(logo_url)` (bytes), then later called `data.get('back_style', ...)` causing AttributeError 500 whenever a logo_url was provided. Renamed local var to `logo_bytes`.",
+    "storage.fetch_bytes already handles legacy /api/uploads/<file> paths with R2 fallback, /uploads/, http(s) URLs, data URLs, absolute paths and bare filenames — coverage looks complete.",
+    "store_file falls back silently to local disk on R2 failure (logs error). Acceptable for resilience but consider surfacing a warning header or telemetry so stale local writes are not missed in prod.",
+    "Cache-Control 'public, max-age=31536000, immutable' is correctly applied both at PUT (R2 metadata) and at GET proxy response.",
+    "uploads.py GET /uploads/{filename} uses ClientError catch only; will not redirect to R2 public URL because R2_PUBLIC_URL is empty — proxy path is the only route, which is the intended behaviour for private bucket."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_r2_storage.py (new)",
+    "/app/backend/routers/catalog.py (fixed `data` shadow bug in preview_businesscard_pdf)"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "not tested (backend-only request)"
+  },
+  "test_credentials": "Not required — endpoints are public.",
+  "seed_data_creation": "Each test uploads ephemeral files (PIL-generated JPG/PNG, minimal valid PDF) and cleans up via boto3 delete_object after assertions. Catalog orders inserted in catalog_orders collection use TEST_R2 prefix and are not cleaned (read-mostly admin collection).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "R2 credentials live in /app/backend/.env. test_r2_storage.py uses python-dotenv + boto3 head_object/delete_object directly against bucket printsout-uploads to verify both presence in R2 AND absence in /app/backend/uploads. Tests assert binary byte-equality between uploaded source and proxied GET response. Re-run: `pytest /app/backend/tests/test_r2_storage.py -v`.",
+  "rca of the issue": {
+    "bug": "POST /api/catalog/businesscard/preview-pdf returned 500 when logo_url was a valid R2/local URL.",
+    "root_cause": "FastAPI handler signature `async def preview_businesscard_pdf(data: dict)` used `data` for the request body. Inside the function `data = fetch_bytes(logo_url)` reassigned the name to bytes, but later code still read `data.get('back_style', ...)` etc., raising AttributeError: 'bytes' object has no attribute 'get'.",
+    "reproduction": "1. Upload PNG via /api/upload (returns /api/uploads/<uuid>.png in R2). 2. POST /api/catalog/businesscard/preview-pdf with body {logo_url, card_details, ...}. 3. Server returns 500 (traceback shows AttributeError on data.get).",
+    "fix": "Renamed local variable in catalog.py from `data` to `logo_bytes` so the request dict is preserved for subsequent .get() calls. Test now passes.",
+    "verification": "tests/test_r2_storage.py::TestBusinessCardPreview::test_preview_pdf_with_r2_logo PASSED after the fix; PDF >2KB returned with correct content-type."
+  }
+}

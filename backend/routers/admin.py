@@ -436,11 +436,14 @@ async def download_businesscard_pdf(order_id: str, item_index: int = 0, admin=De
 
     # If source is "pdf", return the user's uploaded PDF directly
     if customization.get("source") == "pdf" and customization.get("pdf_url"):
-        pdf_filename = customization["pdf_url"].split("/")[-1]
-        pdf_path = UPLOADS_DIR / pdf_filename
-        if pdf_path.exists():
+        pdf_url = customization["pdf_url"]
+        from storage import fetch_bytes
+        from fastapi.responses import Response
+        data = fetch_bytes(pdf_url)
+        if data:
             orig = customization.get("original_filename") or "visitkort_design.pdf"
-            return FileResponse(str(pdf_path), media_type="application/pdf", filename=orig, headers={"Content-Disposition": f'attachment; filename="{orig}"'})
+            return Response(content=data, media_type="application/pdf",
+                            headers={"Content-Disposition": f'attachment; filename="{orig}"'})
         raise HTTPException(status_code=404, detail="Uppladdad PDF-fil hittades inte")
 
     output_dir = Path("/tmp/businesscard_pdfs")

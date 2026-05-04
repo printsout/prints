@@ -435,10 +435,9 @@ def generate_businesscard_pdf(customization: dict, output_path: str, font_settin
     logo_path = None
     logo_url = customization.get("logo_url", "")
     if logo_url:
-        filename = logo_url.split("/")[-1]
-        candidate = UPLOADS_DIR / filename
-        if candidate.exists() and candidate.stat().st_size > 100:
-            logo_path = str(candidate)
+        from storage import fetch_to_tempfile
+        ext = ".png" if logo_url.lower().endswith(".png") else ".jpg"
+        logo_path = fetch_to_tempfile(logo_url, suffix=ext)
 
     c_pdf = canvas.Canvas(output_path, pagesize=A4)
 
