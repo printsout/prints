@@ -12,7 +12,7 @@ API = f"{BASE_URL}/api"
 
 def _register_user():
     email = f"test_sd_{uuid.uuid4().hex[:10]}@example.com"
-    password = "Testing123!"
+    password = os.environ.get("TEST_USER_PASSWORD", f"T_{uuid.uuid4().hex[:12]}!Aa1")
     r = requests.post(f"{API}/auth/register", json={
         "email": email, "password": password, "name": "Saved Design Tester"
     }, timeout=30)
