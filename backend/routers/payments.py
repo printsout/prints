@@ -47,6 +47,8 @@ async def _create_stripe_session(request: Request, order: Order, checkout_data: 
     method = checkout_data.payment_method
     if method == "klarna":
         payment_methods = ["klarna"]
+    elif method == "swish":
+        payment_methods = ["swish"]
     else:
         payment_methods = ["card"]
 

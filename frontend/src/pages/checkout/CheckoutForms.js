@@ -87,13 +87,16 @@ export const PaymentMethodSelector = ({ paymentMethod, setPaymentMethod }) => (
         <span className="text-xs font-bold text-white bg-[#FFB3C7] rounded px-1.5 py-0.5">Klarna</span>
       </label>
 
-      <label className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all opacity-60 border-slate-200" data-testid="payment-swish">
-        <input type="radio" name="payment" value="swish" disabled className="text-primary" />
+      <label
+        className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'swish' ? 'border-[#1F8FFF] bg-[#1F8FFF]/5' : 'border-slate-200 hover:border-slate-300'}`}
+        data-testid="payment-swish"
+      >
+        <input type="radio" name="payment" value="swish" checked={paymentMethod === 'swish'} onChange={(e) => setPaymentMethod(e.target.value)} className="text-[#1F8FFF]" />
         <div className="flex-1">
           <p className="font-medium">Swish</p>
-          <p className="text-sm text-slate-500">Kommer snart</p>
+          <p className="text-sm text-slate-500">Betala direkt med mobil-BankID</p>
         </div>
-        <span className="text-xs bg-slate-100 px-2 py-1 rounded">Snart</span>
+        <span className="text-xs font-bold text-white bg-[#1F8FFF] rounded px-1.5 py-0.5">Swish</span>
       </label>
     </div>
   </div>
