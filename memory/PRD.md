@@ -211,7 +211,7 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [ ] Dela ProductPreview3D (274 rader) → 3D-hooks
 - [ ] Förbättra e-postmallar med Jinja2
 - [ ] Fixa Unsplash ORB-bildproblem (ersätt med lokala bilder)
-- [ ] Molnlagring för uppladdade filer (bilder/PDF försvinner vid omstart)
+- [x] ~~Molnlagring för uppladdade filer~~ (2026-05-04: Cloudflare R2 — se nedan)
 
 ## Kalender PDF-nedladdning (2026-04-09) - NYTT
 - [x] Ny backend `calendar_pdf.py` — genererar 12-sidig kalender-PDF med bilder + kalenderrutnät
@@ -240,3 +240,15 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] **Storlek = Pris (per produkt)** (2026-04-30): Admin-redigeraren har en enkel lista (Storlek + Pris-input + X) med synlig "+ Lägg till"-knapp för att lägga till valfritt antal storlekar per produkt. Kundens produktsida (`ProductDetail.js`) visar nu storlekarna med priser i ett rutnät, och produktpriset uppdateras dynamiskt vid val av storlek. Kvalitetsfält är nu valfria — om admin bara satt storlekar fungerar flödet ändå (defaultkvalitet = "Standard").
 - [x] **Storlek = Pris universell + auto-migration** (2026-04-30): Funktionen är nu helt universell — fungerar för alla produkter (Premium Poster, Familjekalender, Skrivbordskalender, iPhone Skal, Årskalender, Personligt Fotoalbum, Tygkassar, framtida produkter). När admin öppnar en befintlig produkt med gamla storlekar kopieras de automatiskt till "Storlekar & Priser"-listan med produktens grundpris som startvärde. Den dubbla "Storlekar"-tagginputen är borttagen från admin. Den gamla storleksdropdownen på kundsidan döljs när nya storlekar finns. `selectedPrintSize` skickas vidare till kalender/fotoalbum/namnskylt-editorn vid "Designa"-flödet.
 - [x] **Kvaliteter (papper/material) per storlek** (2026-04-30): Admin kan lägga till valfritt antal kvaliteter (t.ex. Standard, Premium, Canvas) via en separat tagginput. Varje storlek får automatiskt ett pris per kvalitet. När en ny kvalitet läggs till får alla befintliga storlekar automatiskt en prisrad för den. När en kvalitet tas bort raderas dess prisrader från alla storlekar. På kundsidan visas både storlek- och kvalitetsväljaren — priserna i storleksrutnätet uppdateras dynamiskt baserat på vald kvalitet, och totalpriset reflekterar storlek×kvalitet-kombinationen.
+
+
+## Cloudflare R2 Persistent Storage (2026-05-04) - NYTT
+- [x] **Central `storage.py`-modul** med `store_file()`, `fetch_bytes()`, `fetch_image_reader()`, `fetch_to_tempfile()`. Använder boto3 mot R2 S3-kompatibel API.
+- [x] **POST /api/upload + /api/upload-base64** lagrar filer i R2-bucket `printsout-uploads` istället för lokal disk. Returnerar `/api/uploads/<uuid>` (proxy via backend när R2_PUBLIC_URL är tom).
+- [x] **GET /api/uploads/{filename}** hämtar binärt innehåll från R2 om filen inte finns lokalt — bakåtkompatibel med gamla URL:er.
+- [x] **PDF-generatorer uppdaterade** (calendar_pdf, businesscard_pdf, catalog_pdf, catalog/download-pdf) hämtar bilder via `storage.fetch_*` så R2-URL:er fungerar i alla PDF-export.
+- [x] **Katalogbeställningar** (B2B PDF-uppladdning, visitkortslogo, designeditor) lagrar uppladdade filer i R2.
+- [x] **Lokal fallback**: Om R2 saknas eller misslyckas faller systemet tillbaka till lokal disk. Säkerställer dev-miljön fungerar utan credentials.
+- [x] **Testat**: 12/12 backend-tester passerar (`/app/backend/tests/test_r2_storage.py`).
+- [x] **Bug fix**: variabelskuggning i `preview_businesscard_pdf` — `data: dict` (request body) skuggades av `data = fetch_bytes(...)`. Renamead till `logo_bytes`.
+- [ ] **DEPLOYMENT**: Lägg till följande env-variabler i Railway production: `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`, (valfritt: `R2_PUBLIC_URL` för CDN-URL).
