@@ -252,3 +252,22 @@ E-handelsplattform "Printsout" för anpassade fototryck på produkter (muggar, t
 - [x] **Testat**: 12/12 backend-tester passerar (`/app/backend/tests/test_r2_storage.py`).
 - [x] **Bug fix**: variabelskuggning i `preview_businesscard_pdf` — `data: dict` (request body) skuggades av `data = fetch_bytes(...)`. Renamead till `logo_bytes`.
 - [ ] **DEPLOYMENT**: Lägg till följande env-variabler i Railway production: `R2_ENDPOINT`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`, `R2_BUCKET`, (valfritt: `R2_PUBLIC_URL` för CDN-URL).
+
+## SEO + Favicon (2026-05-04) - NYTT
+- [x] **Komplett SEO-paket** i `index.html`: lang='sv', sv-SE locale, beskrivande svensk meta-description + keywords, canonical URL, theme-color #2a9d8f.
+- [x] **Open Graph + Twitter Card**: og:title, og:description, og:image (1200x630 genererad), og:type, twitter:card=summary_large_image — länkar visas snyggt på Facebook/LinkedIn/WhatsApp/Twitter.
+- [x] **Schema.org JSON-LD** (OnlineStore) för bättre Google-visning.
+- [x] **Favicons**: favicon.ico (multi-size 16/32/48), favicon-16x16.png, favicon-32x32.png, apple-touch-icon.png (180x180), logo192.png, logo512.png genererade från logo.jpg.
+- [x] **PWA manifest.json** med icons, theme_color, lang=sv.
+- [x] **robots.txt** + **sitemap.xml** med 10 sidor, för Google Search Console.
+
+## Spara mina designer (2026-05-04) - NYTT
+- [x] **Ny backend-modell** `SavedDesign` (flexibel `customization: Dict[str, Any]`) i `models.py`.
+- [x] **Nytt API** `/api/saved-designs` — POST/GET/PUT/DELETE, alla auth-skyddade, ägarskapscope. Mongo `_id` exkluderas på alla reads.
+- [x] **Återanvändbar komponent** `SaveDesignButton.js` med inline-dialog för namnsättning. Hanterar både CREATE och UPDATE (när `designId` skickas in).
+- [x] **Inpluggat i alla 5 editorer**: BusinessCardEditor (via /foretag), CalendarEditor, NameTagEditor, PhotoAlbumEditor (via AlbumSidebar saveDesignSlot prop), DesignEditor.
+- [x] **Hydrate från sparad design**: varje editor lyssnar på `?design={id}`-URL-param, hämtar via API och förfyller staten.
+- [x] **Mina designer-flik** i `/konto`: kort med editor-typ-badge, datum, pris, **Beställ igen** (lägger i varukorg), **Redigera** (öppnar editor med ?design=...), **Ta bort**.
+- [x] **Bara inloggade kunder**: anonym klick på "Spara design" visar toast "Logga in för att spara designer" istället för att öppna dialogen.
+- [x] **Testat**: 26/26 backend-tester passerar (`/app/backend/tests/test_saved_designs.py`) inkl. cross-user isolation. Frontend Mina designer-flik + 4 editor-knappar verifierade.
+

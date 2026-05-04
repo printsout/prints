@@ -19,7 +19,7 @@ const DesignEditor = () => {
   const [searchParams] = useSearchParams();
   const savedDesignId = searchParams.get('design');
   const { addToCart } = useCart();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const canvasRef = useRef(null);
 
   const [product, setProduct] = useState(null);
@@ -210,15 +210,13 @@ const DesignEditor = () => {
             </button>
             <h1 className="font-semibold text-slate-900">Designa: {product?.name}</h1>
             <div className="flex items-center gap-2">
-              {user && (
-                <SaveDesignButton
-                  buildPayload={buildSavedDesignPayload}
-                  defaultName={`${product?.name || 'Design'}`}
-                  designId={savedDesignId}
-                  variant="outline"
-                  size="sm"
-                />
-              )}
+              <SaveDesignButton
+                buildPayload={buildSavedDesignPayload}
+                defaultName={`${product?.name || 'Design'}`}
+                designId={savedDesignId}
+                variant="outline"
+                size="sm"
+              />
               <Button size="sm" className="btn-primary text-sm py-2" onClick={handleAddToCart} data-testid="add-to-cart-design">
                 <ShoppingCart className="w-4 h-4 mr-1" /><span className="hidden sm:inline">Lägg i varukorg</span>
               </Button>
