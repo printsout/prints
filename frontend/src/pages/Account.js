@@ -1,16 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Package, Palette, LogOut } from 'lucide-react';
+import { User, Package, Palette, LogOut, ShoppingCart, Pencil, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+
+const EDITOR_LABEL = {
+  businesscard: 'Visitkort',
+  calendar: 'Kalender',
+  nametag: 'Namnskylt',
+  photoalbum: 'Fotoalbum',
+  design: 'Design',
+};
 
 const Account = () => {
   const navigate = useNavigate();
   const { user, token, logout, loading: authLoading } = useAuth();
-  
+  const { addToCart } = useCart();
+
   const [orders, setOrders] = useState([]);
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +28,8 @@ const Account = () => {
   const fetchData = useCallback(async () => {
     try {
       const [ordersRes, designsRes] = await Promise.all([
-        api.get('/orders/my-orders', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        api.get('/designs/my-designs', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        api.get('/orders/my-orders', { headers: { Authorization: `Bearer ${token}` } }),
+        api.get('/saved-designs', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setOrders(ordersRes.data);
       setDesigns(designsRes.data);
@@ -39,10 +45,7 @@ const Account = () => {
       navigate('/logga-in');
       return;
     }
-
-    if (user && token) {
-      fetchData();
-    }
+    if (user && token) fetchData();
   }, [user, token, authLoading, navigate, fetchData]);
 
   const handleLogout = () => {
@@ -53,53 +56,70 @@ const Account = () => {
 
   const handleDeleteDesign = async (designId) => {
     try {
-      await api.delete(`/designs/${designId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      await api.delete(`/saved-designs/${designId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setDesigns(designs.filter(d => d.design_id !== designId));
+      setDesigns((prev) => prev.filter((d) => d.design_id !== designId));
       toast.success('Design borttagen');
     } catch (error) {
       toast.error('Kunde inte ta bort designen');
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('sv-SE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const handleReorder = async (design) => {
+    try {
+      await addToCart({
+        product_id: design.product_id || `${design.editor_type}-saved`,
+        name: design.product_name || design.name,
+        price: design.price || 0,
+        quantity: design.quantity || 1,
+        image: design.image || design.design_preview,
+        design_preview: design.design_preview,
+        color: design.color,
+        size: design.size,
+        print_size: design.print_size,
+        print_quality: design.print_quality,
+        customization: design.customization,
+      });
+      toast.success('Tillagd i varukorgen');
+      navigate('/varukorg');
+    } catch (err) {
+      toast.error('Kunde inte lägga i varukorgen');
+    }
   };
+
+  const handleEditDesign = (design) => {
+    if (design.editor_type === 'businesscard') {
+      navigate(`/foretag?design=${design.design_id}`);
+      return;
+    }
+    const base = {
+      calendar: '/kalender',
+      nametag: '/namnskylt',
+      photoalbum: '/fotoalbum',
+      design: '/design',
+    }[design.editor_type];
+    if (!base || !design.product_id) {
+      toast.error('Kan inte öppna editorn för denna design');
+      return;
+    }
+    navigate(`${base}/${design.product_id}?design=${design.design_id}`);
+  };
+
+  const formatDate = (s) =>
+    new Date(s).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-700';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'shipped':
-        return 'bg-blue-100 text-blue-700';
-      case 'delivered':
-        return 'bg-green-100 text-green-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
-    }
+    const map = {
+      confirmed: 'bg-green-100 text-green-700',
+      pending: 'bg-yellow-100 text-yellow-700',
+      shipped: 'bg-blue-100 text-blue-700',
+      delivered: 'bg-green-100 text-green-700',
+    };
+    return map[status] || 'bg-slate-100 text-slate-700';
   };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Bekräftad';
-      case 'pending':
-        return 'Väntar';
-      case 'shipped':
-        return 'Skickad';
-      case 'delivered':
-        return 'Levererad';
-      default:
-        return status;
-    }
-  };
+  const getStatusText = (status) =>
+    ({ confirmed: 'Bekräftad', pending: 'Väntar', shipped: 'Skickad', delivered: 'Levererad' }[status] || status);
 
   if (authLoading || loading) {
     return (
@@ -112,7 +132,6 @@ const Account = () => {
   return (
     <div className="min-h-screen bg-slate-50" data-testid="account-page">
       <div className="container-main py-12">
-        {/* Header */}
         <div className="bg-white rounded-xl p-6 shadow-soft mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -124,55 +143,47 @@ const Account = () => {
                 <p className="text-slate-500">{user?.email}</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              data-testid="logout-button"
-            >
+            <Button variant="outline" onClick={handleLogout} data-testid="logout-button">
               <LogOut className="w-4 h-4 mr-2" />
               Logga ut
             </Button>
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList className="bg-white shadow-soft rounded-xl p-1">
-            <TabsTrigger value="orders" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-orders">
+            <TabsTrigger
+              value="orders"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white"
+              data-testid="tab-orders"
+            >
               <Package className="w-4 h-4 mr-2" />
               Beställningar
             </TabsTrigger>
-            <TabsTrigger value="designs" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white" data-testid="tab-designs">
+            <TabsTrigger
+              value="designs"
+              className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white"
+              data-testid="tab-designs"
+            >
               <Palette className="w-4 h-4 mr-2" />
               Mina designer
             </TabsTrigger>
           </TabsList>
 
-          {/* Orders Tab */}
           <TabsContent value="orders">
             {orders.length === 0 ? (
               <div className="bg-white rounded-xl p-12 text-center shadow-soft">
                 <Package className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                  Inga beställningar än
-                </h3>
-                <p className="text-slate-500 mb-6">
-                  När du gör din första beställning kommer den att visas här
-                </p>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Inga beställningar än</h3>
+                <p className="text-slate-500 mb-6">När du gör din första beställning kommer den att visas här</p>
                 <Link to="/produkter">
-                  <Button className="btn-primary">
-                    Börja handla
-                  </Button>
+                  <Button className="btn-primary">Börja handla</Button>
                 </Link>
               </div>
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => (
-                  <div 
-                    key={order.order_id}
-                    className="bg-white rounded-xl p-6 shadow-soft"
-                    data-testid={`order-${order.order_id}`}
-                  >
+                  <div key={order.order_id} className="bg-white rounded-xl p-6 shadow-soft" data-testid={`order-${order.order_id}`}>
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <p className="text-sm text-slate-500">Order #{order.order_id.slice(0, 8)}</p>
@@ -182,28 +193,20 @@ const Account = () => {
                         {getStatusText(order.status)}
                       </span>
                     </div>
-                    
                     <div className="space-y-3">
                       {order.items?.map((item, idx) => (
                         <div key={idx} className="flex items-center gap-4">
                           {item.design_preview && (
-                            <img 
-                              src={item.design_preview}
-                              alt={item.product_name}
-                              className="w-12 h-12 rounded object-cover"
-                            />
+                            <img src={item.design_preview} alt={item.product_name} className="w-12 h-12 rounded object-cover" />
                           )}
                           <div className="flex-1">
                             <p className="font-medium text-slate-800">{item.product_name}</p>
-                            <p className="text-sm text-slate-500">
-                              {item.quantity} st × {item.price} kr
-                            </p>
+                            <p className="text-sm text-slate-500">{item.quantity} st × {item.price} kr</p>
                           </div>
                           <p className="font-medium">{(item.quantity * item.price).toFixed(0)} kr</p>
                         </div>
                       ))}
                     </div>
-                    
                     <div className="border-t mt-4 pt-4 flex items-center justify-between">
                       <span className="text-slate-600">Totalt</span>
                       <span className="text-lg font-semibold text-primary">{order.total_amount.toFixed(2)} kr</span>
@@ -214,62 +217,77 @@ const Account = () => {
             )}
           </TabsContent>
 
-          {/* Designs Tab */}
           <TabsContent value="designs">
             {designs.length === 0 ? (
               <div className="bg-white rounded-xl p-12 text-center shadow-soft">
                 <Palette className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                  Inga sparade designer
-                </h3>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">Inga sparade designer</h3>
                 <p className="text-slate-500 mb-6">
-                  Dina sparade designer kommer att visas här
+                  Spara dina favoritdesigner från valfri editor med "Spara design"-knappen för att hitta dem här.
                 </p>
                 <Link to="/produkter">
-                  <Button className="btn-primary">
-                    Skapa en design
-                  </Button>
+                  <Button className="btn-primary">Skapa en design</Button>
                 </Link>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {designs.map((design) => (
-                  <div 
+                  <div
                     key={design.design_id}
-                    className="bg-white rounded-xl overflow-hidden shadow-soft"
+                    className="bg-white rounded-xl overflow-hidden shadow-soft flex flex-col"
                     data-testid={`design-${design.design_id}`}
                   >
-                    <div className="aspect-square bg-slate-100">
-                      {design.preview_image ? (
-                        <img 
-                          src={design.preview_image}
-                          alt={design.name}
-                          className="w-full h-full object-cover"
-                        />
+                    <div className="aspect-square bg-slate-100 relative">
+                      {design.design_preview || design.image ? (
+                        <img src={design.design_preview || design.image} alt={design.name} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Palette className="w-12 h-12 text-slate-300" />
                         </div>
                       )}
+                      <span className="absolute top-2 right-2 text-xs font-medium bg-white/90 backdrop-blur px-2 py-1 rounded-full text-slate-700">
+                        {EDITOR_LABEL[design.editor_type] || design.editor_type}
+                      </span>
                     </div>
-                    <div className="p-4">
+                    <div className="p-4 flex-1 flex flex-col">
                       <h3 className="font-semibold text-slate-800 truncate">{design.name}</h3>
-                      <p className="text-sm text-slate-500">{formatDate(design.created_at)}</p>
-                      <div className="flex gap-2 mt-4">
-                        <Link to={`/design/${design.product_id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            Redigera
-                          </Button>
-                        </Link>
-                        <Button 
-                          variant="ghost" 
+                      <p className="text-sm text-slate-500">
+                        {formatDate(design.updated_at || design.created_at)}
+                      </p>
+                      {design.price > 0 && (
+                        <p className="text-sm font-medium text-primary mt-1">{design.price.toFixed(0)} kr</p>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        <Button
                           size="sm"
-                          onClick={() => handleDeleteDesign(design.design_id)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="w-full bg-primary text-white hover:bg-primary/90"
+                          onClick={() => handleReorder(design)}
+                          data-testid={`reorder-design-${design.design_id}`}
                         >
-                          Ta bort
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          Beställ
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleEditDesign(design)}
+                          data-testid={`edit-design-${design.design_id}`}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Redigera
                         </Button>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDesign(design.design_id)}
+                        className="mt-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        data-testid={`delete-design-${design.design_id}`}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Ta bort
+                      </Button>
                     </div>
                   </div>
                 ))}

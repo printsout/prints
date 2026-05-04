@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /konto
+Disallow: /konto/
+Disallow: /kassa
+Disallow: /varukorg
+
+Sitemap: https://www.printsout.se/sitemap.xml

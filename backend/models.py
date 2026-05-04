@@ -95,6 +95,44 @@ class Design(BaseModel):
     preview_image: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+
+class SavedDesign(BaseModel):
+    """Generic saved design — works for any editor (BusinessCard, Calendar, NameTag, PhotoAlbum, DesignEditor)."""
+    design_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    name: str = "Min design"
+    editor_type: str  # "businesscard" | "calendar" | "nametag" | "photoalbum" | "design"
+    product_id: Optional[str] = None
+    product_name: Optional[str] = None
+    price: float = 0.0
+    quantity: int = 1
+    print_size: Optional[str] = None
+    print_quality: Optional[str] = None
+    color: Optional[str] = None
+    size: Optional[str] = None
+    image: Optional[str] = None  # product thumbnail
+    design_preview: Optional[str] = None  # rendered preview
+    customization: Dict[str, Any] = Field(default_factory=dict)
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class SavedDesignCreate(BaseModel):
+    """Payload for POST /api/saved-designs — user_id is filled from auth token."""
+    name: str = "Min design"
+    editor_type: str
+    product_id: Optional[str] = None
+    product_name: Optional[str] = None
+    price: float = 0.0
+    quantity: int = 1
+    print_size: Optional[str] = None
+    print_quality: Optional[str] = None
+    color: Optional[str] = None
+    size: Optional[str] = None
+    image: Optional[str] = None
+    design_preview: Optional[str] = None
+    customization: Dict[str, Any] = Field(default_factory=dict)
+
 class AdminLogin(BaseModel):
     email: EmailStr
     password: str

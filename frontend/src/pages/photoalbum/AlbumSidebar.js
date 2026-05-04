@@ -6,7 +6,7 @@ export function AlbumSidebar({
   product, coverImage, pages, selectedSize, setSelectedSize,
   quantity, setQuantity, coverMaterial, basePrice, extraPageCost,
   materialCost, totalPerItem, getTotalImages, handleAddToCart,
-  addPages, removeLastPages, editMode,
+  addPages, removeLastPages, editMode, saveDesignSlot,
 }) {
   return (
     <div className="space-y-4 lg:sticky lg:top-4 self-start">
@@ -137,6 +137,8 @@ export function AlbumSidebar({
         <Button className="w-full bg-[#2a9d8f] hover:bg-[#238b7e] h-12 text-base" onClick={handleAddToCart} disabled={getTotalImages() === 0} data-testid="add-album-to-cart">
           <ShoppingCart className="w-5 h-5 mr-2" />{editMode ? 'Spara ändringar' : 'Lägg i kundvagn'}
         </Button>
+
+        {saveDesignSlot && <div className="mt-2">{saveDesignSlot}</div>}
 
         {getTotalImages() === 0 && (
           <p className="text-xs text-slate-400 text-center mt-2">Lägg till minst en bild för att fortsätta</p>

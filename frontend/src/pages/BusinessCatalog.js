@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import BusinessCardEditor from './BusinessCardEditor';
+import SaveDesignButton from '../components/SaveDesignButton';
 import {
   Building2, Check, Printer, X,
   FileText, Upload, Package, Clock, ShieldCheck, Minus, Plus,
@@ -68,6 +70,8 @@ const BusinessCatalog = () => {
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
+  const { token } = useAuth();
+  const savedDesignId = searchParams.get('design');
   const [activeTab, setActiveTab] = useState('our');
   const [submitting, setSubmitting] = useState(false);
 
@@ -116,6 +120,59 @@ const BusinessCatalog = () => {
     if (c.font_sizes) setFontSizes(c.font_sizes);
     setQuantity(cartItem.quantity || 1);
   }, [editCartItemId, cart.items]);
+
+  // Hydrate from saved design
+  useEffect(() => {
+    if (!savedDesignId || !token) return;
+    (async () => {
+      try {
+        const res = await api.get(`/saved-designs/${savedDesignId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const c = res.data?.customization;
+        if (!c || c.type !== 'businesscard') return;
+        setActiveTab('print');
+        setPrintService('businesscard');
+        setCardSource(c.source || 'editor');
+        if (c.card_details) setCard(c.card_details);
+        if (c.template) setCardTemplate(c.template);
+        if (c.color) setCardColor(c.color);
+        if (c.logo_url) setLogo(c.logo_url);
+        if (c.back_style) setBackStyle(c.back_style);
+        if (c.back_tagline) setBackTagline(c.back_tagline);
+        if (c.back_color) setBackColor(c.back_color);
+        if (c.font_sizes) setFontSizes(c.font_sizes);
+        if (res.data.quantity) setQuantity(res.data.quantity);
+      } catch { toast.error('Kunde inte ladda sparad design'); }
+    })();
+  }, [savedDesignId, token]);
+
+  const buildBusinessCardSavedPayload = async () => {
+    if (cardSource === 'editor' && !card.name.trim()) {
+      toast.error('Fyll i namn på visitkortet först');
+      return null;
+    }
+    let logoUrl = null;
+    if (logo) {
+      logoUrl = (logo.startsWith('/api/') || logo.startsWith('http')) ? logo : await uploadBase64(logo);
+    }
+    const unitPrice = getCardPrice(quantity);
+    return {
+      editor_type: 'businesscard',
+      product_id: 'print-businesscard',
+      product_name: `Visitkort: ${card.name || 'Mitt visitkort'}`,
+      price: unitPrice,
+      quantity,
+      design_preview: logoUrl,
+      customization: {
+        type: 'businesscard', source: cardSource,
+        card_details: { ...card }, template: cardTemplate, color: cardColor,
+        logo_url: logoUrl, back_style: backStyle, back_tagline: backTagline,
+        back_color: backColor || cardColor, font_sizes: fontSizes,
+        pdf_url: null, original_filename: null,
+      },
+    };
+  };
 
   /* Helper: upload a file (PDF/image) and get server URL */
   const uploadFile = async (file) => {
@@ -678,14 +735,24 @@ const BusinessCatalog = () => {
           {!(activeTab === 'print' && printService === 'catalog' && catalogSource === 'design') && (
             <div className="bg-white rounded-2xl border border-slate-200 px-6 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-slate-500">{getSubmitLabel()}</div>
-              <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
-                disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
-                {submitting ? 'Hämtar...' : (
-                  activeTab === 'our' && selectedCatalogType === 'digital'
-                    ? <><Download className="w-4 h-4 mr-2" />Ladda ner katalog (PDF)</>
-                    : <><ShoppingCart className="w-4 h-4 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {activeTab === 'print' && printService === 'businesscard' && cardSource === 'editor' && (
+                  <SaveDesignButton
+                    buildPayload={buildBusinessCardSavedPayload}
+                    defaultName={card.name ? `Visitkort - ${card.name}` : 'Mitt visitkort'}
+                    designId={savedDesignId}
+                    variant="outline"
+                  />
                 )}
-              </Button>
+                <Button type="submit" className="bg-[#2a9d8f] hover:bg-[#238b7e] h-12 px-8 text-base font-semibold"
+                  disabled={isSubmitDisabled()} data-testid="submit-catalog-order">
+                  {submitting ? 'Hämtar...' : (
+                    activeTab === 'our' && selectedCatalogType === 'digital'
+                      ? <><Download className="w-4 h-4 mr-2" />Ladda ner katalog (PDF)</>
+                      : <><ShoppingCart className="w-4 h-4 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i varukorgen'}</>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </form>

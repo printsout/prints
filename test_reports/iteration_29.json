@@ -1,0 +1,54 @@
+{
+  "summary": "Tested 'Spara mina designer' feature end-to-end. Backend: 26/26 pytest assertions passing — auth guards, full CRUD with Create→GET/Update→GET/Delete→GET verification, cross-user isolation (user A cannot see/update/delete user B's designs → 404), flexible customization dict across all 5 editor types (businesscard/calendar/nametag/photoalbum/design), no Mongo _id leakage. SEO files (robots.txt, sitemap.xml, manifest.json, favicon.ico, favicon-32x32.png, apple-touch-icon.png, og-image.jpg) all served; index.html contains lang='sv', og:title, og:image, twitter:card, schema.org JSON-LD. Frontend: /konto 'Mina designer' tab lists seeded designs with editor-type badge + date + price; Beställ navigates to /varukorg; Redigera navigates to correct editor with ?design={id} URL param; Ta bort removes card from list and DB. Anonymous click on 'Spara design' shows toast 'Logga in för att spara designer' and does NOT open the dialog. Save Design button confirmed present on CalendarEditor, NameTagEditor, and PhotoAlbumEditor. However it was NOT visible on DesignEditor (/design/{product_id}) for a t-shirt-type product, and NOT visible on /foretag default catalog tab.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "DesignEditor /design/:id",
+        "issue": "[data-testid=save-design-btn] not rendered when loading product 1dddbb87-d1b9-443c-b5a8-763381f9e153 (non-calendar/non-album model). Review request says DesignEditor should have SaveDesignButton. Either button is conditionally gated behind a state (e.g., after first image upload) or regression — main agent should confirm the render condition matches spec.",
+        "selector": "[data-testid=save-design-btn]",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "BusinessCatalog /foretag",
+        "issue": "[data-testid=save-design-btn] not visible on default /foretag view (catalog-order tab). Review request says SaveDesignButton sits ovanpå submit-knappen in BusinessCatalog.js — likely only on the other tab ('tab-print-catalog' / businesscard designer sub-flow). Main agent should verify the button is reachable via normal business-card flow; not tested further because the flow is complex (marked optional in request).",
+        "selector": "[data-testid=save-design-btn]",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_saved_designs.py",
+    "/app/test_reports/pytest/pytest_saved_designs.xml"
+  ],
+  "action_items": [
+    "Confirm SaveDesignButton render condition in DesignEditor.js — must be visible whenever the user can edit (even before first image upload) per spec.",
+    "Confirm SaveDesignButton is reachable in BusinessCatalog flow (likely tab-print-catalog / 'Utskriftstjänster' tab). If gated behind card-type selection, consider exposing it earlier.",
+    "Note: CalendarEditor rightly blocks save with 'Lägg till minst en bild innan du sparar' when no month images uploaded — this is a good UX guard. Other editors may want similar validation."
+  ],
+  "critical_code_review_comments": [
+    "routers/saved_designs.py is clean (69 lines): projects {_id: 0} on all reads; auth dependency on every endpoint; ownership scoped on every query (`design_id + user_id`); PUT bumps updated_at; DELETE relies on deleted_count for 404. No mongo ObjectId leakage.",
+    "models.SavedDesign uses Dict[str, Any] for customization — flexible but unvalidated. Acceptable since each editor owns its own schema.",
+    "Account.js handleEditDesign falls back to toast 'Kan inte öppna editorn' when product_id is missing but NOT when product_id is a dead UUID (e.g., seeded with 'none'). DesignEditor then redirects to /produkter. Consider validating product existence before nav — low priority.",
+    "SaveDesignButton opens dialog via DialogTrigger asChild; handleClick calls e.preventDefault() for unauthenticated users to block dialog open — verified working (no leak on anon click).",
+    "Frontend POST/PUT send Authorization manually per call instead of axios interceptor — works but duplicates headers across 4 editors + account page."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_saved_designs.py (new, 26 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26)",
+    "frontend": "~85% — all Mina designer flows + 3 of 5 editor save buttons verified; DesignEditor and BusinessCatalog flagged for follow-up"
+  },
+  "test_credentials": "Created random test accounts via /api/auth/register (emails: test_sd_*, test_ui*@example.com). No admin needed. Note: pydantic EmailStr rejects .test TLD, use @example.com.",
+  "seed_data_creation": "Tests create and clean up TEST_-prefixed SavedDesigns per test. Module-scoped users are NOT cleaned (created in auth collection) — consider a fixture to purge test_sd_* users if noise becomes an issue.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend fully green on /app/backend/tests/test_saved_designs.py. Two UI follow-ups: (1) Verify DesignEditor save button renders unconditionally on /design/<any-product>. (2) Confirm BusinessCatalog save button path — likely under 'tab-print-catalog' / businesscard-designer tab. Products: calendar=e055eb06-9dc1-4c49-9dcb-1778d09139b2, nametag=4e5641a2-80de-4f1c-bae7-eba700925192, photoalbum (model_type=standard)=a59a4b01-95d6-43e9-8174-62dbc9ef7ccc, mug/tshirt used for DesignEditor=1dddbb87-d1b9-443c-b5a8-763381f9e153.",
+  "rca of the issue": "N/A — no backend bugs. Frontend SaveDesignButton visibility on DesignEditor and BusinessCatalog needs main-agent visual confirmation (possibly conditional render tied to product.model_type or tab state)."
+}

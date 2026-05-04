@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
+import SaveDesignButton from '../components/SaveDesignButton';
 
 import {
   MIN_PAGES, MAX_PAGES, DEFAULT_PAGES, LAYOUTS, COVER_MATERIALS,
@@ -19,6 +21,8 @@ const PhotoAlbumEditor = () => {
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
+  const { token } = useAuth();
+  const savedDesignId = searchParams.get('design');
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -87,6 +91,40 @@ const PhotoAlbumEditor = () => {
       setPages(hydratedPages);
     }
   }, [editCartItemId, cart.items]);
+
+  // Hydrate from saved design
+  useEffect(() => {
+    if (!savedDesignId || !token) return;
+    (async () => {
+      try {
+        const res = await api.get(`/saved-designs/${savedDesignId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const c = res.data?.customization;
+        if (!c || c.type !== 'photoalbum') return;
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+        const resolveUrl = (url) => {
+          if (!url) return null;
+          return url.startsWith('/api') ? `${backendUrl}${url}` : url;
+        };
+        if (c.size) setSelectedSize(c.size);
+        if (c.cover_material) setCoverMaterial(c.cover_material);
+        if (c.cover_text) setCoverText(c.cover_text);
+        if (c.cover_image_url) setCoverImage(resolveUrl(c.cover_image_url));
+        if (c.pages?.length) {
+          const hydrated = c.pages.map((p, idx) => {
+            const layout = LAYOUTS.find((l) => l.id === p.layout) || LAYOUTS[0];
+            const images = Array(layout.slots).fill(null);
+            const captions = Array(layout.slots).fill('');
+            (p.image_urls || []).forEach((url, i) => { if (url && i < images.length) images[i] = resolveUrl(url); });
+            (p.captions || []).forEach((cap, i) => { if (cap && i < captions.length) captions[i] = cap; });
+            return { id: idx, layout: p.layout || 'single', images, captions };
+          });
+          setPages(hydrated);
+        }
+      } catch { toast.error('Kunde inte ladda sparad design'); }
+    })();
+  }, [savedDesignId, token]);
 
   const handleCoverUpload = (e) => {
     const file = e.target.files?.[0];
@@ -171,59 +209,7 @@ const PhotoAlbumEditor = () => {
     if (getTotalImages() === 0) { toast.error('Lägg till minst en bild i ditt album'); return; }
     try {
       toast.info('Laddar upp bilder...');
-      const uploadedPages = [];
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const uploadedImages = [];
-        for (let s = 0; s < page.images.length; s++) {
-          if (page.images[s]) {
-            const img = page.images[s];
-            if (img.startsWith('data:')) {
-              const finalImg = await burnCaptionOnImage(img, page.captions?.[s] || '');
-              const uploadRes = await api.post('/upload-base64', { image: finalImg });
-              uploadedImages.push(uploadRes.data.url);
-            } else {
-              // Already uploaded URL
-              const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-              const path = img.startsWith(backendUrl) ? img.replace(backendUrl, '') : img;
-              uploadedImages.push(path);
-            }
-          } else {
-            uploadedImages.push(null);
-          }
-        }
-        uploadedPages.push({
-          page_number: i + 1, layout: page.layout,
-          image_count: getPageImageCount(page),
-          image_urls: uploadedImages.filter(Boolean),
-          captions: (page.captions || []).filter((c, idx) => page.images[idx] && c),
-        });
-      }
-      let coverImageUrl = null;
-      if (coverImage) {
-        if (coverImage.startsWith('data:')) {
-          const finalCover = await burnCaptionOnImage(coverImage, coverText);
-          const coverRes = await api.post('/upload-base64', { image: finalCover });
-          coverImageUrl = coverRes.data.url;
-        } else {
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-          coverImageUrl = coverImage.startsWith(backendUrl)
-            ? coverImage.replace(backendUrl, '')
-            : coverImage;
-        }
-      }
-      const itemData = {
-        product_id: product.product_id, name: product.name,
-        price: totalPerItem, quantity,
-        image: coverImage || pages.flatMap(p => p.images).find(Boolean) || product.images?.[0],
-        customization: {
-          type: 'photoalbum', total_pages: pages.length,
-          total_images: getTotalImages(), size: selectedSize,
-          cover_image_url: coverImageUrl, cover_text: coverText || null,
-          cover_material: coverMaterial, pages: uploadedPages,
-        },
-      };
-
+      const itemData = await buildCartItemData();
       if (editCartItemId) {
         await updateCartItem(editCartItemId, itemData);
         toast.success('Fotoalbum uppdaterat!');
@@ -235,6 +221,76 @@ const PhotoAlbumEditor = () => {
     } catch {
       toast.error('Kunde inte spara ändringarna');
     }
+  };
+
+  const buildCartItemData = async () => {
+    const uploadedPages = [];
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+      const uploadedImages = [];
+      for (let s = 0; s < page.images.length; s++) {
+        if (page.images[s]) {
+          const img = page.images[s];
+          if (img.startsWith('data:')) {
+            const finalImg = await burnCaptionOnImage(img, page.captions?.[s] || '');
+            const uploadRes = await api.post('/upload-base64', { image: finalImg });
+            uploadedImages.push(uploadRes.data.url);
+          } else {
+            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+            const path = img.startsWith(backendUrl) ? img.replace(backendUrl, '') : img;
+            uploadedImages.push(path);
+          }
+        } else {
+          uploadedImages.push(null);
+        }
+      }
+      uploadedPages.push({
+        page_number: i + 1, layout: page.layout,
+        image_count: getPageImageCount(page),
+        image_urls: uploadedImages.filter(Boolean),
+        captions: (page.captions || []).filter((c, idx) => page.images[idx] && c),
+      });
+    }
+    let coverImageUrl = null;
+    if (coverImage) {
+      if (coverImage.startsWith('data:')) {
+        const finalCover = await burnCaptionOnImage(coverImage, coverText);
+        const coverRes = await api.post('/upload-base64', { image: finalCover });
+        coverImageUrl = coverRes.data.url;
+      } else {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+        coverImageUrl = coverImage.startsWith(backendUrl)
+          ? coverImage.replace(backendUrl, '')
+          : coverImage;
+      }
+    }
+    return {
+      product_id: product.product_id, name: product.name,
+      price: totalPerItem, quantity,
+      image: coverImage || pages.flatMap((p) => p.images).find(Boolean) || product.images?.[0],
+      customization: {
+        type: 'photoalbum', total_pages: pages.length,
+        total_images: getTotalImages(), size: selectedSize,
+        cover_image_url: coverImageUrl, cover_text: coverText || null,
+        cover_material: coverMaterial, pages: uploadedPages,
+      },
+    };
+  };
+
+  const buildSavedDesignPayload = async () => {
+    if (getTotalImages() === 0) { toast.error('Lägg till minst en bild först'); return null; }
+    const itemData = await buildCartItemData();
+    return {
+      editor_type: 'photoalbum',
+      product_id: itemData.product_id,
+      product_name: itemData.name,
+      price: itemData.price,
+      quantity: itemData.quantity,
+      print_size: itemData.customization.size,
+      image: itemData.image,
+      design_preview: itemData.customization.cover_image_url || itemData.image,
+      customization: itemData.customization,
+    };
   };
 
   if (loading) return (
@@ -301,6 +357,15 @@ const PhotoAlbumEditor = () => {
             handleAddToCart={handleAddToCart} addPages={addPages}
             removeLastPages={removeLastPages}
             editMode={!!editCartItemId}
+            saveDesignSlot={
+              <SaveDesignButton
+                buildPayload={buildSavedDesignPayload}
+                defaultName={coverText ? `Album - ${coverText}` : 'Mitt fotoalbum'}
+                designId={savedDesignId}
+                className="w-full"
+                variant="outline"
+              />
+            }
           />
         </div>
       </div>

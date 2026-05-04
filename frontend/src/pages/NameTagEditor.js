@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import SaveDesignButton from '../components/SaveDesignButton';
 import { toast } from 'sonner';
 import {
   ShoppingCart, ChevronLeft, Type, Palette, ImageIcon, Upload, Copy,
@@ -189,6 +191,8 @@ const NameTagEditor = () => {
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
+  const { token } = useAuth();
+  const savedDesignId = searchParams.get('design');
   const imageInputRef = useRef(null);
 
   const [product, setProduct] = useState(null);
@@ -249,6 +253,33 @@ const NameTagEditor = () => {
     if (cartItem.quantity) setQuantity(cartItem.quantity);
   }, [editCartItemId, cart.items]);
 
+  // Hydrate state from saved design
+  useEffect(() => {
+    if (!savedDesignId || !token) return;
+    (async () => {
+      try {
+        const res = await api.get(`/saved-designs/${savedDesignId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const c = res.data?.customization;
+        if (!c || c.type !== 'nametag') return;
+        if (c.child_name) setChildName(c.child_name);
+        if (c.last_name) setLastName(c.last_name);
+        if (c.phone_number) setPhoneNumber(c.phone_number);
+        if (c.font) setSelectedFont(c.font);
+        if (c.font_color) setFontColor(c.font_color);
+        if (c.background) setSelectedBg(c.background);
+        if (c.motif) { setSelectedMotif(c.motif); setMotifEnabled(true); } else { setMotifEnabled(false); }
+        if (c.uploaded_image_url) {
+          const imgUrl = c.uploaded_image_url.startsWith('/api')
+            ? `${process.env.REACT_APP_BACKEND_URL}${c.uploaded_image_url}`
+            : c.uploaded_image_url;
+          setUploadedImage(imgUrl);
+        }
+      } catch { toast.error('Kunde inte ladda sparad design'); }
+    })();
+  }, [savedDesignId, token]);
+
   const currentFont = FONTS.find(f => f.id === selectedFont) || FONTS[0];
   const currentBg = ALL_BACKGROUNDS.find(b => b.id === selectedBg) || ALL_BACKGROUNDS[0];
   const bgStyle = currentBg.gradient ? { background: currentBg.gradient } : { backgroundColor: currentBg.color || '#FFF' };
@@ -274,32 +305,7 @@ const NameTagEditor = () => {
   const handleAddToCart = async () => {
     if (!childName.trim()) { toast.error('Skriv in ett förnamn'); return; }
     try {
-      let uploadedImageUrl = null;
-      if (uploadedImage) {
-        // Only re-upload if it's a new base64 image (not an existing URL)
-        if (uploadedImage.startsWith('data:')) {
-          const uploadRes = await api.post('/upload-base64', { image: uploadedImage });
-          uploadedImageUrl = uploadRes.data.url;
-        } else {
-          // Already an uploaded URL, extract the path
-          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-          uploadedImageUrl = uploadedImage.startsWith(backendUrl)
-            ? uploadedImage.replace(backendUrl, '')
-            : uploadedImage;
-        }
-      }
-      const itemData = {
-        product_id: product.product_id, name: product.name,
-        price: product.price, quantity,
-        image: product.imageUrl || product.images?.[0],
-        customization: {
-          type: 'nametag', child_name: childName, last_name: lastName,
-          phone_number: phoneNumber, font: selectedFont, font_color: fontColor,
-          motif: motifEnabled ? selectedMotif : null,
-          uploaded_image_url: uploadedImageUrl, background: selectedBg,
-        }
-      };
-
+      const itemData = await buildCartItemData();
       if (editCartItemId) {
         await updateCartItem(editCartItemId, itemData);
         toast.success('Namnlappar uppdaterade!');
@@ -309,6 +315,47 @@ const NameTagEditor = () => {
       }
       navigate('/varukorg');
     } catch { toast.error('Kunde inte spara ändringarna'); }
+  };
+
+  const buildCartItemData = async () => {
+    let uploadedImageUrl = null;
+    if (uploadedImage) {
+      if (uploadedImage.startsWith('data:')) {
+        const uploadRes = await api.post('/upload-base64', { image: uploadedImage });
+        uploadedImageUrl = uploadRes.data.url;
+      } else {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+        uploadedImageUrl = uploadedImage.startsWith(backendUrl)
+          ? uploadedImage.replace(backendUrl, '')
+          : uploadedImage;
+      }
+    }
+    return {
+      product_id: product.product_id, name: product.name,
+      price: product.price, quantity,
+      image: product.imageUrl || product.images?.[0],
+      customization: {
+        type: 'nametag', child_name: childName, last_name: lastName,
+        phone_number: phoneNumber, font: selectedFont, font_color: fontColor,
+        motif: motifEnabled ? selectedMotif : null,
+        uploaded_image_url: uploadedImageUrl, background: selectedBg,
+      },
+    };
+  };
+
+  const buildSavedDesignPayload = async () => {
+    if (!childName.trim()) { toast.error('Skriv in ett förnamn först'); return null; }
+    const itemData = await buildCartItemData();
+    return {
+      editor_type: 'nametag',
+      product_id: itemData.product_id,
+      product_name: itemData.name,
+      price: itemData.price,
+      quantity: itemData.quantity,
+      image: itemData.image,
+      design_preview: itemData.customization.uploaded_image_url || itemData.image,
+      customization: itemData.customization,
+    };
   };
 
   if (loading) return (
@@ -475,6 +522,13 @@ const NameTagEditor = () => {
               <Button className="w-full bg-[#2a9d8f] hover:bg-[#238b7e] h-12 text-base font-semibold" onClick={handleAddToCart} disabled={!childName.trim()} data-testid="add-nametag-to-cart">
                 <ShoppingCart className="w-5 h-5 mr-2" />{editCartItemId ? 'Spara ändringar' : 'Lägg i kundvagn'}
               </Button>
+              <SaveDesignButton
+                buildPayload={buildSavedDesignPayload}
+                defaultName={childName ? `Namnlappar - ${childName}` : 'Namnlappar'}
+                designId={savedDesignId}
+                className="w-full mt-2"
+                variant="outline"
+              />
               {!childName.trim() && <p className="text-xs text-amber-500 text-center mt-2">Ange ett förnamn för att fortsätta</p>}
             </div>
 

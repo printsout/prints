@@ -46,6 +46,7 @@ from routers.admin import router as admin_router
 from routers.uploads import router as uploads_router
 from routers.public import router as public_router
 from routers.catalog import router as catalog_router
+from routers.saved_designs import router as saved_designs_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth_router)
@@ -58,6 +59,7 @@ api_router.include_router(admin_router)
 api_router.include_router(uploads_router)
 api_router.include_router(public_router)
 api_router.include_router(catalog_router)
+api_router.include_router(saved_designs_router)
 
 # Endpoints registered directly on api_router
 @api_router.get("/")

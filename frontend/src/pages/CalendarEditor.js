@@ -2,8 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
+import SaveDesignButton from '../components/SaveDesignButton';
 import { toast } from 'sonner';
 import { 
   Upload, ChevronLeft, ChevronRight, ShoppingCart, 
@@ -134,6 +136,8 @@ const CalendarEditor = () => {
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
+  const { token } = useAuth();
+  const savedDesignId = searchParams.get('design');
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -278,66 +282,59 @@ const CalendarEditor = () => {
     }
   };
 
+  const buildCartItemData = async () => {
+    const uploadedMonths = [];
+    for (let i = 0; i < monthImages.length; i++) {
+      const m = monthImages[i];
+      let imageUrl = null;
+      if (m.preview) {
+        if (m.preview.startsWith('data:')) {
+          const uploadRes = await api.post('/upload-base64', { image: m.preview });
+          imageUrl = uploadRes.data.url;
+        } else {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          imageUrl = m.preview.startsWith(backendUrl) ? m.preview.replace(backendUrl, '') : m.preview;
+        }
+      }
+      uploadedMonths.push({
+        month: MONTHS[i],
+        hasImage: m.preview !== null,
+        image_url: imageUrl,
+        text: m.text || '',
+        textPos: m.textPos || { x: 50, y: 85 },
+        textColor: m.textColor || '#FFFFFF',
+        fontSize: m.fontSize || 24,
+      });
+    }
+    const firstImage = uploadedMonths.find((m) => m.image_url)?.image_url;
+    const calendarLayout = product.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
+    return {
+      product_id: product.product_id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.images?.[0],
+      size: selectedSize,
+      customization: {
+        type: 'calendar',
+        year: selectedYear,
+        size: selectedSize,
+        layout: calendarLayout,
+        images_count: getUploadedCount(),
+        months: uploadedMonths,
+        cover_image_url: firstImage,
+      },
+    };
+  };
+
   const handleAddToCart = async () => {
     if (getUploadedCount() === 0) {
       toast.error('Lägg till minst en bild för din kalender');
       return;
     }
-
     try {
       toast.info('Laddar upp bilder...');
-
-      // Upload all month images to server
-      const uploadedMonths = [];
-      for (let i = 0; i < monthImages.length; i++) {
-        const m = monthImages[i];
-        let imageUrl = null;
-        if (m.preview) {
-          // Only re-upload if it's a new base64 image
-          if (m.preview.startsWith('data:')) {
-            const uploadRes = await api.post('/upload-base64', { image: m.preview });
-            imageUrl = uploadRes.data.url;
-          } else {
-            // Already an uploaded URL, extract path
-            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-            imageUrl = m.preview.startsWith(backendUrl)
-              ? m.preview.replace(backendUrl, '')
-              : m.preview;
-          }
-        }
-        uploadedMonths.push({
-          month: MONTHS[i],
-          hasImage: m.preview !== null,
-          image_url: imageUrl,
-          text: m.text || '',
-          textPos: m.textPos || { x: 50, y: 85 },
-          textColor: m.textColor || '#FFFFFF',
-          fontSize: m.fontSize || 24,
-        });
-      }
-
-      // Use the first uploaded image as the cart thumbnail
-      const firstImage = uploadedMonths.find(m => m.image_url)?.image_url;
-      const calendarLayout = product.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
-
-      const itemData = {
-        product_id: product.product_id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        image: product.images?.[0],
-        size: selectedSize,
-        customization: {
-          type: 'calendar',
-          year: selectedYear,
-          size: selectedSize,
-          layout: calendarLayout,
-          images_count: getUploadedCount(),
-          months: uploadedMonths,
-          cover_image_url: firstImage,
-        }
-      };
-
+      const itemData = await buildCartItemData();
       if (editCartItemId) {
         await updateCartItem(editCartItemId, itemData);
         toast.success('Kalender uppdaterad!');
@@ -349,6 +346,25 @@ const CalendarEditor = () => {
     } catch (error) {
       toast.error('Kunde inte spara ändringarna');
     }
+  };
+
+  const buildSavedDesignPayload = async () => {
+    if (getUploadedCount() === 0) {
+      toast.error('Lägg till minst en bild innan du sparar');
+      return null;
+    }
+    const itemData = await buildCartItemData();
+    return {
+      editor_type: 'calendar',
+      product_id: itemData.product_id,
+      product_name: itemData.name,
+      price: itemData.price,
+      quantity: itemData.quantity,
+      print_size: itemData.size,
+      image: itemData.image,
+      design_preview: itemData.customization.cover_image_url,
+      customization: itemData.customization,
+    };
   };
 
   if (loading) {
@@ -648,6 +664,15 @@ const CalendarEditor = () => {
                 <Download className="w-5 h-5 mr-2" />
                 {downloadingPdf ? 'Genererar...' : 'Ladda ner som PDF'}
               </Button>
+
+              <SaveDesignButton
+                buildPayload={buildSavedDesignPayload}
+                defaultName={`Kalender ${selectedYear}`}
+                designId={savedDesignId}
+                className="w-full mt-3"
+                size="lg"
+                variant="outline"
+              />
 
               {getUploadedCount() === 0 && (
                 <p className="text-sm text-slate-500 text-center mt-3">
