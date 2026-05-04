@@ -61,6 +61,8 @@ class CartItem(BaseModel):
     quantity: int = 1
     color: Optional[str] = None
     size: Optional[str] = None
+    print_size: Optional[str] = None
+    print_quality: Optional[str] = None
     image: Optional[str] = None
     design_id: Optional[str] = None
     design_preview: Optional[str] = None

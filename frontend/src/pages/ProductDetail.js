@@ -77,6 +77,9 @@ const ProductDetail = () => {
     try {
       const cartItem = {
         product_id: product.product_id,
+        name: product.name,
+        price: product.price,
+        image: getActiveImage(),
         quantity,
         color: selectedColor || null,
         size: selectedSize || null
