@@ -93,9 +93,24 @@ const DesignEditor = () => {
         const uploadRes = await api.post('/upload-base64', { image: imagePreview });
         uploadedImageUrl = uploadRes.data.url;
       }
+      // Resolve price from admin size/quality matrix if applicable
+      let resolvedPrice = product?.price;
+      let printSize = null;
+      let printQuality = null;
+      const hasAdminSizePricing = product?.available_sizes?.length > 0 && product?.size_quality_prices?.length > 0;
+      if (hasAdminSizePricing && selectedSize) {
+        const quality = product?.available_qualities?.[0] || 'Standard';
+        const entry = product.size_quality_prices.find(p => p.size === selectedSize && (p.quality || 'Standard') === quality);
+        if (entry) {
+          resolvedPrice = entry.price;
+          printSize = selectedSize;
+          printQuality = quality;
+        }
+      }
       await addToCart({
-        product_id: productId, name: product?.name, price: product?.price, quantity: 1,
+        product_id: productId, name: product?.name, price: resolvedPrice, quantity: 1,
         color: selectedColor || null, size: selectedSize || null,
+        print_size: printSize, print_quality: printQuality,
         image: product?.images?.[0], design_preview: uploadedImageUrl,
         customization: {
           type: 'design', uploaded_image_url: uploadedImageUrl,
