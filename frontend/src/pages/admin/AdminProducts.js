@@ -7,6 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Plus, Search, Edit, Trash2, Package, X, Palette, Ruler, Briefcase, Upload, Image, Eye, EyeOff } from 'lucide-react';
 
+// Resolve /api/uploads/... to full backend URL; absolute URLs returned unchanged.
+const resolveImageUrl = (u) => {
+  if (!u) return '';
+  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:')) return u;
+  if (u.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL}${u}`;
+  return u;
+};
+
 // ─── Tag Input Component ──────────────────────────
 function TagInput({ tags, onChange, placeholder, testId }) {
   const [inputValue, setInputValue] = useState('');
@@ -279,7 +287,7 @@ const AdminProducts = () => {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       const res = await api.post('/upload', formDataUpload, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
-      const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+      const url = res.data.url;
       updateImage(index, url);
       toast.success('Bild uppladdad!');
     } catch {
@@ -302,7 +310,7 @@ const AdminProducts = () => {
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       const res = await api.post('/upload', formDataUpload, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
-      const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+      const url = res.data.url;
       // Replace first empty slot or add new
       const emptyIdx = formData.images.findIndex(img => !img.trim());
       if (emptyIdx >= 0) {
@@ -392,7 +400,7 @@ const AdminProducts = () => {
             <div className="aspect-square bg-slate-100 relative">
               {product.images?.[0] ? (
                 <img 
-                  src={product.images[0].startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${product.images[0]}` : product.images[0]} 
+                  src={resolveImageUrl(product.images[0])} 
                   alt={product.name}
                   className="w-full h-full object-cover"
                   onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
@@ -764,7 +772,7 @@ const AdminProducts = () => {
                         <span className="text-sm font-medium text-slate-700 w-24 shrink-0">{color}</span>
                         {formData.color_images[color] ? (
                           <div className="flex items-center gap-2 flex-1">
-                            <img src={formData.color_images[color]} alt={color} className="w-10 h-10 rounded object-cover border" />
+                            <img src={resolveImageUrl(formData.color_images[color])} alt={color} className="w-10 h-10 rounded object-cover border" />
                             <span className="text-xs text-slate-400 truncate flex-1">{formData.color_images[color].split('/').pop()}</span>
                             <button type="button" onClick={() => setFormData(prev => {
                               const ci = { ...prev.color_images };
@@ -784,7 +792,7 @@ const AdminProducts = () => {
                                 const fd = new FormData();
                                 fd.append('file', file);
                                 const res = await api.post('/upload', fd, { headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' } });
-                                const url = `${process.env.REACT_APP_BACKEND_URL}${res.data.url}`;
+                                const url = res.data.url;
                                 setFormData(prev => ({ ...prev, color_images: { ...prev.color_images, [color]: url } }));
                               } catch { toast.error('Uppladdning misslyckades'); }
                             }} />
@@ -806,7 +814,7 @@ const AdminProducts = () => {
                       img.trim() ? (
                         <div key={`img-${index}`} className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                           <img
-                            src={img}
+                            src={resolveImageUrl(img)}
                             alt={`Bild ${index + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => { e.target.src = ''; e.target.alt = 'Kunde inte ladda'; }}
