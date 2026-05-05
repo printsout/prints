@@ -249,7 +249,7 @@ const OrderItemDetail = ({ item, itemIndex, allItems, toast, orderId }) => {
       {item.customization && (
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
           {item.customization.type === 'nametag' && <NametagCustomization item={item} />}
-          {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} />}
+          {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} orderId={orderId} />}
           {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
           {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} orderId={orderId} />}
@@ -284,13 +284,44 @@ const NametagCustomization = ({ item }) => {
   );
 };
 
-const PhotoAlbumCustomization = ({ item, toast }) => {
+const PhotoAlbumCustomization = ({ item, toast, orderId }) => {
   const c = item.customization;
   const pages = c.pages;
   const pagesWithImages = useMemo(() => 
     pages?.filter(pg => pg.image_urls?.length > 0) || [],
     [pages]
   );
+
+  const handleDownloadZip = () => {
+    if (!orderId) return;
+    const token = sessionStorage.getItem('adminToken');
+    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-images`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `albumbilder_${orderId.slice(0, 8)}.zip`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => toast?.error('Kunde inte ladda ner bilder'));
+  };
+
+  const handleDownloadPdf = () => {
+    if (!orderId) return;
+    const token = sessionStorage.getItem('adminToken');
+    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-pdf`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `album_${orderId.slice(0, 8)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      })
+      .catch(() => toast?.error('Kunde inte generera PDF'));
+  };
+
   return (
     <>
       <p>Sidor: {c.total_pages}</p>
@@ -319,14 +350,22 @@ const PhotoAlbumCustomization = ({ item, toast }) => {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => downloadAllImages(item, toast)}
-            className="flex items-center gap-1.5 mt-2 text-xs font-medium text-[#2a9d8f] hover:underline"
-            data-testid="download-all-images"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Ladda ner alla bilder
-          </button>
+          {orderId && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              <button onClick={handleDownloadZip}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2a9d8f] text-white text-xs font-semibold rounded-md hover:bg-[#238b7e] transition-colors"
+                data-testid="download-album-zip">
+                <Download className="w-3.5 h-3.5" />
+                Ladda ner alla bilder (ZIP)
+              </button>
+              <button onClick={handleDownloadPdf}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition-colors"
+                data-testid="download-album-pdf">
+                <Download className="w-3.5 h-3.5" />
+                Ladda ner album (PDF)
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>

@@ -342,8 +342,9 @@ async def download_nametag_pdf(order_id: str, item_index: int = 0, admin=Depends
 
 @router.get("/orders/{order_id}/calendar-images")
 async def download_calendar_images(order_id: str, admin=Depends(verify_admin_token)):
-    """Download all calendar images as a ZIP file."""
+    """Download all calendar images as a ZIP file (works with R2 + local)."""
     import zipfile
+    from storage import fetch_bytes
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
@@ -357,23 +358,26 @@ async def download_calendar_images(order_id: str, admin=Depends(verify_admin_tok
 
     customization = calendar_item["customization"]
     months = customization.get("months", [])
-    uploads_dir = Path(os.path.dirname(__file__)).parent / "uploads"
 
     zip_path = Path("/tmp") / f"kalender_{order_id[:8]}.zip"
+    added = 0
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for m in months:
             img_url = m.get("image_url")
             if not img_url:
                 continue
-            filename = img_url.split("/")[-1]
-            filepath = uploads_dir / filename
-            if filepath.exists():
-                month_name = m.get("month", "bild")
-                ext = filename.rsplit(".", 1)[-1] if "." in filename else "jpg"
-                zf.write(filepath, f"{month_name}.{ext}")
+            data = fetch_bytes(img_url)
+            if not data:
+                continue
+            month_name = m.get("month", "bild")
+            ext = img_url.rsplit(".", 1)[-1].split("?")[0] if "." in img_url else "jpg"
+            if len(ext) > 5:
+                ext = "jpg"
+            zf.writestr(f"{month_name}.{ext}", data)
+            added += 1
 
-    if not zip_path.exists() or zip_path.stat().st_size < 22:
-        raise HTTPException(status_code=404, detail="Inga kalenderbilder hittades på servern")
+    if added == 0:
+        raise HTTPException(status_code=404, detail="Inga kalenderbilder hittades")
 
     return FileResponse(
         zip_path, media_type="application/zip",
@@ -405,6 +409,81 @@ async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)
     generate_calendar_pdf(year, months, output_path, layout)
     filename = f"kalender_{year}_{order_id[:8]}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/orders/{order_id}/photoalbum-images")
+async def download_photoalbum_images(order_id: str, admin=Depends(verify_admin_token)):
+    """Download all photo album images as a ZIP file (R2 + local)."""
+    import zipfile
+    from storage import fetch_bytes
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    album_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "photoalbum":
+            album_item = item
+            break
+    if not album_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller inget fotoalbum")
+
+    customization = album_item["customization"]
+    pages = customization.get("pages", []) or []
+
+    zip_path = Path("/tmp") / f"album_{order_id[:8]}.zip"
+    added = 0
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        cover_url = customization.get("cover_image_url")
+        if cover_url:
+            data = fetch_bytes(cover_url)
+            if data:
+                ext = cover_url.rsplit(".", 1)[-1].split("?")[0] if "." in cover_url else "jpg"
+                if len(ext) > 5:
+                    ext = "jpg"
+                zf.writestr(f"omslag.{ext}", data)
+                added += 1
+        for pg in pages:
+            for idx, img_url in enumerate(pg.get("image_urls", []) or []):
+                data = fetch_bytes(img_url)
+                if not data:
+                    continue
+                ext = img_url.rsplit(".", 1)[-1].split("?")[0] if "." in img_url else "jpg"
+                if len(ext) > 5:
+                    ext = "jpg"
+                zf.writestr(f"sida_{pg.get('page_number', '?')}_{idx + 1}.{ext}", data)
+                added += 1
+
+    if added == 0:
+        raise HTTPException(status_code=404, detail="Inga albumbilder hittades")
+
+    return FileResponse(
+        zip_path, media_type="application/zip",
+        filename=f"albumbilder_{order_id[:8]}.zip",
+        headers={"Content-Disposition": f'attachment; filename="albumbilder_{order_id[:8]}.zip"'}
+    )
+
+
+@router.get("/orders/{order_id}/photoalbum-pdf")
+async def download_photoalbum_pdf(order_id: str, admin=Depends(verify_admin_token)):
+    """Generate and download a printable photo album PDF."""
+    from photoalbum_pdf import generate_photoalbum_pdf
+    order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order hittades inte")
+    album_item = None
+    for item in order.get("items", []):
+        if item.get("customization", {}).get("type") == "photoalbum":
+            album_item = item
+            break
+    if not album_item:
+        raise HTTPException(status_code=400, detail="Ordern innehåller inget fotoalbum")
+    output_dir = Path("/tmp/album_pdfs")
+    output_dir.mkdir(exist_ok=True)
+    output_path = str(output_dir / f"album_{order_id[:8]}.pdf")
+    generate_photoalbum_pdf(album_item["customization"], output_path)
+    filename = f"album_{order_id[:8]}.pdf"
+    return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
 
 
 @router.get("/orders/{order_id}/businesscard-pdf")
