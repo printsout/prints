@@ -7,7 +7,11 @@ export function AlbumSidebar({
   quantity, setQuantity, coverMaterial, basePrice, extraPageCost,
   materialCost, totalPerItem, getTotalImages, handleAddToCart,
   addPages, removeLastPages, editMode, saveDesignSlot,
+  includedPages, covers,
 }) {
+  const materials = (covers && covers.length > 0) ? covers : COVER_MATERIALS;
+  const baseLabel = `Grundpris (${includedPages ?? DEFAULT_PAGES} sidor)`;
+  const extraSheetCount = Math.max(0, pages.length - (includedPages ?? DEFAULT_PAGES));
   return (
     <div className="space-y-4 lg:sticky lg:top-4 self-start">
       {/* Product info */}
