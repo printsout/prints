@@ -170,6 +170,9 @@ class AdminProductCreate(BaseModel):
     available_sizes: Optional[List[str]] = None
     available_qualities: Optional[List[str]] = None
     size_quality_prices: Optional[List[dict]] = None
+    photoalbum_covers: Optional[List[dict]] = None
+    photoalbum_extra_page_price: Optional[float] = None
+    photoalbum_default_pages: Optional[int] = None
     hidden: Optional[bool] = False
 
 class AdminOrderUpdate(BaseModel):
