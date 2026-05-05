@@ -1,7 +1,8 @@
 import { Upload, Trash2 } from 'lucide-react';
 import { COVER_MATERIALS } from './constants';
 
-export function CoverEditor({ coverImage, setCoverImage, coverText, setCoverText, coverMaterial, setCoverMaterial, coverInputRef, handleCoverUpload }) {
+export function CoverEditor({ coverImage, setCoverImage, coverText, setCoverText, coverMaterial, setCoverMaterial, coverInputRef, handleCoverUpload, covers }) {
+  const materials = (covers && covers.length > 0) ? covers : COVER_MATERIALS;
   return (
     <>
       <div className="bg-white rounded-xl border overflow-hidden" data-testid="cover-editor">
@@ -57,7 +58,7 @@ export function CoverEditor({ coverImage, setCoverImage, coverText, setCoverText
       <div className="bg-white rounded-xl border p-4" data-testid="cover-material-section">
         <h3 className="text-sm font-semibold text-slate-700 mb-3">Välj omslagsmaterial</h3>
         <div className="space-y-2">
-          {COVER_MATERIALS.map(mat => (
+          {materials.map(mat => (
             <button
               key={mat.id}
               onClick={() => setCoverMaterial(mat.id)}

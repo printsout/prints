@@ -138,6 +138,9 @@ const AdminProducts = () => {
     size_quality_prices: [],
     available_sizes: [],
     available_qualities: [],
+    photoalbum_covers: [],
+    photoalbum_extra_page_price: '',
+    photoalbum_default_pages: '',
   });
 
   const fetchProducts = useCallback(async () => {
@@ -165,7 +168,9 @@ const AdminProducts = () => {
       ...formData,
       sizes: syncedSizes,
       price: parseFloat(formData.price),
-      images: formData.images.filter(img => img.trim() !== '')
+      images: formData.images.filter(img => img.trim() !== ''),
+      photoalbum_extra_page_price: formData.photoalbum_extra_page_price === '' ? null : parseFloat(formData.photoalbum_extra_page_price),
+      photoalbum_default_pages: formData.photoalbum_default_pages === '' ? null : parseInt(formData.photoalbum_default_pages, 10),
     };
 
     try {
@@ -233,6 +238,9 @@ const AdminProducts = () => {
       size_quality_prices: migratedSqp,
       available_sizes: migratedSizes,
       available_qualities: product.available_qualities || [],
+      photoalbum_covers: product.photoalbum_covers || [],
+      photoalbum_extra_page_price: product.photoalbum_extra_page_price ?? '',
+      photoalbum_default_pages: product.photoalbum_default_pages ?? '',
     });
     setShowModal(true);
   };
@@ -254,6 +262,9 @@ const AdminProducts = () => {
       size_quality_prices: [],
       available_sizes: [],
       available_qualities: [],
+      photoalbum_covers: [],
+      photoalbum_extra_page_price: '',
+      photoalbum_default_pages: '',
     });
   };
 
@@ -758,6 +769,106 @@ const AdminProducts = () => {
                   testId="color"
                 />
               </div>
+
+              {/* Photo album: covers + page pricing — shown when model_type or category indicates a photoalbum */}
+              {(formData.model_type === 'photoalbum' || formData.category?.toLowerCase().includes('fotoalbum')) && (
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                  <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-1.5">
+                    <Briefcase className="w-4 h-4" /> Fotoalbum-inställningar
+                  </h3>
+
+                  {/* Pages config */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Inkluderade sidor (standard)</label>
+                      <Input
+                        type="number" min="1"
+                        value={formData.photoalbum_default_pages}
+                        onChange={(e) => setFormData(prev => ({ ...prev, photoalbum_default_pages: e.target.value }))}
+                        placeholder="t.ex. 20"
+                        data-testid="album-default-pages-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Pris per extra sida (kr)</label>
+                      <Input
+                        type="number" min="0" step="0.5"
+                        value={formData.photoalbum_extra_page_price}
+                        onChange={(e) => setFormData(prev => ({ ...prev, photoalbum_extra_page_price: e.target.value }))}
+                        placeholder="t.ex. 5"
+                        data-testid="album-extra-page-price-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cover materials list */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-medium text-slate-600">Fodral / Omslag</label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          photoalbum_covers: [...(prev.photoalbum_covers || []), { id: '', label: '', desc: '', price: 0 }],
+                        }))}
+                        className="text-xs text-[#2a9d8f] hover:underline flex items-center gap-1"
+                        data-testid="album-add-cover-btn"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Lägg till fodral
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {(formData.photoalbum_covers || []).map((cover, idx) => (
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_90px_32px] gap-2 items-start bg-white rounded-lg p-2 border border-slate-200" data-testid={`album-cover-row-${idx}`}>
+                          <Input
+                            value={cover.label || ''}
+                            onChange={(e) => setFormData(prev => {
+                              const arr = [...prev.photoalbum_covers];
+                              arr[idx] = { ...arr[idx], label: e.target.value, id: arr[idx].id || e.target.value.toLowerCase().replace(/\s+/g, '_') };
+                              return { ...prev, photoalbum_covers: arr };
+                            })}
+                            placeholder="Namn (t.ex. Tygbeklätt)"
+                          />
+                          <Input
+                            value={cover.desc || ''}
+                            onChange={(e) => setFormData(prev => {
+                              const arr = [...prev.photoalbum_covers];
+                              arr[idx] = { ...arr[idx], desc: e.target.value };
+                              return { ...prev, photoalbum_covers: arr };
+                            })}
+                            placeholder="Beskrivning"
+                          />
+                          <Input
+                            type="number" min="0" step="1"
+                            value={cover.price ?? 0}
+                            onChange={(e) => setFormData(prev => {
+                              const arr = [...prev.photoalbum_covers];
+                              arr[idx] = { ...arr[idx], price: parseFloat(e.target.value) || 0 };
+                              return { ...prev, photoalbum_covers: arr };
+                            })}
+                            placeholder="Pris"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({
+                              ...prev,
+                              photoalbum_covers: prev.photoalbum_covers.filter((_, i) => i !== idx),
+                            }))}
+                            className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
+                            data-testid={`album-cover-remove-${idx}`}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {(formData.photoalbum_covers || []).length === 0 && (
+                        <p className="text-xs text-slate-400 italic">Inga fodral tillagda — kunden får ett standardomslag.</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">Det första fodralet i listan blir standardvalet. Pris adderas på totalpriset.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Color-specific images */}
               {formData.colors.length > 0 && (

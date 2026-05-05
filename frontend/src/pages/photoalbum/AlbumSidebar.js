@@ -106,18 +106,18 @@ export function AlbumSidebar({
 
         <div className="space-y-1 mb-4">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Grundpris ({DEFAULT_PAGES} sidor)</span>
+            <span className="text-slate-500">{baseLabel}</span>
             <span className="text-slate-700">{basePrice} kr</span>
           </div>
           {extraPageCost > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Extra sidor ({pages.length - DEFAULT_PAGES} st)</span>
+              <span className="text-slate-500">Extra sidor ({extraSheetCount} st)</span>
               <span className="text-slate-700">+{extraPageCost} kr</span>
             </div>
           )}
           {materialCost > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">{COVER_MATERIALS.find(m => m.id === coverMaterial)?.label}</span>
+              <span className="text-slate-500">{materials.find(m => m.id === coverMaterial)?.label}</span>
               <span className="text-slate-700">+{materialCost} kr</span>
             </div>
           )}
@@ -152,7 +152,7 @@ export function AlbumSidebar({
           <li>Välj sidlayout för att lägga till 1-4 bilder per sida</li>
           <li>Klicka på ett tomt fält för att ladda upp en bild</li>
           <li>Hovra över en bild för att ta bort den</li>
-          <li>Extra sidor kostar 5 kr / sida utöver {DEFAULT_PAGES} grundsidor</li>
+          <li>Extra sidor kostar utöver {includedPages ?? DEFAULT_PAGES} grundsidor</li>
         </ul>
       </div>
     </div>

@@ -41,6 +41,10 @@ class Product(BaseModel):
     available_sizes: Optional[List[str]] = None
     available_qualities: Optional[List[str]] = None
     size_quality_prices: Optional[List[dict]] = None
+    # Photo album admin config (optional, only used when category == "photoalbum"-style products)
+    photoalbum_covers: Optional[List[dict]] = None  # [{id, label, desc, price}]
+    photoalbum_extra_page_price: Optional[float] = None  # cost per extra page beyond default
+    photoalbum_default_pages: Optional[int] = None  # included pages
     hidden: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

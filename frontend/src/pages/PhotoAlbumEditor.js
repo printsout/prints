@@ -42,6 +42,16 @@ const PhotoAlbumEditor = () => {
         const response = await api.get(`/products/${productId}`);
         setProduct(response.data);
         if (response.data.sizes?.length > 0) setSelectedSize(response.data.sizes[0]);
+        // If admin configured covers, use the first one as default
+        const covers = response.data.photoalbum_covers;
+        if (covers?.length > 0 && covers[0].id) {
+          setCoverMaterial(covers[0].id);
+        }
+        // Sync default page count
+        const defaultPages = response.data.photoalbum_default_pages;
+        if (typeof defaultPages === 'number' && defaultPages > 0) {
+          setPages(Array.from({ length: defaultPages }, (_, i) => createPage(i)));
+        }
       } catch {
         toast.error('Kunde inte hämta produkt');
       } finally {
@@ -200,9 +210,18 @@ const PhotoAlbumEditor = () => {
 
   const getTotalImages = () => pages.reduce((sum, p) => sum + p.images.filter(Boolean).length, 0);
 
-  const extraPageCost = Math.max(0, pages.length - DEFAULT_PAGES) * 5;
+  // Resolve admin-configured covers + page pricing, with sensible fallbacks
+  const adminCovers = (product?.photoalbum_covers && product.photoalbum_covers.length > 0)
+    ? product.photoalbum_covers
+    : COVER_MATERIALS;
+  const includedPages = product?.photoalbum_default_pages ?? DEFAULT_PAGES;
+  const extraPagePrice = (typeof product?.photoalbum_extra_page_price === 'number')
+    ? product.photoalbum_extra_page_price
+    : 5;
+
+  const extraPageCost = Math.max(0, pages.length - includedPages) * extraPagePrice;
   const basePrice = product?.price || 0;
-  const materialCost = COVER_MATERIALS.find(m => m.id === coverMaterial)?.price || 0;
+  const materialCost = adminCovers.find(m => m.id === coverMaterial)?.price || 0;
   const totalPerItem = basePrice + extraPageCost + materialCost;
 
   const handleAddToCart = async () => {
@@ -336,6 +355,7 @@ const PhotoAlbumEditor = () => {
                 coverText={coverText} setCoverText={setCoverText}
                 coverMaterial={coverMaterial} setCoverMaterial={setCoverMaterial}
                 coverInputRef={coverInputRef} handleCoverUpload={handleCoverUpload}
+                covers={adminCovers}
               />
             ) : (
               <PagesEditor
@@ -357,6 +377,8 @@ const PhotoAlbumEditor = () => {
             handleAddToCart={handleAddToCart} addPages={addPages}
             removeLastPages={removeLastPages}
             editMode={!!editCartItemId}
+            includedPages={includedPages}
+            covers={adminCovers}
             saveDesignSlot={
               <SaveDesignButton
                 buildPayload={buildSavedDesignPayload}
