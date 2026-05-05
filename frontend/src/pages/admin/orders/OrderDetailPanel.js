@@ -235,9 +235,15 @@ const OrderDetailPanel = ({ selectedOrder, onUpdateStatus, onPrint, onDelete, to
 };
 
 const OrderItemDetail = ({ item, itemIndex, allItems, toast, orderId }) => {
-  // Calculate businesscard-specific index for PDF generation
+  // Calculate per-type indices for PDF generation
   const bcIndex = item.customization?.type === 'businesscard'
     ? allItems.slice(0, itemIndex).filter(i => i.customization?.type === 'businesscard').length
+    : 0;
+  const calIndex = item.customization?.type === 'calendar'
+    ? allItems.slice(0, itemIndex).filter(i => i.customization?.type === 'calendar').length
+    : 0;
+  const albumIndex = item.customization?.type === 'photoalbum'
+    ? allItems.slice(0, itemIndex).filter(i => i.customization?.type === 'photoalbum').length
     : 0;
   return (
     <div className="border border-slate-100 rounded-lg p-3">
@@ -249,8 +255,8 @@ const OrderItemDetail = ({ item, itemIndex, allItems, toast, orderId }) => {
       {item.customization && (
         <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600 space-y-1">
           {item.customization.type === 'nametag' && <NametagCustomization item={item} />}
-          {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} orderId={orderId} />}
-          {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} />}
+          {item.customization.type === 'photoalbum' && <PhotoAlbumCustomization item={item} toast={toast} orderId={orderId} itemIndex={albumIndex} />}
+          {item.customization.type === 'calendar' && <CalendarCustomization item={item} orderId={orderId} itemIndex={calIndex} />}
           {item.customization.type === 'design' && <DesignCustomization item={item} />}
           {item.customization.type === 'catalog_design' && <CatalogDesignCustomization item={item} orderId={orderId} />}
           {item.customization.type === 'businesscard' && <BusinesscardCustomization item={item} orderId={orderId} itemIndex={bcIndex} />}
@@ -284,7 +290,7 @@ const NametagCustomization = ({ item }) => {
   );
 };
 
-const PhotoAlbumCustomization = ({ item, toast, orderId }) => {
+const PhotoAlbumCustomization = ({ item, toast, orderId, itemIndex = 0 }) => {
   const c = item.customization;
   const pages = c.pages;
   const pagesWithImages = useMemo(() => 
@@ -295,12 +301,12 @@ const PhotoAlbumCustomization = ({ item, toast, orderId }) => {
   const handleDownloadZip = () => {
     if (!orderId) return;
     const token = sessionStorage.getItem('adminToken');
-    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-images`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-images?item_index=${itemIndex}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
       .then(blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `albumbilder_${orderId.slice(0, 8)}.zip`;
+        a.download = `albumbilder_${orderId.slice(0, 8)}_${itemIndex + 1}.zip`;
         a.click();
         URL.revokeObjectURL(a.href);
       })
@@ -310,12 +316,12 @@ const PhotoAlbumCustomization = ({ item, toast, orderId }) => {
   const handleDownloadPdf = () => {
     if (!orderId) return;
     const token = sessionStorage.getItem('adminToken');
-    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-pdf`, { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_BASE}/api/admin/orders/${orderId}/photoalbum-pdf?item_index=${itemIndex}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
       .then(blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `album_${orderId.slice(0, 8)}.pdf`;
+        a.download = `album_${orderId.slice(0, 8)}_${itemIndex + 1}.pdf`;
         a.click();
         URL.revokeObjectURL(a.href);
       })
@@ -372,7 +378,7 @@ const PhotoAlbumCustomization = ({ item, toast, orderId }) => {
   );
 };
 
-const CalendarCustomization = ({ item, orderId }) => {
+const CalendarCustomization = ({ item, orderId, itemIndex = 0 }) => {
   const c = item.customization;
   const months = c.months;
   const monthsWithImages = useMemo(() => 
@@ -382,7 +388,7 @@ const CalendarCustomization = ({ item, orderId }) => {
 
   const handleDownloadZip = () => {
     const token = sessionStorage.getItem('adminToken');
-    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-images`;
+    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-images?item_index=${itemIndex}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('Kunde inte ladda ner');
@@ -391,7 +397,7 @@ const CalendarCustomization = ({ item, orderId }) => {
       .then(blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `kalenderbilder_${orderId?.slice(0, 8)}.zip`;
+        a.download = `kalenderbilder_${orderId?.slice(0, 8)}_${itemIndex + 1}.zip`;
         a.click();
         URL.revokeObjectURL(a.href);
       })
@@ -400,7 +406,7 @@ const CalendarCustomization = ({ item, orderId }) => {
 
   const handleDownloadPdf = () => {
     const token = sessionStorage.getItem('adminToken');
-    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-pdf`;
+    const url = `${API_BASE}/api/admin/orders/${orderId}/calendar-pdf?item_index=${itemIndex}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('Kunde inte generera PDF');
@@ -409,7 +415,7 @@ const CalendarCustomization = ({ item, orderId }) => {
       .then(blob => {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `kalender_${c.year || 2026}_${orderId?.slice(0, 8)}.pdf`;
+        a.download = `kalender_${c.year || 2026}_${orderId?.slice(0, 8)}_${itemIndex + 1}.pdf`;
         a.click();
         URL.revokeObjectURL(a.href);
       })

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,26 +18,53 @@ const MONTHS = [
   'September', 'Oktober', 'November', 'December'
 ];
 
-const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, onUpdateText, onUpdateTextPos, getRootProps, getInputProps, isDragActive }) => {
+const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, onUpdateText, onUpdateTextPos, onUpdateImagePos, getRootProps, getInputProps, isDragActive }) => {
   const containerRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
+  const [dragging, setDragging] = useState(null); // null | 'text' | 'image'
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+
+  const startDrag = (e, type, clientX, clientY) => {
+    if (!containerRef.current) return;
+    setDragging(type);
+    if (type === 'image') {
+      dragStartRef.current = {
+        x: clientX, y: clientY,
+        posX: monthData.imagePos?.x ?? 50,
+        posY: monthData.imagePos?.y ?? 50,
+      };
+    }
+  };
 
   const handleMouseDown = useCallback((e) => {
     if (e.target.closest('button') || e.target.closest('input')) return;
-    if (!monthData.text) return;
     e.preventDefault();
-    setDragging(true);
-  }, [monthData.text]);
+    // Click on text overlay → drag text. Click anywhere else on image → drag image.
+    const onText = e.target.closest('[data-testid="calendar-text-overlay"]');
+    if (onText && monthData.text) {
+      setDragging('text');
+    } else if (monthData.preview) {
+      startDrag(e, 'image', e.clientX, e.clientY);
+    }
+  }, [monthData.text, monthData.preview]);
 
   const handleMouseMove = useCallback((e) => {
     if (!dragging || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
-    onUpdateTextPos({ x, y });
-  }, [dragging, onUpdateTextPos]);
+    if (dragging === 'text') {
+      const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
+      onUpdateTextPos({ x, y });
+    } else if (dragging === 'image') {
+      const dx = ((e.clientX - dragStartRef.current.x) / rect.width) * 100;
+      const dy = ((e.clientY - dragStartRef.current.y) / rect.height) * 100;
+      // Inverted because object-position moves the focal point opposite of cursor
+      const x = Math.max(0, Math.min(100, dragStartRef.current.posX - dx));
+      const y = Math.max(0, Math.min(100, dragStartRef.current.posY - dy));
+      onUpdateImagePos({ x, y });
+    }
+  }, [dragging, onUpdateTextPos, onUpdateImagePos]);
 
-  const handleMouseUp = useCallback(() => setDragging(false), []);
+  const handleMouseUp = useCallback(() => setDragging(null), []);
 
   useEffect(() => {
     if (dragging) {
@@ -52,18 +79,32 @@ const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, o
 
   const handleTouchStart = useCallback((e) => {
     if (e.target.closest('button') || e.target.closest('input')) return;
-    if (!monthData.text || !containerRef.current) return;
-    setDragging(true);
-  }, [monthData.text]);
+    if (!containerRef.current) return;
+    const onText = e.target.closest('[data-testid="calendar-text-overlay"]');
+    const t = e.touches[0];
+    if (onText && monthData.text) {
+      setDragging('text');
+    } else if (monthData.preview) {
+      startDrag(e, 'image', t.clientX, t.clientY);
+    }
+  }, [monthData.text, monthData.preview]);
 
   const handleTouchMove = useCallback((e) => {
     if (!dragging || !containerRef.current) return;
     const touch = e.touches[0];
     const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(5, Math.min(95, ((touch.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(5, Math.min(95, ((touch.clientY - rect.top) / rect.height) * 100));
-    onUpdateTextPos({ x, y });
-  }, [dragging, onUpdateTextPos]);
+    if (dragging === 'text') {
+      const x = Math.max(5, Math.min(95, ((touch.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(5, Math.min(95, ((touch.clientY - rect.top) / rect.height) * 100));
+      onUpdateTextPos({ x, y });
+    } else if (dragging === 'image') {
+      const dx = ((touch.clientX - dragStartRef.current.x) / rect.width) * 100;
+      const dy = ((touch.clientY - dragStartRef.current.y) / rect.height) * 100;
+      const x = Math.max(0, Math.min(100, dragStartRef.current.posX - dx));
+      const y = Math.max(0, Math.min(100, dragStartRef.current.posY - dy));
+      onUpdateImagePos({ x, y });
+    }
+  }, [dragging, onUpdateTextPos, onUpdateImagePos]);
 
   if (!monthData.preview) {
     return (
@@ -88,17 +129,24 @@ const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, o
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
-      onTouchEnd={() => setDragging(false)}
-      style={{ cursor: monthData.text ? (dragging ? 'grabbing' : 'grab') : 'default' }}
+      onTouchEnd={() => setDragging(null)}
+      style={{ cursor: dragging === 'image' ? 'grabbing' : 'grab' }}
+      title="Dra för att flytta bilden"
     >
-      <img src={monthData.preview} alt={monthName} className="w-full h-full object-cover pointer-events-none" />
+      <img
+        src={monthData.preview}
+        alt={monthName}
+        className="w-full h-full object-cover pointer-events-none"
+        style={{ objectPosition: `${monthData.imagePos?.x ?? 50}% ${monthData.imagePos?.y ?? 50}%` }}
+      />
       {monthData.text && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-auto"
           style={{
             left: `${monthData.textPos.x}%`,
             top: `${monthData.textPos.y}%`,
             transform: 'translate(-50%, -50%)',
+            cursor: dragging === 'text' ? 'grabbing' : 'grab',
           }}
           data-testid="calendar-text-overlay"
         >
@@ -137,13 +185,19 @@ const CalendarEditor = () => {
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
   const { token } = useAuth();
+  const location = useLocation();
   const savedDesignId = searchParams.get('design');
+
+  // Variant pricing from ProductDetail (admin "Storlekar & Priser")
+  const variantSize = location.state?.print_size || null;
+  const variantQuality = location.state?.print_quality || null;
+  const variantPrice = typeof location.state?.resolved_price === 'number' ? location.state.resolved_price : null;
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(0);
   const [monthImages, setMonthImages] = useState(
-    Array(12).fill(null).map(() => ({ image: null, preview: null, text: '', textPos: { x: 50, y: 85 }, textColor: '#FFFFFF', fontSize: 24 }))
+    Array(12).fill(null).map(() => ({ image: null, preview: null, text: '', textPos: { x: 50, y: 85 }, textColor: '#FFFFFF', fontSize: 24, imagePos: { x: 50, y: 50 } }))
   );
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() + 1);
@@ -182,7 +236,8 @@ const CalendarEditor = () => {
           text: m.text || '', 
           textPos: m.textPos || { x: 50, y: 85 }, 
           textColor: m.textColor || '#FFFFFF', 
-          fontSize: m.fontSize || 24 
+          fontSize: m.fontSize || 24,
+          imagePos: m.imagePos || { x: 50, y: 50 },
         };
         if (m.image_url) {
           const fullUrl = m.image_url.startsWith('/api')
@@ -264,7 +319,7 @@ const CalendarEditor = () => {
               : m.preview;
           }
         }
-        uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl, text: m.text || '', textPos: m.textPos || { x: 50, y: 85 }, textColor: m.textColor || '#FFFFFF', fontSize: m.fontSize || 24 });
+        uploadedMonths.push({ month: MONTHS[i], hasImage: m.preview !== null, image_url: imageUrl, text: m.text || '', textPos: m.textPos || { x: 50, y: 85 }, textColor: m.textColor || '#FFFFFF', fontSize: m.fontSize || 24, imagePos: m.imagePos || { x: 50, y: 50 } });
       }
       const layout = product?.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
       const res = await api.post('/calendar/generate-pdf', { year: selectedYear, months: uploadedMonths, layout }, { responseType: 'blob' });
@@ -304,25 +359,33 @@ const CalendarEditor = () => {
         textPos: m.textPos || { x: 50, y: 85 },
         textColor: m.textColor || '#FFFFFF',
         fontSize: m.fontSize || 24,
+        imagePos: m.imagePos || { x: 50, y: 50 },
       });
     }
     const firstImage = uploadedMonths.find((m) => m.image_url)?.image_url;
-    const calendarLayout = product.name?.toLowerCase().includes('familje') ? 'family' : 'standard';
+    const lname = (product.name || '').toLowerCase();
+    let calendarLayout = 'standard';
+    if (lname.includes('familje')) calendarLayout = 'family';
+    else if (lname.includes('skrivbord')) calendarLayout = 'desk';
     return {
       product_id: product.product_id,
       name: product.name,
-      price: product.price,
+      price: variantPrice ?? product.price,
       quantity: 1,
       image: product.images?.[0],
-      size: selectedSize,
+      size: variantSize || selectedSize,
+      print_size: variantSize,
+      print_quality: variantQuality,
       customization: {
         type: 'calendar',
         year: selectedYear,
-        size: selectedSize,
+        size: variantSize || selectedSize,
         layout: calendarLayout,
         images_count: getUploadedCount(),
         months: uploadedMonths,
         cover_image_url: firstImage,
+        print_size: variantSize,
+        print_quality: variantQuality,
       },
     };
   };
@@ -439,6 +502,11 @@ const CalendarEditor = () => {
                   onUpdateTextPos={(textPos) => {
                     const next = [...monthImages];
                     next[currentMonth] = { ...next[currentMonth], textPos };
+                    setMonthImages(next);
+                  }}
+                  onUpdateImagePos={(imagePos) => {
+                    const next = [...monthImages];
+                    next[currentMonth] = { ...next[currentMonth], imagePos };
                     setMonthImages(next);
                   }}
                   getRootProps={getRootProps}
@@ -613,8 +681,8 @@ const CalendarEditor = () => {
               </div>
             </div>
 
-            {/* Size Selection */}
-            {product.sizes?.length > 0 && (
+            {/* Size Selection — hidden for family calendars (size is locked) */}
+            {product.sizes?.length > 0 && !product.name?.toLowerCase().includes('familje') && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="font-semibold text-slate-900 mb-4">Välj storlek</h3>
                 <div className="space-y-2">
@@ -638,8 +706,8 @@ const CalendarEditor = () => {
             {/* Price & Add to Cart */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-slate-600">Pris</span>
-                <span className="text-2xl font-bold text-slate-900">{product.price} kr</span>
+                <span className="text-slate-600">Pris{variantSize ? ` (${variantSize}${variantQuality ? `, ${variantQuality}` : ''})` : ''}</span>
+                <span className="text-2xl font-bold text-slate-900">{variantPrice ?? product.price} kr</span>
               </div>
               
               <Button 

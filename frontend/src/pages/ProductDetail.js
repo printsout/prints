@@ -108,14 +108,26 @@ const ProductDetail = () => {
 
   const handleDesign = () => {
     const sizeForEditor = hasAdminSizePricing ? selectedPrintSize : selectedSize;
+    let resolvedPrice = product?.price;
+    if (hasAdminSizePricing && selectedPrintSize) {
+      const quality = selectedPrintQuality || 'Standard';
+      const entry = product.size_quality_prices?.find(p => p.size === selectedPrintSize && (p.quality || 'Standard') === quality);
+      if (entry) resolvedPrice = entry.price;
+    }
+    const sharedState = {
+      size: sizeForEditor,
+      print_size: selectedPrintSize || null,
+      print_quality: selectedPrintQuality || null,
+      resolved_price: resolvedPrice,
+    };
     if (product?.model_type === 'calendar' || product?.category === 'kalender') {
-      navigate(`/kalender/${productId}`, { state: { size: sizeForEditor } });
+      navigate(`/kalender/${productId}`, { state: sharedState });
     } else if (product?.model_type === 'nametag' || product?.category === 'namnskylt') {
-      navigate(`/namnskylt/${productId}`, { state: { size: sizeForEditor } });
+      navigate(`/namnskylt/${productId}`, { state: sharedState });
     } else if (product?.category === 'fotoalbum') {
-      navigate(`/fotoalbum/${productId}`, { state: { size: sizeForEditor } });
+      navigate(`/fotoalbum/${productId}`, { state: sharedState });
     } else {
-      navigate(`/design/${productId}`, { state: { color: selectedColor, size: sizeForEditor } });
+      navigate(`/design/${productId}`, { state: { color: selectedColor, ...sharedState } });
     }
   };
 

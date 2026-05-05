@@ -91,8 +91,17 @@ def _draw_month_page(c, year: int, month_index: int, image_path: str = None, mon
             scale = max(PAGE_W / iw, img_h / ih)
             draw_w = iw * scale
             draw_h = ih * scale
-            x_pos = (PAGE_W - draw_w) / 2
-            y_pos = cal_h + (img_h - draw_h) / 2
+            # Image focal point from user's drag-positioning (0-100%)
+            img_pos = (month_data or {}).get("imagePos") or {"x": 50, "y": 50}
+            focal_x = max(0.0, min(100.0, float(img_pos.get("x", 50)))) / 100.0
+            focal_y = max(0.0, min(100.0, float(img_pos.get("y", 50)))) / 100.0
+            # Compute offset so the focal point of the source image aligns with the same
+            # focal point of the visible area (CSS object-position semantics).
+            extra_w = draw_w - PAGE_W
+            extra_h = draw_h - img_h
+            x_pos = -extra_w * focal_x
+            # ReportLab Y grows upward; CSS Y grows downward → invert
+            y_pos = cal_h - extra_h * (1 - focal_y)
             # Clip to the image zone so any overflow is hidden
             c.saveState()
             p = c.beginPath()

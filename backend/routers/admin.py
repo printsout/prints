@@ -341,25 +341,23 @@ async def download_nametag_pdf(order_id: str, item_index: int = 0, admin=Depends
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 @router.get("/orders/{order_id}/calendar-images")
-async def download_calendar_images(order_id: str, admin=Depends(verify_admin_token)):
-    """Download all calendar images as a ZIP file (works with R2 + local)."""
+async def download_calendar_images(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
+    """Download all calendar images as a ZIP file (works with R2 + local). item_index selects which calendar in a multi-calendar order."""
     import zipfile
     from storage import fetch_bytes
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
-    calendar_item = None
-    for item in order.get("items", []):
-        if item.get("customization", {}).get("type") == "calendar":
-            calendar_item = item
-            break
-    if not calendar_item:
+    cal_items = [i for i in order.get("items", []) if i.get("customization", {}).get("type") == "calendar"]
+    if not cal_items or item_index >= len(cal_items):
         raise HTTPException(status_code=400, detail="Ordern innehåller ingen kalender")
+    calendar_item = cal_items[item_index]
 
     customization = calendar_item["customization"]
     months = customization.get("months", [])
 
-    zip_path = Path("/tmp") / f"kalender_{order_id[:8]}.zip"
+    safe_name = (calendar_item.get("product_name") or calendar_item.get("name") or "kalender").lower().replace(" ", "_")[:30]
+    zip_path = Path("/tmp") / f"kalender_{order_id[:8]}_{item_index}.zip"
     added = 0
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for m in months:
@@ -381,56 +379,51 @@ async def download_calendar_images(order_id: str, admin=Depends(verify_admin_tok
 
     return FileResponse(
         zip_path, media_type="application/zip",
-        filename=f"kalenderbilder_{order_id[:8]}.zip",
-        headers={"Content-Disposition": f'attachment; filename="kalenderbilder_{order_id[:8]}.zip"'}
+        filename=f"{safe_name}_{order_id[:8]}.zip",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}_{order_id[:8]}.zip"'}
     )
 
 @router.get("/orders/{order_id}/calendar-pdf")
-async def download_calendar_pdf(order_id: str, admin=Depends(verify_admin_token)):
-    """Generate and download a calendar PDF from order data."""
+async def download_calendar_pdf(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
+    """Generate and download a calendar PDF from order data. item_index selects which calendar in the order."""
     from calendar_pdf import generate_calendar_pdf
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
-    calendar_item = None
-    for item in order.get("items", []):
-        if item.get("customization", {}).get("type") == "calendar":
-            calendar_item = item
-            break
-    if not calendar_item:
+    cal_items = [i for i in order.get("items", []) if i.get("customization", {}).get("type") == "calendar"]
+    if not cal_items or item_index >= len(cal_items):
         raise HTTPException(status_code=400, detail="Ordern innehåller ingen kalender")
+    calendar_item = cal_items[item_index]
     customization = calendar_item["customization"]
     year = customization.get("year", 2026)
     months = customization.get("months", [])
     layout = customization.get("layout", "standard")
     output_dir = Path("/tmp/calendar_pdfs")
     output_dir.mkdir(exist_ok=True)
-    output_path = str(output_dir / f"kalender_{order_id[:8]}.pdf")
+    output_path = str(output_dir / f"kalender_{order_id[:8]}_{item_index}.pdf")
     generate_calendar_pdf(year, months, output_path, layout)
-    filename = f"kalender_{year}_{order_id[:8]}.pdf"
+    safe_name = (calendar_item.get("product_name") or calendar_item.get("name") or "kalender").lower().replace(" ", "_")[:30]
+    filename = f"{safe_name}_{year}_{order_id[:8]}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
 @router.get("/orders/{order_id}/photoalbum-images")
-async def download_photoalbum_images(order_id: str, admin=Depends(verify_admin_token)):
-    """Download all photo album images as a ZIP file (R2 + local)."""
+async def download_photoalbum_images(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
+    """Download all photo album images as a ZIP file (R2 + local). item_index selects which album in the order."""
     import zipfile
     from storage import fetch_bytes
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
-    album_item = None
-    for item in order.get("items", []):
-        if item.get("customization", {}).get("type") == "photoalbum":
-            album_item = item
-            break
-    if not album_item:
+    album_items = [i for i in order.get("items", []) if i.get("customization", {}).get("type") == "photoalbum"]
+    if not album_items or item_index >= len(album_items):
         raise HTTPException(status_code=400, detail="Ordern innehåller inget fotoalbum")
+    album_item = album_items[item_index]
 
     customization = album_item["customization"]
     pages = customization.get("pages", []) or []
 
-    zip_path = Path("/tmp") / f"album_{order_id[:8]}.zip"
+    zip_path = Path("/tmp") / f"album_{order_id[:8]}_{item_index}.zip"
     added = 0
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         cover_url = customization.get("cover_image_url")
@@ -458,30 +451,27 @@ async def download_photoalbum_images(order_id: str, admin=Depends(verify_admin_t
 
     return FileResponse(
         zip_path, media_type="application/zip",
-        filename=f"albumbilder_{order_id[:8]}.zip",
-        headers={"Content-Disposition": f'attachment; filename="albumbilder_{order_id[:8]}.zip"'}
+        filename=f"albumbilder_{order_id[:8]}_{item_index}.zip",
+        headers={"Content-Disposition": f'attachment; filename="albumbilder_{order_id[:8]}_{item_index}.zip"'}
     )
 
 
 @router.get("/orders/{order_id}/photoalbum-pdf")
-async def download_photoalbum_pdf(order_id: str, admin=Depends(verify_admin_token)):
-    """Generate and download a printable photo album PDF."""
+async def download_photoalbum_pdf(order_id: str, item_index: int = 0, admin=Depends(verify_admin_token)):
+    """Generate and download a printable photo album PDF. item_index selects which album in the order."""
     from photoalbum_pdf import generate_photoalbum_pdf
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order hittades inte")
-    album_item = None
-    for item in order.get("items", []):
-        if item.get("customization", {}).get("type") == "photoalbum":
-            album_item = item
-            break
-    if not album_item:
+    album_items = [i for i in order.get("items", []) if i.get("customization", {}).get("type") == "photoalbum"]
+    if not album_items or item_index >= len(album_items):
         raise HTTPException(status_code=400, detail="Ordern innehåller inget fotoalbum")
+    album_item = album_items[item_index]
     output_dir = Path("/tmp/album_pdfs")
     output_dir.mkdir(exist_ok=True)
-    output_path = str(output_dir / f"album_{order_id[:8]}.pdf")
+    output_path = str(output_dir / f"album_{order_id[:8]}_{item_index}.pdf")
     generate_photoalbum_pdf(album_item["customization"], output_path)
-    filename = f"album_{order_id[:8]}.pdf"
+    filename = f"album_{order_id[:8]}_{item_index}.pdf"
     return FileResponse(output_path, media_type="application/pdf", filename=filename, headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -18,11 +18,17 @@ import { AlbumSidebar } from './photoalbum/AlbumSidebar';
 const PhotoAlbumEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const editCartItemId = searchParams.get('edit');
   const { addToCart, updateCartItem, cart } = useCart();
   const { token } = useAuth();
   const savedDesignId = searchParams.get('design');
+
+  // Pricing context coming from ProductDetail (size+quality variant chosen by user)
+  const variantSize = location.state?.print_size || null;
+  const variantQuality = location.state?.print_quality || null;
+  const variantPrice = typeof location.state?.resolved_price === 'number' ? location.state.resolved_price : null;
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -220,7 +226,7 @@ const PhotoAlbumEditor = () => {
     : 5;
 
   const extraPageCost = Math.max(0, pages.length - includedPages) * extraPagePrice;
-  const basePrice = product?.price || 0;
+  const basePrice = (variantPrice ?? product?.price) || 0;
   const materialCost = adminCovers.find(m => m.id === coverMaterial)?.price || 0;
   const totalPerItem = basePrice + extraPageCost + materialCost;
 
@@ -287,11 +293,14 @@ const PhotoAlbumEditor = () => {
       product_id: product.product_id, name: product.name,
       price: totalPerItem, quantity,
       image: coverImage || pages.flatMap((p) => p.images).find(Boolean) || product.images?.[0],
+      print_size: variantSize,
+      print_quality: variantQuality,
       customization: {
         type: 'photoalbum', total_pages: pages.length,
         total_images: getTotalImages(), size: selectedSize,
         cover_image_url: coverImageUrl, cover_text: coverText || null,
         cover_material: coverMaterial, pages: uploadedPages,
+        print_size: variantSize, print_quality: variantQuality,
       },
     };
   };
