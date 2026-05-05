@@ -71,26 +71,6 @@ export function AlbumSidebar({
           <p className="text-xs text-slate-400 mt-1">Min {MIN_PAGES}, Max {MAX_PAGES} sidor</p>
           {extraPageCost > 0 && <p className="text-xs text-[#2a9d8f] mt-1">+{extraPageCost} kr för extra sidor</p>}
         </div>
-
-        {product.sizes?.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-2">Storlek</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {product.sizes.map(size => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                    selectedSize === size ? 'border-[#2a9d8f] bg-[#2a9d8f]/5 text-[#2a9d8f]' : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                  data-testid={`size-${size}`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Quantity + Price */}
