@@ -178,6 +178,114 @@ const DraggableImageArea = ({ monthData, monthIndex, monthName, onRemoveImage, o
   );
 };
 
+// Desk calendar preview — landscape A-frame, image left, grid right
+const DeskCalendarPreview = ({ monthData, monthName, monthIndex, year, onUpdateImagePos, getRootProps, getInputProps, isDragActive }) => {
+  const containerRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+
+  const firstDay = new Date(year, monthIndex, 1).getDay(); // 0=Sun ... we want Mon=0
+  const offsetCols = (firstDay + 6) % 7;
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < offsetCols; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const startDrag = (e, clientX, clientY) => {
+    e.preventDefault();
+    setDragging(true);
+    dragStartRef.current = {
+      x: clientX, y: clientY,
+      posX: monthData.imagePos?.x ?? 50,
+      posY: monthData.imagePos?.y ?? 50,
+    };
+  };
+
+  const onMouseDown = (e) => {
+    if (!monthData.preview || !containerRef.current) return;
+    startDrag(e, e.clientX, e.clientY);
+  };
+
+  const onMouseMove = useCallback((e) => {
+    if (!dragging || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - dragStartRef.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - dragStartRef.current.y) / rect.height) * 100;
+    onUpdateImagePos({
+      x: Math.max(0, Math.min(100, dragStartRef.current.posX - dx)),
+      y: Math.max(0, Math.min(100, dragStartRef.current.posY - dy)),
+    });
+  }, [dragging, onUpdateImagePos]);
+  const onMouseUp = useCallback(() => setDragging(false), []);
+
+  useEffect(() => {
+    if (!dragging) return;
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [dragging, onMouseMove, onMouseUp]);
+
+  return (
+    <div className="aspect-[1.4/1] bg-white border-2 border-slate-200 rounded-lg overflow-hidden shadow-lg relative">
+      {/* Spiral binding strip */}
+      <div className="absolute top-0 left-0 right-0 h-5 bg-slate-50 border-b border-slate-200 flex items-center justify-around px-2 z-10">
+        {Array.from({ length: 24 }).map((_, i) => (
+          <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+        ))}
+      </div>
+      <div className="flex h-full pt-5">
+        {/* Left half: image */}
+        <div
+          ref={containerRef}
+          className="w-1/2 h-full relative bg-slate-100 select-none"
+          onMouseDown={onMouseDown}
+          style={{ cursor: monthData.preview ? (dragging ? 'grabbing' : 'grab') : 'default' }}
+        >
+          {monthData.preview ? (
+            <img
+              src={monthData.preview}
+              alt={monthName}
+              className="w-full h-full object-cover pointer-events-none"
+              style={{ objectPosition: `${monthData.imagePos?.x ?? 50}% ${monthData.imagePos?.y ?? 50}%` }}
+            />
+          ) : (
+            <div {...getRootProps()} className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors">
+              <input {...getInputProps()} />
+              <div className="text-slate-400 text-center px-4">
+                <p className="text-sm font-medium mb-1">{isDragActive ? 'Släpp bilden här' : 'Ladda upp bild för ' + monthName}</p>
+                <p className="text-xs">Klicka eller dra & släpp</p>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Right half: month grid */}
+        <div className="w-1/2 h-full p-4 flex flex-col">
+          <div className="flex items-baseline justify-between mb-3">
+            <h3 className="text-3xl font-bold italic text-slate-900" style={{ fontFamily: 'Georgia, serif' }}>{monthName}</h3>
+            <span className="text-lg text-slate-500 font-light">{year}</span>
+          </div>
+          <div className="grid grid-cols-7 gap-0 text-center text-xs font-bold border-b border-slate-200 pb-1 mb-1">
+            {['M', 'T', 'O', 'T', 'F', 'L', 'S'].map((d, i) => (
+              <div key={`h-${i}`} className={i >= 5 ? 'text-red-500' : 'text-slate-700'}>{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-0 text-center flex-1 content-start text-sm">
+            {cells.map((day, i) => (
+              <div key={`d-${i}`} className={`py-1 ${i % 7 >= 5 ? 'text-red-500' : 'text-slate-800'}`}>
+                {day ?? ''}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CalendarEditor = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -487,6 +595,22 @@ const CalendarEditor = () => {
               </div>
 
               {/* Calendar Page Preview */}
+              {product.name?.toLowerCase().includes('skrivbord') ? (
+                <DeskCalendarPreview
+                  monthData={monthImages[currentMonth]}
+                  monthName={MONTHS[currentMonth]}
+                  monthIndex={currentMonth}
+                  year={selectedYear}
+                  onUpdateImagePos={(imagePos) => {
+                    const next = [...monthImages];
+                    next[currentMonth] = { ...next[currentMonth], imagePos };
+                    setMonthImages(next);
+                  }}
+                  getRootProps={getRootProps}
+                  getInputProps={getInputProps}
+                  isDragActive={isDragActive}
+                />
+              ) : (
               <div className="aspect-[3/4] bg-white border-2 border-slate-200 rounded-lg overflow-hidden shadow-lg">
                 {/* Image Area */}
                 <DraggableImageArea
@@ -531,6 +655,7 @@ const CalendarEditor = () => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Month Thumbnails */}
               <div className="mt-6">
