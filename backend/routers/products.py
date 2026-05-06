@@ -18,20 +18,24 @@ async def get_products(category: Optional[str] = None):
 @router.get("/categories")
 async def get_categories():
     """Build categories dynamically from non-hidden products in DB."""
-    # Get all distinct categories from visible products (excluding 'foretag')
     products = await db.products.find(
         {"category": {"$ne": "foretag"}, "hidden": {"$ne": True}},
-        {"_id": 0, "category": 1}
+        {"_id": 0, "category": 1, "images": 1}
     ).to_list(1000)
 
-    # Count products per category
+    # Pick first image per category as thumbnail
+    category_image = {}
     category_counts = {}
     for p in products:
         cat = p.get("category", "").strip().lower()
-        if cat:
-            category_counts[cat] = category_counts.get(cat, 0) + 1
+        if not cat:
+            continue
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+        if cat not in category_image:
+            imgs = p.get("images") or []
+            if imgs:
+                category_image[cat] = imgs[0]
 
-    # Known category display names (fallback: capitalize)
     CATEGORY_NAMES = {
         "mugg": "Muggar", "tshirt": "T-shirts", "hoodie": "Hoodies",
         "poster": "Posters", "mobilskal": "Mobilskal", "tygkasse": "Tygkassar",
@@ -41,7 +45,11 @@ async def get_categories():
     categories = []
     for cat_id in sorted(category_counts.keys()):
         name = CATEGORY_NAMES.get(cat_id, cat_id.capitalize())
-        categories.append({"id": cat_id, "name": name})
+        categories.append({
+            "id": cat_id,
+            "name": name,
+            "image": category_image.get(cat_id, ""),
+        })
 
     return categories
 

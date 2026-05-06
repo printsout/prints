@@ -5,6 +5,13 @@ import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
 
+const resolveImg = (u) => {
+  if (!u) return '';
+  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:')) return u;
+  if (u.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL}${u}`;
+  return u;
+};
+
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -180,7 +187,7 @@ const Home = () => {
                 data-testid={`category-${category.id}`}
               >
                 <img 
-                  src={category.image}
+                  src={resolveImg(category.image)}
                   alt={category.name}
                   className="w-full h-full object-cover"
                 />
